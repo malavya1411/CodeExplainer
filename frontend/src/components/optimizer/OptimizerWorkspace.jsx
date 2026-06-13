@@ -31,12 +31,17 @@ export function OptimizerWorkspace() {
 
   const [exportOpen, setExportOpen] = useState(false)
   const exportRef = useRef(null)
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false)
+  const categoryRef = useRef(null)
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768)
 
   useEffect(() => {
     const onClick = (e) => {
       if (exportRef.current && !exportRef.current.contains(e.target)) {
         setExportOpen(false)
+      }
+      if (categoryRef.current && !categoryRef.current.contains(e.target)) {
+        setCategoryDropdownOpen(false)
       }
     }
     document.addEventListener("mousedown", onClick)
@@ -326,49 +331,71 @@ export function OptimizerWorkspace() {
           </div>
         </Card>
 
-        {/* Switchers (Category Filter + Depth Toggles) */}
-        <div className="space-y-3 pt-1">
+        {/* Unified Toolbar for Filters & Depth */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 pb-1 select-none">
           
-          {/* Category Badges Filter */}
-          <div className="flex flex-wrap gap-1.5 select-none">
-            {categories.map((c) => {
-              const isActive = activeCategory === c.id
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => setFilter(c.id)}
-                  className={`text-[11px] font-semibold rounded px-2.5 py-1.5 border transition-all cursor-pointer ${
-                    isActive
-                      ? "bg-[var(--accent-primary)] border-[var(--accent-primary)] text-[var(--accent-on)]"
-                      : "bg-[var(--bg-secondary)] border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]"
-                  }`}
-                >
-                  {c.label}
-                </button>
-              )
-            })}
+          {/* Category Filter Dropdown */}
+          <div className="relative" ref={categoryRef}>
+            <button
+              onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
+              className="flex items-center gap-2 text-xs font-semibold rounded-lg px-3 py-2 border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer shadow-sm active:scale-95"
+            >
+              <span className="text-[var(--text-muted)] font-normal">Category:</span>
+              <span className="text-[var(--text-primary)] font-bold">
+                {categories.find(c => c.id === activeCategory)?.label || "All"}
+              </span>
+              <ChevronDown size={14} className="text-[var(--text-muted)]" />
+            </button>
+            
+            {categoryDropdownOpen && (
+              <div className="absolute left-0 mt-1.5 w-48 premium-card shadow-xl py-1 z-40">
+                {categories.map((c) => {
+                  const isActive = activeCategory === c.id
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => {
+                        setFilter(c.id)
+                        setCategoryDropdownOpen(false)
+                      }}
+                      className={`flex items-center justify-between w-full px-3 py-2 text-xs text-left transition-colors cursor-pointer ${
+                        isActive
+                          ? "bg-[color-mix(in_srgb,var(--accent-primary)_10%,transparent)] text-[var(--accent-primary)] font-bold"
+                          : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]"
+                      }`}
+                    >
+                      {c.label}
+                      {isActive && <Check size={12} strokeWidth={3} />}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
-          {/* Explanation Level switch */}
-          <div className="flex items-center gap-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded p-1 w-fit select-none">
-            <span className="text-[10px] uppercase font-black tracking-wider text-[var(--text-muted)] px-2">Explanation</span>
-            {["beginner", "intermediate", "expert"].map((level) => {
-              const isActive = explanationLevel === level
-              return (
-                <button
-                  key={level}
-                  onClick={() => setExplanationLevel(level)}
-                  className={`text-[10px] font-bold uppercase rounded px-2.5 py-1 transition-all cursor-pointer ${
-                    isActive
-                      ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
-                      : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-                  }`}
-                >
-                  {level}
-                </button>
-              )
-            })}
+          {/* Explanation Depth Segmented Switcher */}
+          <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-1 shadow-sm">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--text-muted)] px-2">Depth</span>
+            <div className="flex gap-0.5">
+              {["beginner", "intermediate", "expert"].map((level) => {
+                const isActive = explanationLevel === level
+                return (
+                  <button
+                    key={level}
+                    onClick={() => setExplanationLevel(level)}
+                    className={`text-[10px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)] shadow-sm"
+                        : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                    }`}
+                  >
+                    {level}
+                  </button>
+                )
+              })}
+            </div>
           </div>
+
         </div>
 
         {/* Improvement Cards Feed */}
