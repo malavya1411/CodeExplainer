@@ -4,6 +4,19 @@ Welcome to the **CodeExplainer** repository! This project is structured as a pro
 
 ---
 
+## Key Features
+
+* **Interactive Code Explainer**: Dynamic editor layout with local language auto-detection.
+* **Automated Code Commenting**: Insert custom annotations with adjustable explanation depths (Beginner, Intermediate, Expert) and comment formats (Inline, Block, Docstring).
+* **Interactive Code Optimizer**:
+  * **SVG Score Ring**: Visual representation of code quality scores with dynamic transition animations.
+  * **Comparative Metric Stats**: Tables listing exact before/after complexity indicators (e.g. `Time: O(n) ➔ O(log n)`).
+  * **Overall Impact Grid**: At-a-glance performance, maintainability, security, and execution speed rating cards.
+  * **Automated Tab View-Mode Swap**: Automatically switches between Comparison (diff) and Final Code views when applying or reverting changes.
+* **Complexity Overlay**: Clean floating tooltip overlay inside the editor displaying complexity statistics.
+
+---
+
 ## Directory Structure
 
 ```text

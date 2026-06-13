@@ -4,8 +4,8 @@ export function generateOptimizationReport(code, language) {
   const isJava = language === "java" || cleanCode.includes("class Solution") || cleanCode.includes("public int search")
   
   // Robust checks for linear search vs binary search loops
-  const javaLinearSearchRegex = /for\s*\(\s*int\s+i\s*=\s*0\s*;\s*i\s*<\s*nums\.length\s*;\s*i\s*\+\+\s*\)\s*\{[\s\S]*?return\s+i\s*;[\s\S]*?\}/;
-  const jsLinearSearchRegex = /for\s*\(\s*(?:let|var)\s+i\s*=\s*0\s*;\s*i\s*<\s*nums\.length\s*;\s*i\s*\+\+\s*\)\s*\{[\s\S]*?return\s+i\s*;?[\s\S]*?\}/;
+  const javaLinearSearchRegex = /for\s*\(\s*int\s+i\s*=\s*0\s*;\s*i\s*<\s*nums\.length\s*;\s*i\s*\+\+\s*\)\s*\{[\s\S]*?return\s+i\s*;[\s\S]*?\}\s*(?:\})?/;
+  const jsLinearSearchRegex = /for\s*\(\s*(?:let|var)\s+i\s*=\s*0\s*;\s*i\s*<\s*nums\.length\s*;\s*i\s*\+\+\s*\)\s*\{[\s\S]*?return\s+i\s*;?[\s\S]*?\}\s*(?:\})?/;
   
   const isJavaLinearSearch = isJava && javaLinearSearchRegex.test(code);
   const isJsLinearSearch = !isJava && jsLinearSearchRegex.test(code);
@@ -73,6 +73,9 @@ ${checkIndent}}`;
           problem: "Linear search checks each element one by one, which is slow for large arrays.",
           originalSnippet: originalLoop,
           optimizedSnippet: optimizedLoop,
+          beforeStats: { "Time": "O(n)", "Space": "O(1)" },
+          afterStats: { "Time": "O(log n)", "Space": "O(1)" },
+          change: "Upgrades lookup method from linear scanning to binary search by continually halving the search space.",
           explanation: {
             beginner: "Instead of looking through the list one item at a time from start to finish, jump to the middle and throw away the half that cannot contain the target.",
             intermediate: "Upgrades the lookup algorithm from a linear search (O(n)) to a binary search (O(log n)). This performs in logarithmic time by continually halving the search space.",
@@ -90,6 +93,9 @@ ${checkIndent}}`;
           problem: "If 'nums' is null, accessing 'nums.length' will throw a NullPointerException. Running the search on empty array runs unnecessary loop initialization.",
           originalSnippet: originalCheck,
           optimizedSnippet: optimizedCheck,
+          beforeStats: { "Safety": "Unprotected" },
+          afterStats: { "Safety": "Protected" },
+          change: "Adds defensive guard clauses to validate array existence and length before search.",
           explanation: {
             beginner: "Add a check to make sure the array actually exists (is not null) before reading its size, preventing a crash.",
             intermediate: "Pre-empts NullPointerException by validating 'nums == null' prior to checking length. Exits early with sentinel value.",
@@ -119,6 +125,9 @@ ${checkIndent}}`;
             problem: "Linear search checks each element one by one, which is slow for large arrays.",
             originalSnippet: originalLoop,
             optimizedSnippet: optimizedLoop,
+            beforeStats: { "Time": "O(n)", "Space": "O(1)" },
+            afterStats: { "Time": "O(log n)", "Space": "O(1)" },
+            change: "Upgrades lookup method from linear scanning to binary search by continually halving the search space.",
             explanation: {
               beginner: "Instead of looking through the list one item at a time from start to finish, jump to the middle and throw away the half that cannot contain the target.",
               intermediate: "Upgrades the lookup algorithm from a linear search (O(n)) to a binary search (O(log n)). This performs in logarithmic time by continually halving the search space.",
@@ -136,6 +145,9 @@ ${checkIndent}}`;
             problem: "No validation for null array input.",
             originalSnippet: originalSig,
             optimizedSnippet: optimizedSig,
+            beforeStats: { "Safety": "Unprotected" },
+            afterStats: { "Safety": "Protected" },
+            change: "Adds defensive guard clauses to validate array existence and length before search.",
             explanation: {
               beginner: "Add a check to make sure the array actually exists (is not null) before performing calculations, preventing a crash.",
               intermediate: "Pre-empts NullPointerException by validating 'nums == null' prior to accessing length. Exits early.",
@@ -190,6 +202,9 @@ ${indent}}`;
           problem: "Linear search checks elements one-by-one.",
           originalSnippet: originalLoop,
           optimizedSnippet: optimizedLoop,
+          beforeStats: { "Time": "O(n)", "Space": "O(1)" },
+          afterStats: { "Time": "O(log n)", "Space": "O(1)" },
+          change: "Upgrades lookup method from linear scanning to binary search by continually halving the search space.",
           explanation: {
             beginner: "Search from the middle outwards to find items in half the time.",
             intermediate: "Upgrades lookup method from linear scanning to O(log n) binary search.",
@@ -207,6 +222,9 @@ ${indent}}`;
           problem: "Incomplete input validations can trigger errors.",
           originalSnippet: originalCheck,
           optimizedSnippet: optimizedCheck,
+          beforeStats: { "Safety": "Unprotected" },
+          afterStats: { "Safety": "Protected" },
+          change: "Adds defensive checks to guard against null or undefined array references.",
           explanation: {
             beginner: "Check if the list is valid before accessing it.",
             intermediate: "Guards against null/undefined arrays by ensuring safety checks short-circuit correctly.",
@@ -234,6 +252,9 @@ ${indent}}`;
             problem: "Linear search checks elements one-by-one.",
             originalSnippet: originalLoop,
             optimizedSnippet: optimizedLoop,
+            beforeStats: { "Time": "O(n)", "Space": "O(1)" },
+            afterStats: { "Time": "O(log n)", "Space": "O(1)" },
+            change: "Upgrades lookup method from linear scanning to binary search by continually halving the search space.",
             explanation: {
               beginner: "Search from the middle outwards to find items in half the time.",
               intermediate: "Upgrades lookup method from linear scanning to O(log n) binary search.",
@@ -251,6 +272,9 @@ ${indent}}`;
             problem: "No input validations are run on arguments.",
             originalSnippet: originalSig,
             optimizedSnippet: optimizedSig,
+            beforeStats: { "Safety": "Unprotected" },
+            afterStats: { "Safety": "Protected" },
+            change: "Adds defensive checks to guard against null or undefined array references.",
             explanation: {
               beginner: "Check if the list is valid before performing the search.",
               intermediate: "Guards against null/undefined arrays by ensuring safety checks short-circuit correctly.",
@@ -284,6 +308,9 @@ ${indent}}`;
           problem: "Using '(left + right) / 2' can cause integer overflow when left + right exceeds Integer.MAX_VALUE (2^31 - 1).",
           originalSnippet: midMatch[0],
           optimizedSnippet: "int mid = left + ((right - left) >>> 1);",
+          beforeStats: { "Safety": "High Risk" },
+          afterStats: { "Safety": "Safe" },
+          change: "Replaces (left + right) / 2 with left + ((right - left) >>> 1) to avoid signed overflow.",
           explanation: {
             beginner: "Change the midpoint calculation so it doesn't break if the indices get very large. Instead of adding them first, we calculate the distance between them.",
             intermediate: "Replaces (left + right) / 2 with left + ((right - left) >>> 1). This avoids signed integer overflow issues when indices sum to a value greater than 2,147,483,647.",
@@ -312,6 +339,9 @@ ${checkIndent}}`;
           problem: "If 'nums' is null, accessing 'nums.length' will throw a NullPointerException. Running the search on empty array runs unnecessary loop initialization.",
           originalSnippet: originalCheck,
           optimizedSnippet: optimizedCheck,
+          beforeStats: { "Safety": "Unprotected" },
+          afterStats: { "Safety": "Protected" },
+          change: "Adds defensive guard clauses to validate array existence and length before operations.",
           explanation: {
             beginner: "Add a check to make sure the array actually exists (is not null) before reading its size, preventing a crash.",
             intermediate: "Pre-empts NullPointerException by validating 'nums == null' prior to checking length. Exits early with sentinel value.",
@@ -342,6 +372,9 @@ ${checkIndent}}`;
           problem: "Using Math.floor((left + right) / 2) uses floating-point division which is slower and can be optimized using bitwise shift operators.",
           originalSnippet: midMatch[0],
           optimizedSnippet: "const mid = left + ((right - left) >> 1);",
+          beforeStats: { "Time": "O(log n)", "Space": "O(1)" },
+          afterStats: { "Time": "O(log n)", "Space": "O(1)" },
+          change: "Replaces Math.floor((left + right) / 2) with arithmetic right-shift '>> 1'.",
           explanation: {
             beginner: "Calculate the middle index using bitwise shifting rather than division. This is a standard math trick that computers run much faster.",
             intermediate: "Replaces Math.floor() division with an arithmetic right-shift '>> 1'. This runs as a single bit-level assembly command, avoiding float conversions.",
@@ -369,6 +402,9 @@ ${checkIndent}}`;
     } else {
       right = mid - 1;
     }`,
+          beforeStats: { "Access": "3x per worst case" },
+          afterStats: { "Access": "1x per worst case" },
+          change: "Caches 'nums[mid]' in a local constant 'midVal'.",
           explanation: {
             beginner: "Read the value from the list once and save it in a helper variable, instead of looking it up in the list multiple times.",
             intermediate: "Caches 'nums[mid]' inside a local constant 'midVal'. Reuses this constant in conditional checks, reducing array dereference lookup costs.",
@@ -397,6 +433,9 @@ ${checkIndent}}`;
           originalSnippet: whileMatch[0],
           optimizedSnippet: `if (!nums || nums.length === 0) return -1;
   while (left <= right) {`,
+          beforeStats: { "Safety": "Unprotected" },
+          afterStats: { "Safety": "Protected" },
+          change: "Adds protective null and undefined guard clauses at the beginning of the function.",
           explanation: {
             beginner: "Ensure the list actually has items before starting the search loop.",
             intermediate: "Adds protective null and undefined guard clauses at the beginning of the function.",
@@ -424,6 +463,9 @@ ${checkIndent}}`;
         problem: "Using 'var' declares function-scoped variables rather than block-scoped, which can cause scope pollution and hoisting bugs.",
         originalSnippet: "var ",
         optimizedSnippet: "let ",
+        beforeStats: { "Scope": "Function" },
+        afterStats: { "Scope": "Block" },
+        change: "Replaces function-scoped var with block-scoped let/const.",
         explanation: {
           beginner: "Change 'var' to 'let' or 'const'. This prevents variables from accidentally leaking outside of their curly braces.",
           intermediate: "Replaces function-scoped 'var' with block-scoped 'let' to bound variable access to the declaring block.",
@@ -443,6 +485,9 @@ ${checkIndent}}`;
         problem: "Nested loops cause the code to search through lists repeatedly, scaling quadratically with input size.",
         originalSnippet: "for",
         optimizedSnippet: "// Optimized: Nested loop replaced with HashMap cache lookups\n    for",
+        beforeStats: { "Time": "O(n²)", "Space": "O(1)" },
+        afterStats: { "Time": "O(n)", "Space": "O(n)" },
+        change: "Replaces internal nested loop iterations with constant-time hash map lookups.",
         explanation: {
           beginner: "Instead of searching inside a loop inside another loop, record details in a map first so lookups are instant.",
           intermediate: "Reduces algorithmic runtime complexity from O(n^2) to O(n) by caching array elements in a Set/Map prior to matching.",
@@ -462,6 +507,9 @@ ${checkIndent}}`;
         problem: "Keeping console.log statements in production code pollutes developer logs and adds thread blockage in dense loops.",
         originalSnippet: "console.log",
         optimizedSnippet: "// console.log",
+        beforeStats: { "I/O Overhead": "High" },
+        afterStats: { "I/O Overhead": "None" },
+        change: "Comments out console.log statements to prevent process thread blocking.",
         explanation: {
           beginner: "Comment out or remove logging statements so they don't print in production.",
           intermediate: "Removes/comments debugger logger commands to keep console output clean.",
@@ -482,6 +530,9 @@ ${checkIndent}}`;
         problem: "Spacing, naming conventions, or brackets can be structured more cleanly.",
         originalSnippet: " {",
         optimizedSnippet: " { // Optimized brackets",
+        beforeStats: { "Format": "Non-standard" },
+        afterStats: { "Format": "Clean" },
+        change: "Standardizes styling brackets and spacing layout.",
         explanation: {
           beginner: "Standardize formatting brackets.",
           intermediate: "Improves syntax layout and bracket readability.",

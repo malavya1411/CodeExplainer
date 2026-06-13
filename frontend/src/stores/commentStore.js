@@ -79,6 +79,7 @@ export const useCommentStore = create((set, get) => ({
       
       set({
         commentedCode: commented,
+        showInlineComments: true,
         isGenerating: false,
         lastGenerated: new Date().toISOString(),
       })
