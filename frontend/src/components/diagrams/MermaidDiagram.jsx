@@ -19,11 +19,11 @@ export function MermaidDiagram({ definition, ariaLabel }) {
       themeVariables:
         resolvedTheme === "dark"
           ? {
-              primaryColor: "#21262D",
-              primaryTextColor: "#C9D1D9",
-              primaryBorderColor: "#58A6FF",
-              lineColor: "#8B949E",
-              background: "#0D1117",
+              primaryColor: "#1B1F1C",
+              primaryTextColor: "#F5F4EE",
+              primaryBorderColor: "#5F9E73",
+              lineColor: "#6D726D",
+              background: "#151816",
             }
           : {
               primaryColor: "#F3F0E2",
