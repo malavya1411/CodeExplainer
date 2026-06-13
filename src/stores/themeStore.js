@@ -3,8 +3,13 @@ import { create } from "zustand"
 const STORAGE_KEY = "code-explainer-theme"
 
 function getInitialPreference() {
-  if (typeof window === "undefined") return "system"
-  return localStorage.getItem(STORAGE_KEY) || "system"
+  try {
+    if (typeof window === "undefined") return "system"
+    return localStorage.getItem(STORAGE_KEY) || "system"
+  } catch (e) {
+    console.warn("Failed to read theme from localStorage:", e)
+    return "system"
+  }
 }
 
 function systemTheme() {
@@ -32,8 +37,12 @@ export const useThemeStore = create((set, get) => ({
   setTheme: (theme) => {
     const resolved = resolve(theme)
     apply(resolved)
-    if (theme === "system") localStorage.removeItem(STORAGE_KEY)
-    else localStorage.setItem(STORAGE_KEY, theme)
+    try {
+      if (theme === "system") localStorage.removeItem(STORAGE_KEY)
+      else localStorage.setItem(STORAGE_KEY, theme)
+    } catch (e) {
+      console.warn("Failed to write theme to localStorage:", e)
+    }
     set({ theme, resolvedTheme: resolved })
   },
   toggleTheme: () => {

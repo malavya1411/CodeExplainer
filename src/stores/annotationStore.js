@@ -18,10 +18,14 @@ function load() {
 }
 
 function persist(state) {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify({ annotations: state.annotations, confusingLines: state.confusingLines }),
-  )
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ annotations: state.annotations, confusingLines: state.confusingLines }),
+    )
+  } catch (e) {
+    console.warn("Failed to persist annotations in localStorage:", e)
+  }
 }
 
 const initial = load()

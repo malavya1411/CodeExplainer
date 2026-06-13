@@ -44,7 +44,7 @@ export function CodePanel({ highlightLine, complexity, onFormat, onHighlightExpl
     >
       <CodeToolbar onFormat={onFormat} onHighlightExplain={onHighlightExplain} />
 
-      <div className={"flex-1 min-h-0 relative " + (dragActive ? "drop-active" : "")}>
+      <div className={"flex flex-col flex-1 min-h-0 relative " + (dragActive ? "drop-active" : "")}>
         {analysisError && (
           <div className="flex items-center gap-2 px-3 py-2 text-xs text-[var(--error)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] border-b border-[var(--error)]">
             <AlertCircle size={14} />
