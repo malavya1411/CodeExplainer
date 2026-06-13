@@ -4,7 +4,7 @@ export function Card({ title, accent = true, action, children, className, ...pro
   return (
     <div
       className={cn(
-        "premium-card",
+        "premium-card shrink-0",
         "hover:border-[var(--accent-secondary)] hover:-translate-y-0.5 hover:shadow-md",
         accent && "border-l-4 border-l-[var(--accent-primary)]",
         className,
