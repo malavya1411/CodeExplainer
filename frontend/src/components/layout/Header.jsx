@@ -1,11 +1,21 @@
 import { useState, useRef, useEffect } from "react"
-import { Sun, Moon, Settings, Download, ChevronDown, Code2, Play, Share2, LogOut } from "lucide-react"
+import { Sun, Moon, Settings, Download, ChevronDown, Code2, Play, Share2, LogOut, Cpu } from "lucide-react"
 import { useThemeStore } from "../../stores/themeStore.js"
 import { useAuthStore } from "../../stores/authStore.js"
 import { IconButton, Tooltip } from "../shared/IconButton.jsx"
 import { Button } from "../shared/Button.jsx"
 
-export function Header({ onAnalyze, onExport, onShare, onSettings, isAnalyzing }) {
+export function Header({
+  onAnalyze,
+  onExport,
+  onShare,
+  onSettings,
+  isAnalyzing,
+  activeWorkspace = "explainer",
+  onWorkspaceChange,
+  onOptimize,
+  isOptimizing
+}) {
   const resolvedTheme = useThemeStore((s) => s.resolvedTheme)
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
   const logout = useAuthStore((s) => s.logout)
@@ -46,14 +56,38 @@ export function Header({ onAnalyze, onExport, onShare, onSettings, isAnalyzing }
 
       <div className="flex items-center gap-1.5">
         <Button
-          variant="primary"
+          variant={activeWorkspace === "explainer" ? "primary" : "secondary"}
           size="sm"
           icon={Play}
-          onClick={onAnalyze}
+          onClick={() => {
+            if (activeWorkspace !== "explainer") {
+              onWorkspaceChange("explainer")
+            } else {
+              onAnalyze()
+            }
+          }}
           disabled={isAnalyzing}
           className="hidden sm:inline-flex"
         >
           {isAnalyzing ? "Analyzing…" : "Explain"}
+        </Button>
+
+        <Button
+          variant={activeWorkspace === "optimizer" ? "primary" : "secondary"}
+          size="sm"
+          icon={Cpu}
+          onClick={() => {
+            if (activeWorkspace !== "optimizer") {
+              onWorkspaceChange("optimizer")
+              onOptimize()
+            } else {
+              onOptimize()
+            }
+          }}
+          disabled={isOptimizing}
+          className="hidden sm:inline-flex"
+        >
+          {isOptimizing ? "Optimizing…" : "Optimize"}
         </Button>
 
         <div className="relative" ref={exportRef}>

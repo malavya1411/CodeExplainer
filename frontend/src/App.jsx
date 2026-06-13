@@ -12,7 +12,9 @@ import { useExplanationStore } from "./stores/explanationStore.js"
 import { useAnnotationStore } from "./stores/annotationStore.js"
 import { useThemeStore } from "./stores/themeStore.js"
 import { useAuthStore } from "./stores/authStore.js"
+import { useOptimizerStore } from "./stores/optimizerStore.js"
 import { AuthPage } from "./components/auth/AuthPage.jsx"
+import { OptimizerWorkspace } from "./components/optimizer/OptimizerWorkspace.jsx"
 import { buildMarkdown, buildHTML, buildNotion, downloadText, downloadPDF } from "./utils/exportGenerator.js"
 import { analyzeComplexity } from "./utils/complexityAnalyzer.js"
 import { generateDynamicExplanation } from "./utils/explanationGenerator.js"
@@ -24,6 +26,8 @@ export default function App() {
   const language = useCodeStore((s) => s.language)
   const isAnalyzing = useCodeStore((s) => s.isAnalyzing)
   const setAnalyzing = useCodeStore((s) => s.setAnalyzing)
+  const isOptimizing = useOptimizerStore((s) => s.isOptimizing)
+  const runOptimization = useOptimizerStore((s) => s.runOptimization)
   
   const explanation = useExplanationStore((s) => s.explanation)
   const setExplanation = useExplanationStore((s) => s.setExplanation)
@@ -35,6 +39,7 @@ export default function App() {
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
+  const [activeWorkspace, setActiveWorkspace] = useState("explainer")
   
   const [complexity, setComplexity] = useState(null)
   
@@ -68,6 +73,15 @@ export default function App() {
       setAnalyzing(false)
       toast.success("Code analyzed successfully")
     }, 1500)
+  }
+
+  const handleOptimize = async () => {
+    if (!code.trim()) {
+      toast.warning("Please enter some code first")
+      return
+    }
+    await runOptimization(code, language)
+    toast.success("Code optimized successfully")
   }
 
   const handleExport = async (format) => {
@@ -138,27 +152,35 @@ export default function App() {
         onShare={() => setShareOpen(true)}
         onSettings={() => setSettingsOpen(true)}
         isAnalyzing={isAnalyzing}
+        activeWorkspace={activeWorkspace}
+        onWorkspaceChange={setActiveWorkspace}
+        onOptimize={handleOptimize}
+        isOptimizing={isOptimizing}
       />
       
       <main className="flex-1 min-h-0 relative">
-        <PanelGroup direction="horizontal" className="h-full">
-          <Panel defaultSize={45} minSize={30} className="h-full">
-            <CodePanel
-              highlightLine={activeLine}
-              complexity={complexity}
-              onFormat={handleFormat}
-              onHighlightExplain={handleHighlightExplain}
-            />
-          </Panel>
-          
-          <PanelResizeHandle className="w-1.5 bg-[var(--border)] hover:bg-[var(--accent-primary)] transition-colors cursor-col-resize z-10" />
-          
-          <Panel defaultSize={55} minSize={30} className="h-full">
-            <ExplanationPanel complexity={complexity} />
-          </Panel>
-        </PanelGroup>
+        {activeWorkspace === "explainer" ? (
+          <PanelGroup direction="horizontal" className="h-full">
+            <Panel defaultSize={45} minSize={30} className="h-full">
+              <CodePanel
+                highlightLine={activeLine}
+                complexity={complexity}
+                onFormat={handleFormat}
+                onHighlightExplain={handleHighlightExplain}
+              />
+            </Panel>
+            
+            <PanelResizeHandle className="w-1.5 bg-[var(--border)] hover:bg-[var(--accent-primary)] transition-colors cursor-col-resize z-10" />
+            
+            <Panel defaultSize={55} minSize={30} className="h-full">
+              <ExplanationPanel complexity={complexity} />
+            </Panel>
+          </PanelGroup>
+        ) : (
+          <OptimizerWorkspace />
+        )}
         
-        <AnnotationPanel />
+        {activeWorkspace === "explainer" && <AnnotationPanel />}
       </main>
 
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />

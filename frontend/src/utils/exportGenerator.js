@@ -177,6 +177,166 @@ export async function downloadPDF({ code, language, explanation, depth }) {
   doc.save("code-explanation.pdf")
 }
 
+export async function downloadOptimizationPDF({ originalCode, modifiedCode, language, report, appliedOptimizations }) {
+  const { default: jsPDF } = await import("jspdf")
+  const doc = new jsPDF({ unit: "pt", format: "a4" })
+  const margin = 40
+  let y = margin
+  const pageHeight = doc.internal.pageSize.getHeight()
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const maxWidth = pageWidth - margin * 2
+
+  const writeText = (text, size, style = "normal", color = [26, 29, 35]) => {
+    doc.setFont("helvetica", style)
+    doc.setFontSize(size)
+    doc.setTextColor(...color)
+    const wrapped = doc.splitTextToSize(text, maxWidth)
+    wrapped.forEach((ln) => {
+      if (y > pageHeight - margin) {
+        doc.addPage()
+        y = margin
+      }
+      doc.text(ln, margin, y)
+      y += size * 1.4
+    })
+  }
+
+  // Header
+  writeText("CodeExplainer Optimization Report", 20, "bold", [45, 106, 79])
+  y += 6
+
+  // Horizontal line
+  doc.setDrawColor(220, 225, 230)
+  doc.setLineWidth(1)
+  doc.line(margin, y, pageWidth - margin, y)
+  y += 20
+
+  // Scores Summary Card
+  if (y > pageHeight - margin - 80) {
+    doc.addPage()
+    y = margin
+  }
+
+  doc.setFillColor(248, 249, 250) // #F8F9FA
+  doc.setDrawColor(45, 106, 79) // #2D6A4F
+  doc.setLineWidth(1.5)
+  doc.roundedRect(margin, y, maxWidth, 65, 4, 4, "FD")
+
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(16)
+  doc.setTextColor(45, 106, 79)
+  doc.text(`Overall Score: ${report.score}/100`, margin + 15, y + 25)
+
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(9)
+  doc.setTextColor(73, 80, 87)
+  const categoriesText = `Performance: ${report.categories.performance}/100  |  Readability: ${report.categories.readability}/100  |  Maintainability: ${report.categories.maintainability}/100  |  Security: ${report.categories.security}/100`
+  doc.text(categoriesText, margin + 15, y + 45)
+  y += 85
+
+  // Complexity Comparison
+  if (y > pageHeight - margin - 50) {
+    doc.addPage()
+    y = margin
+  }
+  writeText("Complexity Comparison", 12, "bold", [45, 106, 79])
+  y += 4
+  writeText(`Current complexity:   Time: ${report.currentComplexity.time}  |  Space: ${report.currentComplexity.space}`, 9.5)
+  writeText(`Optimized complexity: Time: ${report.optimizedComplexity.time}  |  Space: ${report.optimizedComplexity.space}`, 9.5)
+  y += 15
+
+  // Code Block Writer
+  const writeCodeBlock = (title, codeString) => {
+    if (y > pageHeight - margin - 40) {
+      doc.addPage()
+      y = margin
+    }
+    writeText(title, 12, "bold", [45, 106, 79])
+    y += 4
+
+    doc.setFont("courier", "normal")
+    doc.setFontSize(8.5)
+    doc.setTextColor(60, 60, 60)
+
+    const lines = codeString.split("\n")
+    lines.forEach((ln) => {
+      if (y > pageHeight - margin) {
+        doc.addPage()
+        y = margin
+      }
+      const wrappedLine = doc.splitTextToSize(ln, maxWidth - 20)
+      wrappedLine.forEach((subLn) => {
+        doc.text(subLn, margin + 10, y)
+        y += 11
+      })
+    })
+    y += 15
+  }
+
+  writeCodeBlock("Original Code", originalCode)
+  writeCodeBlock("Optimized Code", modifiedCode)
+
+  // Improvements Breakdown
+  if (y > pageHeight - margin - 40) {
+    doc.addPage()
+    y = margin
+  }
+  writeText("Detailed Improvements", 14, "bold", [45, 106, 79])
+  y += 8
+
+  report.improvements.forEach((imp) => {
+    const isApplied = appliedOptimizations.includes(imp.id)
+    const status = isApplied ? "APPLIED" : "NOT APPLIED"
+
+    if (y > pageHeight - margin - 80) {
+      doc.addPage()
+      y = margin
+    }
+
+    // Header
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(11)
+    doc.setTextColor(45, 106, 79)
+    doc.text(`${imp.title} (${status})`, margin, y)
+    y += 12
+
+    // Meta details
+    writeText(`Category: ${imp.category}  |  Impact: ${imp.impact} Impact  |  Benefit: ${imp.benefit}`, 9, "oblique", [73, 80, 87])
+    y += 2
+
+    // Problem description
+    writeText(`Problem: ${imp.problem}`, 9.5)
+    y += 2
+
+    // Recommended Fix
+    writeText("Recommended Fix:", 9.5, "bold")
+    y += 4
+
+    doc.setFont("courier", "normal")
+    doc.setFontSize(8.5)
+    doc.setTextColor(50, 50, 50)
+    const fixLines = imp.optimizedSnippet.split("\n")
+    fixLines.forEach((fln) => {
+      if (y > pageHeight - margin) {
+        doc.addPage()
+        y = margin
+      }
+      doc.text(fln, margin + 10, y)
+      y += 11
+    })
+    y += 6
+
+    // Explanation
+    writeText(`Explanation: ${imp.explanation.intermediate}`, 9.5)
+    if (imp.tradeoffs) {
+      writeText(`Trade-offs: ${imp.tradeoffs}`, 9.5, "normal", [100, 100, 100])
+    }
+    y += 15 // Space between improvement cards
+  })
+
+  doc.save("code-optimization-report.pdf")
+}
+
 function cap(s) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : ""
 }
