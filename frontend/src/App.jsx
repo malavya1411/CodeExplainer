@@ -13,7 +13,7 @@ import { useAnnotationStore } from "./stores/annotationStore.js"
 import { useThemeStore } from "./stores/themeStore.js"
 import { buildMarkdown, buildHTML, buildNotion, downloadText, downloadPDF } from "./utils/exportGenerator.js"
 import { analyzeComplexity } from "./utils/complexityAnalyzer.js"
-import { mockExplanation } from "./data/mockExplanation.js"
+import { generateDynamicExplanation } from "./utils/explanationGenerator.js"
 
 export default function App() {
   const syncSystemTheme = useThemeStore((s) => s.syncSystemTheme)
@@ -60,7 +60,8 @@ export default function App() {
     setAnalyzing(true)
     // Simulate API delay
     setTimeout(() => {
-      setExplanation(mockExplanation)
+      const dynamicResult = generateDynamicExplanation(code, language)
+      setExplanation(dynamicResult)
       setAnalyzing(false)
       toast.success("Code analyzed successfully")
     }, 1500)
