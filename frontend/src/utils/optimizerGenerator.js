@@ -9,6 +9,7 @@ export function generateOptimizationReport(code, language) {
   const improvements = []
   let overallScore = 78
   let scores = { performance: 72, readability: 80, maintainability: 82, security: 90 }
+  let hasNestedLoops = false
 
   if (isBinarySearch) {
     overallScore = 96
@@ -146,7 +147,7 @@ export function generateOptimizationReport(code, language) {
     // Dynamic fallback optimizer logic for arbitrary code pasted by the user
     const hasVar = cleanCode.includes("var ")
     const hasConsoleLog = cleanCode.includes("console.log")
-    const hasNestedLoops = /(?:for|while).*\{[^{}]*(?:for|while)/s.test(cleanCode)
+    hasNestedLoops = /(?:for|while).*\{[^{}]*(?:for|while)/s.test(cleanCode)
 
     if (hasVar) {
       improvements.push({
