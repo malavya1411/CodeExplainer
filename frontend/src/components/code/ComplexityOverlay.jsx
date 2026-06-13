@@ -50,12 +50,6 @@ export function ComplexityOverlay({ complexity }) {
                 </span>
               </div>
             </Tooltip>
-            <button
-              onClick={() => setActiveTab("Complexity")}
-              className="w-full text-[11px] text-[var(--accent-primary)] hover:underline text-center"
-            >
-              View full analysis
-            </button>
           </div>
         )}
       </motion.div>
