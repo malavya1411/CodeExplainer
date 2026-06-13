@@ -13,6 +13,7 @@ import { useAnnotationStore } from "./stores/annotationStore.js"
 import { useThemeStore } from "./stores/themeStore.js"
 import { useAuthStore } from "./stores/authStore.js"
 import { useOptimizerStore } from "./stores/optimizerStore.js"
+import { useCommentStore } from "./stores/commentStore.js"
 import { AuthPage } from "./components/auth/AuthPage.jsx"
 import { OptimizerWorkspace } from "./components/optimizer/OptimizerWorkspace.jsx"
 import { buildMarkdown, buildHTML, buildNotion, downloadText, downloadPDF } from "./utils/exportGenerator.js"
@@ -129,7 +130,29 @@ export default function App() {
         useThemeStore.getState().toggleTheme()
       } else if ((e.ctrlKey || e.metaKey) && e.key === "/") {
         e.preventDefault()
-        useAnnotationStore.getState().openPanel(1) // Open for line 1 as fallback
+        const show = useCommentStore.getState().showInlineComments
+        useCommentStore.getState().setShowInlineComments(!show)
+        toast.info(show ? "Hidden inline comments" : "Showing inline comments")
+      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "c") {
+        e.preventDefault()
+        const codeText = useCodeStore.getState().code
+        const lang = useCodeStore.getState().language
+        useCommentStore.getState().generateComments(codeText, lang)
+        toast.info("Generating comments...")
+      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "v") {
+        e.preventDefault()
+        useExplanationStore.getState().setActiveTab("Comments")
+        toast.info("Switched to Commented Code view")
+      } else if ((e.ctrlKey || e.metaKey) && e.altKey && e.key.toLowerCase() === "c") {
+        e.preventDefault()
+        const commentedCode = useCommentStore.getState().commentedCode
+        if (commentedCode) {
+          navigator.clipboard.writeText(commentedCode)
+            .then(() => toast.success("Commented code copied to clipboard!"))
+            .catch(() => toast.error("Failed to copy code."))
+        } else {
+          toast.warning("No generated comments to copy. Generate comments first!")
+        }
       } else if (e.key === "Escape") {
         setSettingsOpen(false)
         setShareOpen(false)
