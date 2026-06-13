@@ -11,11 +11,14 @@ import { useCodeStore } from "./stores/codeStore.js"
 import { useExplanationStore } from "./stores/explanationStore.js"
 import { useAnnotationStore } from "./stores/annotationStore.js"
 import { useThemeStore } from "./stores/themeStore.js"
+import { useAuthStore } from "./stores/authStore.js"
+import { AuthPage } from "./components/auth/AuthPage.jsx"
 import { buildMarkdown, buildHTML, buildNotion, downloadText, downloadPDF } from "./utils/exportGenerator.js"
 import { analyzeComplexity } from "./utils/complexityAnalyzer.js"
 import { generateDynamicExplanation } from "./utils/explanationGenerator.js"
 
 export default function App() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const syncSystemTheme = useThemeStore((s) => s.syncSystemTheme)
   const code = useCodeStore((s) => s.code)
   const language = useCodeStore((s) => s.language)
@@ -122,6 +125,10 @@ export default function App() {
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [])
+
+  if (!isAuthenticated) {
+    return <AuthPage />
+  }
 
   return (
     <div className="flex flex-col h-screen w-full bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-hidden antialiased">

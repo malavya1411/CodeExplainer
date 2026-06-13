@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from "react"
-import { Sun, Moon, Settings, Download, ChevronDown, Code2, Play, Share2 } from "lucide-react"
+import { Sun, Moon, Settings, Download, ChevronDown, Code2, Play, Share2, LogOut } from "lucide-react"
 import { useThemeStore } from "../../stores/themeStore.js"
+import { useAuthStore } from "../../stores/authStore.js"
 import { IconButton, Tooltip } from "../shared/IconButton.jsx"
 import { Button } from "../shared/Button.jsx"
 
 export function Header({ onAnalyze, onExport, onShare, onSettings, isAnalyzing }) {
   const resolvedTheme = useThemeStore((s) => s.resolvedTheme)
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
+  const logout = useAuthStore((s) => s.logout)
   const [exportOpen, setExportOpen] = useState(false)
   const exportRef = useRef(null)
 
@@ -103,6 +105,10 @@ export function Header({ onAnalyze, onExport, onShare, onSettings, isAnalyzing }
 
         <Tooltip content="Settings" position="bottom">
           <IconButton icon={Settings} label="Open settings" onClick={onSettings} />
+        </Tooltip>
+
+        <Tooltip content="Log Out" position="bottom">
+          <IconButton icon={LogOut} label="Log out" onClick={logout} />
         </Tooltip>
       </div>
     </header>
