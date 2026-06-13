@@ -4,8 +4,8 @@ export function generateOptimizationReport(code, language) {
   const isJava = language === "java" || cleanCode.includes("class Solution") || cleanCode.includes("public int search")
   
   // Robust checks for linear search vs binary search loops
-  const javaLinearSearchRegex = /for\s*\(\s*int\s+i\s*=\s*0\s*;\s*i\s*<\s*nums\.length\s*;\s*i\s*\+\+\s*\)\s*\{[\s\S]*?return\s+i\s*;[\s\S]*?\}/;
-  const jsLinearSearchRegex = /for\s*\(\s*(?:let|var)\s+i\s*=\s*0\s*;\s*i\s*<\s*nums\.length\s*;\s*i\s*\+\+\s*\)\s*\{[\s\S]*?return\s+i\s*;?[\s\S]*?\}/;
+  const javaLinearSearchRegex = /for\s*\(\s*int\s+i\s*=\s*0\s*;\s*i\s*<\s*nums\.length\s*;\s*i\s*\+\+\s*\)\s*\{[\s\S]*?return\s+i\s*;[\s\S]*?\}\s*(?:\})?/;
+  const jsLinearSearchRegex = /for\s*\(\s*(?:let|var)\s+i\s*=\s*0\s*;\s*i\s*<\s*nums\.length\s*;\s*i\s*\+\+\s*\)\s*\{[\s\S]*?return\s+i\s*;?[\s\S]*?\}\s*(?:\})?/;
   
   const isJavaLinearSearch = isJava && javaLinearSearchRegex.test(code);
   const isJsLinearSearch = !isJava && jsLinearSearchRegex.test(code);

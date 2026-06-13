@@ -227,7 +227,10 @@ export function OptimizerWorkspace() {
           
           <div className="flex items-center gap-1.5">
             <button
-              onClick={applyAll}
+              onClick={() => {
+                applyAll()
+                setViewMode("code")
+              }}
               disabled={appliedOptimizations.length === report.improvements.length}
               className="flex items-center gap-1.5 text-xs font-semibold rounded px-2.5 py-1.5 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:opacity-50 text-[var(--accent-on)] transition-colors cursor-pointer"
             >
@@ -235,7 +238,10 @@ export function OptimizerWorkspace() {
               Apply All
             </button>
             <button
-              onClick={revertAll}
+              onClick={() => {
+                revertAll()
+                setViewMode("diff")
+              }}
               disabled={appliedOptimizations.length === 0}
               className="flex items-center gap-1.5 text-xs font-semibold rounded px-2.5 py-1.5 border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] disabled:opacity-50 transition-colors cursor-pointer"
             >
@@ -473,7 +479,15 @@ export function OptimizerWorkspace() {
 
                     {/* Local Apply/Revert buttons */}
                     <button
-                      onClick={() => isApplied ? revertOptimization(imp.id) : applyOptimization(imp.id)}
+                      onClick={() => {
+                        if (isApplied) {
+                          revertOptimization(imp.id)
+                          setViewMode("diff")
+                        } else {
+                          applyOptimization(imp.id)
+                          setViewMode("code")
+                        }
+                      }}
                       className={`text-xs font-semibold rounded px-2.5 py-1.5 border transition-all cursor-pointer active:scale-95 ${
                         isApplied
                           ? "bg-[color-mix(in_srgb,var(--success)_12%,transparent)] border-[var(--success)] text-[var(--success)] hover:bg-[color-mix(in_srgb,var(--success)_18%,transparent)]"
