@@ -44,44 +44,45 @@
 }
 
 :root[data-theme="dark"] {
-  --bg-primary: #0d1117;
-  --bg-secondary: #161b22;
-  --bg-tertiary: #21262d;
-  --bg-code: #161b22;
+  --bg-primary: #0F1110;
+  --bg-secondary: #151816;
+  --bg-tertiary: #1B1F1C;
+  --bg-code: #151816;
 
-  --text-primary: #c9d1d9;
-  --text-secondary: #8b949e;
-  --text-muted: #6e7681;
+  --text-primary: #F5F4EE;
+  --text-secondary: #B5B4AB;
+  --text-muted: #88887F;
 
-  --accent-primary: #58a6ff;
-  --accent-secondary: #79c0ff;
-  --accent-tertiary: #a5d6ff;
-  --accent-hover: #1f6feb;
+  --accent-primary: #5F9E73;
+  --accent-secondary: #7CB08B;
+  --accent-tertiary: #67C07A;
+  --accent-hover: #8FC29B;
 
-  --border: #30363d;
-  --success: #3fb950;
-  --warning: #d29922;
-  --error: #f85149;
-  --info: #58a6ff;
+  --border: #2A2F2B;
+  --success: #67C07A;
+  --warning: #D8B25C;
+  --error: #B86A4D;
+  --info: #6FA5B7;
 
-  --syntax-keyword: #ff7b72;
-  --syntax-string: #a5d6ff;
-  --syntax-function: #d2a8ff;
-  --syntax-comment: #8b949e;
-  --syntax-number: #79c0ff;
+  --syntax-keyword: #D9A96A;
+  --syntax-string: #9DC7E5;
+  --syntax-function: #89BFA0;
+  --syntax-comment: #6D726D;
+  --syntax-number: #D8B25C;
 
-  --accent-on: #0d1117;
+  --accent-on: #0F1110;
 
-  /* Card default variables for dark theme */
-  --card-radius: 12px;
-  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
-  --card-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
-  --btn-primary-shadow: none;
-  --btn-secondary-shadow: none;
+  /* Premium theme additions for dark mode */
+  --card-radius: 20px;
+  --card-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.6), 0 2px 8px -1px rgba(0, 0, 0, 0.4);
+  --card-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.03);
+  --btn-primary-shadow: 0 0 12px 0 rgba(95, 158, 115, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  --btn-secondary-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.02);
 
-  --chart-good: #3fb950;
-  --chart-moderate: #d29922;
-  --chart-poor: #f85149;
+  --chart-good: #6EBB78;
+  --chart-moderate: #D8B25C;
+  --chart-poor: #B86A4D;
+  --chart-info: #6FA5B7;
 }
 
 * {
@@ -122,6 +123,26 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
+/* Dark Theme Background Radial Gradients + Noise Texture */
+:root[data-theme="dark"] body {
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(27, 31, 28, 0.5) 0%, transparent 80%),
+    radial-gradient(circle at 0% 100%, rgba(21, 24, 22, 0.3) 0%, transparent 60%);
+}
+
+:root[data-theme="dark"] body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  opacity: 0.018; /* Almost invisible noise */
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
 /* Premium Card custom utility styling */
 .premium-card {
   border-radius: var(--card-radius);
@@ -158,12 +179,34 @@ code {
   transform: translateY(-0.5px);
   box-shadow: 0 4px 12px 0 rgba(45, 106, 79, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
 }
+:root[data-theme="dark"] .premium-btn-primary {
+  border-color: rgba(95, 158, 115, 0.4);
+}
+:root[data-theme="dark"] .premium-btn-primary:hover {
+  transform: translateY(-0.5px);
+  background-color: var(--accent-hover);
+  color: #0F1110;
+  box-shadow: 0 4px 16px 0 rgba(95, 158, 115, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+}
 
 .premium-btn-secondary {
   box-shadow: var(--btn-secondary-shadow);
 }
 :root[data-theme="light"] .premium-btn-secondary:hover {
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+}
+:root[data-theme="dark"] .premium-btn-secondary {
+  background-color: var(--bg-tertiary);
+  border-color: var(--border);
+}
+:root[data-theme="dark"] .premium-btn-secondary:hover {
+  background-color: var(--bg-code);
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Danger buttons and state focus rings */
+:root[data-theme="dark"] button.bg-\[var\(--error\)\]:hover {
+  box-shadow: 0 4px 12px 0 rgba(184, 106, 77, 0.25);
 }
 
 /* Smooth 250ms transitions on color/shadow properties */

@@ -147,19 +147,19 @@ export function OptimizerWorkspace() {
       base: "vs-dark",
       inherit: true,
       rules: [
-        { token: "keyword", foreground: "FF7B72" },
-        { token: "string", foreground: "A5D6FF" },
-        { token: "number", foreground: "79C0FF" },
-        { token: "comment", foreground: "8B949E", fontStyle: "italic" },
-        { token: "type.identifier", foreground: "D2A8FF" }
+        { token: "keyword", foreground: "D9A96A" },
+        { token: "string", foreground: "9DC7E5" },
+        { token: "number", foreground: "D8B25C" },
+        { token: "comment", foreground: "6D726D", fontStyle: "italic" },
+        { token: "type.identifier", foreground: "89BFA0" }
       ],
       colors: {
-        "editor.background": "#161B22",
-        "editor.foreground": "#C9D1D9",
-        "editorLineNumber.foreground": "#6E7681",
-        "editorLineNumber.activeForeground": "#C9D1D9",
-        "editor.lineHighlightBackground": "#21262D",
-        "editorGutter.background": "#161B22"
+        "editor.background": "#151816",
+        "editor.foreground": "#F5F4EE",
+        "editorLineNumber.foreground": "#2A2F2B",
+        "editorLineNumber.activeForeground": "#B5B4AB",
+        "editor.lineHighlightBackground": "#1B1F1C",
+        "editorGutter.background": "#151816"
       }
     })
     monaco.editor.defineTheme("explainer-light", {
