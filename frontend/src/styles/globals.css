@@ -29,6 +29,12 @@
   --syntax-comment: #999990;
   --syntax-number: #A87D25;
 
+  --comment-beginner: #2D6A4F;
+  --comment-intermediate: #457B9D;
+  --comment-expert: #6F42C1;
+  --comment-docstring: #E9C46A;
+  --comment-highlight-bg: #E9F5F0;
+
   --accent-on: #ffffff;
 
   /* Premium theme additions */
@@ -69,6 +75,12 @@
   --syntax-function: #89BFA0;
   --syntax-comment: #6D726D;
   --syntax-number: #D8B25C;
+
+  --comment-beginner: #3FB950;
+  --comment-intermediate: #58A6FF;
+  --comment-expert: #D2A8FF;
+  --comment-docstring: #D29922;
+  --comment-highlight-bg: #1C2B24;
 
   --accent-on: #0F1110;
 
@@ -312,3 +324,22 @@ pre,
   outline: 2px dashed var(--accent-primary);
   outline-offset: -6px;
 }
+
+/* Ghost comments view zones styling */
+.ghost-comment-zone {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: 50px;
+  opacity: 0.8;
+  user-select: none;
+  pointer-events: none;
+}
+.ghost-comment-line {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 21px;
+  font-style: italic;
+  white-space: pre;
+}
+

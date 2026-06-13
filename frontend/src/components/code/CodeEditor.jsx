@@ -2,16 +2,22 @@ import { useRef, useEffect, useCallback } from "react"
 import Editor, { loader } from "@monaco-editor/react"
 import { useThemeStore } from "../../stores/themeStore.js"
 import { useAnnotationStore } from "../../stores/annotationStore.js"
+import { useCommentStore } from "../../stores/commentStore.js"
 import { getMonacoLanguage } from "../../utils/languageDetector.js"
 
 export function CodeEditor({ value, language, onChange, highlightLine, onCursorLine, onSelectionText }) {
   const editorRef = useRef(null)
   const monacoRef = useRef(null)
   const decorationsRef = useRef([])
+  const viewZonesRef = useRef([])
   const resolvedTheme = useThemeStore((s) => s.resolvedTheme)
   const annotations = useAnnotationStore((s) => s.annotations)
   const confusingLines = useAnnotationStore((s) => s.confusingLines)
   const openPanel = useAnnotationStore((s) => s.openPanel)
+
+  const showInlineComments = useCommentStore((s) => s.showInlineComments)
+  const commentedCode = useCommentStore((s) => s.commentedCode)
+  const commentSettings = useCommentStore((s) => s.commentSettings)
 
   const defineThemes = (monaco) => {
     monaco.editor.defineTheme("explainer-dark", {
@@ -146,6 +152,94 @@ export function CodeEditor({ value, language, onChange, highlightLine, onCursorL
     }
   }, [resolvedTheme])
 
+  useEffect(() => {
+    const editor = editorRef.current
+    if (!editor) return
+
+    const clearViewZones = () => {
+      if (viewZonesRef.current.length > 0) {
+        editor.changeViewZones((changeAccessor) => {
+          viewZonesRef.current.forEach((id) => {
+            changeAccessor.removeZone(id)
+          })
+        })
+        viewZonesRef.current = []
+      }
+    }
+
+    if (!showInlineComments || !commentedCode || !value) {
+      clearViewZones()
+      return
+    }
+
+    const lineMap = mapCommentsToLines(value, commentedCode, language)
+    const depth = commentSettings.depth || "intermediate"
+    const commentColor = `var(--comment-${depth})`
+    const docstringColor = "var(--comment-docstring)"
+
+    clearViewZones()
+
+    editor.changeViewZones((changeAccessor) => {
+      const ids = []
+      
+      Object.entries(lineMap).forEach(([lineNumStr, info]) => {
+        const lineNum = parseInt(lineNumStr, 10)
+        
+        if (info.blockComments && info.blockComments.length > 0) {
+          const domNode = document.createElement("div")
+          domNode.className = "ghost-comment-zone"
+          
+          info.blockComments.forEach((c) => {
+            const lineEl = document.createElement("div")
+            lineEl.className = "ghost-comment-line"
+            lineEl.textContent = c
+            
+            const isDoc = c.trim().startsWith("/**") || c.trim().startsWith("*") || c.trim().startsWith('"""')
+            lineEl.style.color = isDoc ? docstringColor : commentColor
+            domNode.appendChild(lineEl)
+          })
+          
+          const zoneId = changeAccessor.addZone({
+            afterLineNumber: lineNum - 1,
+            heightInLines: info.blockComments.length,
+            domNode: domNode,
+          })
+          ids.push(zoneId)
+        }
+
+        if (info.inlineComment) {
+          const domNode = document.createElement("div")
+          domNode.className = "ghost-comment-zone"
+          
+          const lineEl = document.createElement("div")
+          lineEl.className = "ghost-comment-line"
+          
+          const prefix = language === "python" ? "#" : "//"
+          const origLine = value.split("\n")[lineNum - 1] || ""
+          const indentMatch = origLine.match(/^\s*/)
+          const indent = indentMatch ? indentMatch[0] : ""
+          
+          lineEl.textContent = `${indent}${prefix} ${info.inlineComment}`
+          lineEl.style.color = commentColor
+          domNode.appendChild(lineEl)
+
+          const zoneId = changeAccessor.addZone({
+            afterLineNumber: lineNum,
+            heightInLines: 1,
+            domNode: domNode,
+          })
+          ids.push(zoneId)
+        }
+      })
+      
+      viewZonesRef.current = ids
+    })
+
+    return () => {
+      clearViewZones()
+    }
+  }, [showInlineComments, commentedCode, value, language, commentSettings.depth])
+
   return (
     <div className="flex-1 min-h-0 relative">
       <Editor
@@ -178,4 +272,79 @@ export function CodeEditor({ value, language, onChange, highlightLine, onCursorL
       />
     </div>
   )
+}
+
+function mapCommentsToLines(originalCode, commentedCode, language) {
+  const originalLines = originalCode.split("\n")
+  const commentedLines = commentedCode.split("\n")
+  
+  const isPython = language === "python"
+  
+  const cleanLine = (line) => {
+    let l = line.trim()
+    if (isPython) {
+      if (l.startsWith("#")) return ""
+      if (l.startsWith('"""')) return ""
+      const hashIdx = l.indexOf("#")
+      if (hashIdx !== -1) {
+        l = l.substring(0, hashIdx).trim()
+      }
+    } else {
+      if (l.startsWith("//")) return ""
+      if (l.startsWith("/*") || l.startsWith("*") || l.endsWith("*/")) return ""
+      const doubleSlashIdx = l.indexOf("//")
+      if (doubleSlashIdx !== -1) {
+        l = l.substring(0, doubleSlashIdx).trim()
+      }
+    }
+    return l
+  }
+
+  const lineMap = {}
+  for (let i = 1; i <= originalLines.length; i++) {
+    lineMap[i] = { blockComments: [], inlineComment: "" }
+  }
+
+  let origIdx = 0
+  let commIdx = 0
+  let accumulatedComments = []
+
+  while (commIdx < commentedLines.length && origIdx < originalLines.length) {
+    const originalLineRaw = originalLines[origIdx]
+    const commentedLineRaw = commentedLines[commIdx]
+    
+    const cleanedOriginal = cleanLine(originalLineRaw)
+    const cleanedCommented = cleanLine(commentedLineRaw)
+    
+    if (cleanedCommented === "") {
+      accumulatedComments.push(commentedLineRaw)
+      commIdx++
+    } else if (cleanedOriginal === "") {
+      if (cleanedCommented === "") {
+        commIdx++
+      }
+      origIdx++
+    } else if (cleanedOriginal === cleanedCommented) {
+      if (accumulatedComments.length > 0) {
+        lineMap[origIdx + 1].blockComments = [...accumulatedComments]
+        accumulatedComments = []
+      }
+      
+      const commentMarker = isPython ? "#" : "//"
+      const markerIdx = commentedLineRaw.indexOf(commentMarker)
+      if (markerIdx !== -1 && !commentedLineRaw.trim().startsWith(commentMarker)) {
+        const potentialComment = commentedLineRaw.substring(markerIdx + commentMarker.length).trim()
+        if (originalLineRaw.indexOf(commentMarker) === -1) {
+          lineMap[origIdx + 1].inlineComment = potentialComment
+        }
+      }
+      
+      origIdx++
+      commIdx++
+    } else {
+      commIdx++
+    }
+  }
+  
+  return lineMap
 }

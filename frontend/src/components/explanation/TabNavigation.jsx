@@ -1,4 +1,4 @@
-import { BookOpen, ListOrdered, Variable, Gauge, GitBranch } from "lucide-react"
+import { BookOpen, ListOrdered, Variable, Gauge, GitBranch, FileText } from "lucide-react"
 import { useExplanationStore } from "../../stores/explanationStore.js"
 import { cn } from "../../utils/cn.js"
 
@@ -8,6 +8,7 @@ const TABS = [
   { id: "Variables", icon: Variable },
   { id: "Complexity", icon: Gauge },
   { id: "Diagrams", icon: GitBranch },
+  { id: "Comments", icon: FileText },
 ]
 
 export function TabNavigation() {

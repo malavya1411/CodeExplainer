@@ -7,6 +7,7 @@ import { StepByStepTab } from "./StepByStepTab.jsx"
 import { VariablesTab } from "./VariablesTab.jsx"
 import { ComplexityTab } from "./ComplexityTab.jsx"
 import { DiagramsTab } from "./DiagramsTab.jsx"
+import { CommentPreview } from "./CommentPreview.jsx"
 
 export function ExplanationPanel({ complexity }) {
   const explanation = useExplanationStore((s) => s.explanation)
@@ -52,6 +53,7 @@ export function ExplanationPanel({ complexity }) {
           <ComplexityTab explanation={explanation} complexity={complexity} />
         )}
         {activeTab === "Diagrams" && <DiagramsTab explanation={explanation} />}
+        {activeTab === "Comments" && <CommentPreview />}
       </div>
     </section>
   )

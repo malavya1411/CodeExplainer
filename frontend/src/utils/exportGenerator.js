@@ -347,3 +347,100 @@ function escapeHtml(s) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
 }
+
+export function buildCommentedMarkdown({ filename, commentedCode, language, depth }) {
+  const lines = []
+  lines.push(`# Commented Code: ${filename || "source_code"}`)
+  lines.push("")
+  lines.push(`**Generated:** ${new Date().toLocaleDateString()}  `)
+  lines.push(`**Language:** ${cap(language)}  `)
+  lines.push(`**Comment Depth:** ${cap(depth)}`)
+  lines.push("")
+  lines.push("---")
+  lines.push("")
+  lines.push("## Code")
+  lines.push("")
+  lines.push("```" + language)
+  lines.push(commentedCode)
+  lines.push("```")
+  lines.push("")
+  lines.push("## Key Concepts")
+  lines.push("- **Smart Comments:** Placed strategically to explain context and logic.")
+  lines.push("- **Language Rules:** Comments formatted using language-native syntax.")
+  return lines.join("\n")
+}
+
+export function buildCommentedHTML({ filename, commentedCode, language, depth }) {
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Commented Code: ${escapeHtml(filename || "source_code")}</title>
+<style>
+  body { font-family: Inter, system-ui, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; background:#FAF9F5; color:#3A3A35; }
+  pre { background:#F3F0E2; padding:1.2rem; border-radius:8px; border: 1px solid #D8D1BE; overflow:auto; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; }
+  .header { border-bottom: 2px solid #D8D1BE; padding-bottom: 1rem; margin-bottom: 1.5rem; }
+  .badges span { display:inline-block; background:#FAF9F5; border: 1px solid #D8D1BE; border-radius:4px; padding:.2rem .7rem; margin-right:.4rem; font-size:.85em; font-weight: bold; }
+  h1 { color:#2D6A4F; margin-bottom: 0.5rem; }
+  .muted { color:#6B6B63; font-size: 0.9em; }
+</style></head>
+<body>
+  <div class="header">
+    <h1>Commented Code: ${escapeHtml(filename || "source_code")}</h1>
+    <p class="muted">Generated on ${new Date().toLocaleDateString()}</p>
+    <div class="badges">
+      <span>Language: ${escapeHtml(cap(language))}</span>
+      <span>Depth: ${escapeHtml(cap(depth))}</span>
+    </div>
+  </div>
+  <h2>Annotated Source</h2>
+  <pre><code>${escapeHtml(commentedCode)}</code></pre>
+</body></html>`
+}
+
+export async function downloadCommentedPDF({ filename, commentedCode, language, depth }) {
+  const { default: jsPDF } = await import("jspdf")
+  const doc = new jsPDF({ unit: "pt", format: "a4" })
+  const margin = 40
+  let y = margin
+  const pageHeight = doc.internal.pageSize.getHeight()
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const maxWidth = pageWidth - margin * 2
+
+  const write = (text, size, style = "normal", color = [58, 58, 53]) => {
+    doc.setFont("helvetica", style)
+    doc.setFontSize(size)
+    doc.setTextColor(...color)
+    const wrapped = doc.splitTextToSize(text, maxWidth)
+    wrapped.forEach((ln) => {
+      if (y > pageHeight - margin) {
+        doc.addPage()
+        y = margin
+      }
+      doc.text(ln, margin, y)
+      y += size * 1.4
+    })
+  }
+
+  write(`Commented Code: ${filename || "source_code"}`, 18, "bold", [45, 106, 79])
+  y += 8
+  write(`Language: ${cap(language)}    Depth: ${cap(depth)}    Generated: ${new Date().toLocaleDateString()}`, 10, "bold", [107, 107, 99])
+  y += 15
+
+  doc.setFont("courier", "normal")
+  doc.setFontSize(8.5)
+  doc.setTextColor(60, 60, 60)
+  
+  commentedCode.split("\n").forEach((ln) => {
+    if (y > pageHeight - margin) {
+      doc.addPage()
+      y = margin
+    }
+    const wrappedLine = doc.splitTextToSize(ln, maxWidth - 20)
+    wrappedLine.forEach((subLn) => {
+      doc.text(subLn, margin + 10, y)
+      y += 11
+    })
+  })
+
+  doc.save("commented-code.pdf")
+}
