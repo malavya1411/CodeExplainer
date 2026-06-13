@@ -4,6 +4,7 @@ import { useThemeStore } from "../../stores/themeStore.js"
 import { useAuthStore } from "../../stores/authStore.js"
 import { useCommentStore } from "../../stores/commentStore.js"
 import { useCodeStore } from "../../stores/codeStore.js"
+import { useExplanationStore } from "../../stores/explanationStore.js"
 import { CommentSettingsModal } from "./CommentSettingsModal.jsx"
 import { IconButton, Tooltip } from "../shared/IconButton.jsx"
 import { Button } from "../shared/Button.jsx"
@@ -147,6 +148,10 @@ export function Header({
                   setCommentsMenuOpen(false)
                   updateSettings({ depth: "beginner" })
                   generateComments(code, language)
+                  useExplanationStore.getState().setActiveTab("Comments")
+                  if (activeWorkspace !== "explainer" && onWorkspaceChange) {
+                    onWorkspaceChange("explainer")
+                  }
                 }}
                 className="flex items-center justify-between w-full px-3 py-2 text-xs text-left text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]"
               >
@@ -158,6 +163,10 @@ export function Header({
                   setCommentsMenuOpen(false)
                   updateSettings({ depth: "intermediate" })
                   generateComments(code, language)
+                  useExplanationStore.getState().setActiveTab("Comments")
+                  if (activeWorkspace !== "explainer" && onWorkspaceChange) {
+                    onWorkspaceChange("explainer")
+                  }
                 }}
                 className="flex items-center justify-between w-full px-3 py-2 text-xs text-left text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]"
               >
@@ -169,6 +178,10 @@ export function Header({
                   setCommentsMenuOpen(false)
                   updateSettings({ depth: "expert" })
                   generateComments(code, language)
+                  useExplanationStore.getState().setActiveTab("Comments")
+                  if (activeWorkspace !== "explainer" && onWorkspaceChange) {
+                    onWorkspaceChange("explainer")
+                  }
                 }}
                 className="flex items-center justify-between w-full px-3 py-2 text-xs text-left text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]"
               >
@@ -250,6 +263,8 @@ export function Header({
       <CommentSettingsModal
         isOpen={commentSettingsOpen}
         onClose={() => setCommentSettingsOpen(false)}
+        activeWorkspace={activeWorkspace}
+        onWorkspaceChange={onWorkspaceChange}
       />
     </header>
   )

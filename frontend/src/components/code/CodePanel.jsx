@@ -4,7 +4,6 @@ import { useCodeStore } from "../../stores/codeStore.js"
 import { CodeToolbar } from "./CodeToolbar.jsx"
 import { CodeEditor } from "./CodeEditor.jsx"
 import { CodeStatusBar } from "./CodeStatusBar.jsx"
-import { ComplexityOverlay } from "./ComplexityOverlay.jsx"
 import { toast } from "../shared/Toast.jsx"
 
 export function CodePanel({ highlightLine, complexity, onFormat, onHighlightExplain }) {
@@ -80,8 +79,6 @@ export function CodePanel({ highlightLine, complexity, onFormat, onHighlightExpl
             <p className="text-sm font-medium text-[var(--accent-primary)]">Drop file to load</p>
           </div>
         )}
-
-        <ComplexityOverlay complexity={complexity} />
       </div>
 
       <CodeStatusBar code={code} language={language} line={cursorLine} complexity={complexity} />

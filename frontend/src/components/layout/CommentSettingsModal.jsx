@@ -1,9 +1,10 @@
 import { X, Check } from "lucide-react"
 import { useCommentStore } from "../../stores/commentStore.js"
 import { useCodeStore } from "../../stores/codeStore.js"
+import { useExplanationStore } from "../../stores/explanationStore.js"
 import { toast } from "../shared/Toast.jsx"
 
-export function CommentSettingsModal({ isOpen, onClose }) {
+export function CommentSettingsModal({ isOpen, onClose, activeWorkspace, onWorkspaceChange }) {
   const code = useCodeStore((s) => s.code)
   const language = useCodeStore((s) => s.language)
 
@@ -57,6 +58,10 @@ export function CommentSettingsModal({ isOpen, onClose }) {
 
   const handleApply = () => {
     generateComments(code, language)
+    useExplanationStore.getState().setActiveTab("Comments")
+    if (activeWorkspace !== "explainer" && onWorkspaceChange) {
+      onWorkspaceChange("explainer")
+    }
     toast.success("Settings applied and comments updated!")
     onClose()
   }
