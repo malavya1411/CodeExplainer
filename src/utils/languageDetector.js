@@ -35,7 +35,16 @@ export function detectLanguageFromContent(code) {
   if (/\bfn\s+\w+\s*\(/.test(c) || /\blet\s+mut\b/.test(c) || /println!/.test(c)) return "rust"
   if (/#include\b/.test(c) || /std::/.test(c) || /\bcout\b/.test(c)) return "cpp"
   if (/\busing\s+System\b/.test(c) || /\bConsole\.Write/.test(c) || /\bnamespace\b/.test(c)) return "csharp"
-  if (/\bpublic\s+class\b/.test(c) || /System\.out\.println/.test(c)) return "java"
+  if (
+    /\bpublic\s+class\b/.test(c) || 
+    /System\.out\.println/.test(c) ||
+    /\b(?:public|private|protected)\s+(?:static\s+)?(?:void|int|double|float|boolean|char|long|short|byte|String)(?:\[\])?\s+\w+\s*\(/.test(c) ||
+    /\bclass\s+\w+\s*\{/.test(c) && /\b(?:public|private|protected)\s+/.test(c) ||
+    /System\.out\./.test(c) ||
+    /\bclass\s+\w+\s+(?:implements|extends)\b/.test(c) ||
+    /@Override\b/.test(c)
+  )
+    return "java"
   if (/<\?php/.test(c) || /\$\w+\s*=/.test(c)) return "php"
   if (/\bdef\s+\w+/.test(c) && /\bend\b/.test(c) || /\bputs\b/.test(c)) return "ruby"
   if (/:\s*(string|number|boolean|void|any)\b/.test(c) || /\binterface\s+\w+/.test(c)) return "typescript"

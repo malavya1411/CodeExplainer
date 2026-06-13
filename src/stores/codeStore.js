@@ -12,12 +12,11 @@ export const useCodeStore = create((set, get) => ({
   analysisError: null,
 
   setCode: (code) => {
-    const state = get()
-    const update = { code, analysisError: null }
-    if (!state.languageManual) {
-      update.language = detectLanguageFromContent(code)
-    }
-    set(update)
+    set({
+      code,
+      language: detectLanguageFromContent(code),
+      analysisError: null
+    })
   },
 
   setLanguage: (language) => set({ language, languageManual: true }),

@@ -1,14 +1,14 @@
 import { useRef } from "react"
-import { Upload, Trash2, Copy, AlignLeft, ChevronDown, Link2, Highlighter } from "lucide-react"
+import { Upload, Trash2, Copy, AlignLeft, Link2, Highlighter } from "lucide-react"
 import { useCodeStore } from "../../stores/codeStore.js"
-import { SUPPORTED_LANGUAGES } from "../../utils/languageDetector.js"
+import { getLanguageLabel } from "../../utils/languageDetector.js"
 import { IconButton, Tooltip } from "../shared/IconButton.jsx"
 import { toast } from "../shared/Toast.jsx"
 
 export function CodeToolbar({ onFormat, onHighlightExplain }) {
   const code = useCodeStore((s) => s.code)
   const language = useCodeStore((s) => s.language)
-  const setLanguage = useCodeStore((s) => s.setLanguage)
+  const setCode = useCodeStore((s) => s.setCode)
   const clearCode = useCodeStore((s) => s.clearCode)
   const loadFile = useCodeStore((s) => s.loadFile)
   const loadFromUrl = useCodeStore((s) => s.loadFromUrl)
@@ -43,23 +43,20 @@ export function CodeToolbar({ onFormat, onHighlightExplain }) {
 
   return (
     <div className="flex items-center gap-1.5 px-2 py-1.5 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
-      <div className="relative">
-        <select
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-          aria-label="Select language"
-          className="appearance-none text-xs font-medium bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded pl-2.5 pr-7 py-1.5 border border-[var(--border)] cursor-pointer"
-        >
-          {SUPPORTED_LANGUAGES.map((l) => (
-            <option key={l.id} value={l.id}>
-              {l.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          size={13}
-          className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-muted)]"
-        />
+      <div className="flex items-center gap-2">
+        <div className="text-xs font-semibold bg-[var(--bg-tertiary)] text-[var(--accent-primary)] rounded px-2.5 py-1.5 border border-[var(--border)] select-none">
+          {getLanguageLabel(language)}
+        </div>
+        {!code.trim() && (
+          <button
+            onClick={() =>
+              setCode(`function greet(name) {\n  return "Hello, " + name + "!"\n}`)
+            }
+            className="text-xs text-[var(--accent-primary)] hover:underline font-medium"
+          >
+            Load sample
+          </button>
+        )}
       </div>
 
       <div className="w-px h-5 bg-[var(--border)] mx-0.5" />

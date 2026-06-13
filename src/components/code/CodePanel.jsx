@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react"
-import { Loader2, AlertCircle, FileCode2 } from "lucide-react"
+import { Loader2, AlertCircle } from "lucide-react"
 import { useCodeStore } from "../../stores/codeStore.js"
 import { CodeToolbar } from "./CodeToolbar.jsx"
 import { CodeEditor } from "./CodeEditor.jsx"
@@ -59,17 +59,21 @@ export function CodePanel({ highlightLine, complexity, onFormat, onHighlightExpl
           </div>
         )}
 
-        {!code.trim() && !isAnalyzing ? (
-          <EmptyState />
-        ) : (
-          <CodeEditor
-            value={code}
-            language={language}
-            onChange={setCode}
-            highlightLine={highlightLine}
-            onCursorLine={setCursorLine}
-          />
+        {!code.trim() && (
+          <div className="absolute top-[13px] left-[64px] pointer-events-none select-none z-10">
+            <p className="text-sm text-[var(--text-muted)] opacity-60 font-mono">
+              // Paste or write your code here to start...
+            </p>
+          </div>
         )}
+
+        <CodeEditor
+          value={code}
+          language={language}
+          onChange={setCode}
+          highlightLine={highlightLine}
+          onCursorLine={setCursorLine}
+        />
 
         {dragActive && (
           <div className="absolute inset-0 z-30 flex items-center justify-center bg-[var(--accent-primary)]/10 pointer-events-none">
@@ -82,27 +86,5 @@ export function CodePanel({ highlightLine, complexity, onFormat, onHighlightExpl
 
       <CodeStatusBar code={code} language={language} line={cursorLine} complexity={complexity} />
     </section>
-  )
-}
-
-function EmptyState() {
-  const setCode = useCodeStore((s) => s.setCode)
-  return (
-    <div className="flex flex-col items-center justify-center h-full gap-3 p-8 text-center">
-      <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[var(--bg-tertiary)] text-[var(--text-muted)]">
-        <FileCode2 size={26} />
-      </div>
-      <p className="text-sm text-[var(--text-secondary)] max-w-xs">
-        Paste your code here, upload a file, or drop one in to get an instant interactive explanation.
-      </p>
-      <button
-        onClick={() =>
-          setCode(`function greet(name) {\n  return "Hello, " + name + "!"\n}`)
-        }
-        className="text-xs text-[var(--accent-primary)] hover:underline"
-      >
-        Or load a sample snippet
-      </button>
-    </div>
   )
 }
