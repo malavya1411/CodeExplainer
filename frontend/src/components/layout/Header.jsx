@@ -105,7 +105,7 @@ export function Header({
           {exportOpen && (
             <div
               role="menu"
-              className="absolute right-0 mt-1.5 w-48 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] shadow-xl py-1 z-50 animate-fade-in"
+              className="absolute right-0 mt-1.5 w-48 premium-card shadow-xl py-1 z-50 animate-fade-in"
             >
               {exportFormats.map((f) => (
                 <button

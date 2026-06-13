@@ -129,7 +129,7 @@ function growthFn(time) {
 }
 
 export function ratingColor(rating) {
-  if (rating === "good") return "var(--success)"
-  if (rating === "moderate") return "var(--warning)"
-  return "var(--error)"
+  if (rating === "good") return "var(--chart-good)"
+  if (rating === "moderate") return "var(--chart-moderate)"
+  return "var(--chart-poor)"
 }

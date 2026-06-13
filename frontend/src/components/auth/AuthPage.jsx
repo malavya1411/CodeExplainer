@@ -116,7 +116,7 @@ export function AuthPage() {
           </div>
 
           {/* Clean Mock Code Editor Illustration */}
-          <div className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-sm relative font-mono text-[11px] leading-relaxed max-w-lg mx-auto">
+          <div className="w-full premium-card p-4 relative font-mono text-[11px] leading-relaxed max-w-lg mx-auto bg-[var(--bg-primary)]">
             <div className="flex items-center gap-1.5 pb-3 border-b border-[var(--border)] mb-3 text-[var(--text-muted)]">
               <span className="w-2.5 h-2.5 rounded-full bg-red-400 opacity-60"></span>
               <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 opacity-60"></span>
@@ -149,7 +149,7 @@ export function AuthPage() {
           </div>
 
           {/* Auth Card */}
-          <div className="w-full max-w-[400px] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl shadow-lg p-8 space-y-6 animate-fade-in relative">
+          <div className="w-full max-w-[400px] premium-card p-8 space-y-6 animate-fade-in relative">
             
             {/* Loading Cover Overlay */}
             {isLoading && (

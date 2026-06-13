@@ -33,7 +33,7 @@ export function Modal({ isOpen, onClose, title, children, footer, width = "max-w
             aria-modal="true"
             aria-label={title}
             className={cn(
-              "relative w-full rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] shadow-2xl",
+              "relative w-full premium-card shadow-2xl",
               width,
             )}
             initial={{ scale: 0.95, opacity: 0 }}

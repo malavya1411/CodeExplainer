@@ -166,19 +166,19 @@ export function OptimizerWorkspace() {
       base: "vs",
       inherit: true,
       rules: [
-        { token: "keyword", foreground: "D73A49" },
-        { token: "string", foreground: "032F62" },
-        { token: "number", foreground: "005CC5" },
-        { token: "comment", foreground: "6A737D", fontStyle: "italic" },
-        { token: "type.identifier", foreground: "6F42C1" }
+        { token: "keyword", foreground: "8C472B" },
+        { token: "string", foreground: "3E6B4E" },
+        { token: "number", foreground: "A87D25" },
+        { token: "comment", foreground: "999990", fontStyle: "italic" },
+        { token: "type.identifier", foreground: "2D6A4F" }
       ],
       colors: {
-        "editor.background": "#F1F3F5",
-        "editor.foreground": "#1A1D23",
-        "editorLineNumber.foreground": "#ADB5BD",
-        "editorLineNumber.activeForeground": "#495057",
-        "editor.lineHighlightBackground": "#E9ECEF",
-        "editorGutter.background": "#F1F3F5"
+        "editor.background": "#FAF9F5",
+        "editor.foreground": "#3A3A35",
+        "editorLineNumber.foreground": "#D8D1BE",
+        "editorLineNumber.activeForeground": "#6B6B63",
+        "editor.lineHighlightBackground": "#F3F0E2",
+        "editorGutter.background": "#FAF9F5"
       }
     })
   }
@@ -227,7 +227,7 @@ export function OptimizerWorkspace() {
                 <ChevronDown size={13} />
               </button>
               {exportOpen && (
-                <div className="absolute right-0 mt-1.5 w-44 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] shadow-xl py-1 z-50">
+                <div className="absolute right-0 mt-1.5 w-44 premium-card shadow-xl py-1 z-50">
                   <button
                     onClick={() => { setExportOpen(false); handleCopy(); }}
                     className="flex items-center gap-2 w-full px-3 py-2 text-xs text-left text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]"
@@ -383,7 +383,7 @@ export function OptimizerWorkspace() {
               return (
                 <div
                   key={imp.id}
-                  className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] p-4 shadow-sm space-y-3"
+                  className="premium-card p-5 space-y-3 hover:border-[var(--accent-secondary)] hover:shadow-md hover:-translate-y-0.5"
                 >
                   
                   {/* Card Header: Title + Badges */}
