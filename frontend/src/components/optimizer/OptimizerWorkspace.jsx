@@ -361,7 +361,7 @@ export function OptimizerWorkspace() {
                       className={`flex items-center justify-between w-full px-3 py-2 text-xs text-left transition-colors cursor-pointer ${
                         isActive
                           ? "bg-[color-mix(in_srgb,var(--accent-primary)_10%,transparent)] text-[var(--accent-primary)] font-bold"
-                          : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]"
+                          : "text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
                       }`}
                     >
                       {c.label}
@@ -375,7 +375,7 @@ export function OptimizerWorkspace() {
 
           {/* Explanation Depth Segmented Switcher */}
           <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-1 shadow-sm">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--text-muted)] px-2">Depth</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--text-primary)] px-2">Depth</span>
             <div className="flex gap-0.5">
               {["beginner", "intermediate", "expert"].map((level) => {
                 const isActive = explanationLevel === level
@@ -386,7 +386,7 @@ export function OptimizerWorkspace() {
                     className={`text-[10px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
                       isActive
                         ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)] shadow-sm"
-                        : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                     }`}
                   >
                     {level}
