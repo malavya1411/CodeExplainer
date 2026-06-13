@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { Sun, Moon, Settings, Download, ChevronDown, Code2, Play, Share2, LogOut, Cpu, MessageSquare, Eye, EyeOff } from "lucide-react"
+import { Sun, Moon, Settings, Download, ChevronDown, Code2, Play, Cpu, MessageSquare, Eye, EyeOff } from "lucide-react"
 import { useThemeStore } from "../../stores/themeStore.js"
 import { useAuthStore } from "../../stores/authStore.js"
 import { useCommentStore } from "../../stores/commentStore.js"
@@ -22,7 +22,6 @@ export function Header({
 }) {
   const resolvedTheme = useThemeStore((s) => s.resolvedTheme)
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
-  const logout = useAuthStore((s) => s.logout)
   
   const showInlineComments = useCommentStore((s) => s.showInlineComments)
   const setShowInlineComments = useCommentStore((s) => s.setShowInlineComments)
@@ -239,10 +238,6 @@ export function Header({
           )}
         </div>
 
-        <Tooltip content="Share" position="bottom">
-          <IconButton icon={Share2} label="Share explanation" onClick={onShare} />
-        </Tooltip>
-
         <Tooltip content={resolvedTheme === "dark" ? "Light mode" : "Dark mode"} position="bottom">
           <IconButton
             icon={resolvedTheme === "dark" ? Sun : Moon}
@@ -253,10 +248,6 @@ export function Header({
 
         <Tooltip content="Settings" position="bottom">
           <IconButton icon={Settings} label="Open settings" onClick={onSettings} />
-        </Tooltip>
-
-        <Tooltip content="Log Out" position="bottom">
-          <IconButton icon={LogOut} label="Log out" onClick={logout} />
         </Tooltip>
       </div>
 
