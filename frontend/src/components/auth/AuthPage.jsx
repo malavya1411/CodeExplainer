@@ -1,5 +1,4 @@
-import { useState } from "react"
-import { Github, Chrome, Mail, Lock, Code2, Check, Sun, Moon, Loader2 } from "lucide-react"
+import { Sun, Moon, Code2, Check, Loader2, ArrowRight } from "lucide-react"
 import { useAuthStore } from "../../stores/authStore.js"
 import { useThemeStore } from "../../stores/themeStore.js"
 import { Button } from "../shared/Button.jsx"
@@ -7,63 +6,10 @@ import { toast } from "../shared/Toast.jsx"
 
 export function AuthPage() {
   const login = useAuthStore((s) => s.login)
-  const signup = useAuthStore((s) => s.signup)
   const isLoading = useAuthStore((s) => s.isLoading)
 
   const resolvedTheme = useThemeStore((s) => s.resolvedTheme)
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
-
-  const [view, setView] = useState("login") // "login" | "signup"
-  
-  // Form states
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [rememberMe, setRememberMe] = useState(false)
-  
-  // Error states
-  const [errors, setErrors] = useState({})
-
-  const validate = () => {
-    const newErrors = {}
-    if (!email) {
-      newErrors.email = "Email is required"
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Please enter a valid email address"
-    }
-
-    if (!password) {
-      newErrors.password = "Password is required"
-    } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!validate()) return
-
-    try {
-      if (view === "login") {
-        await login(email, password)
-        toast.success("Successfully signed in!")
-      } else {
-        await signup(email, password)
-        toast.success("Successfully registered account!")
-      }
-    } catch (err) {
-      toast.error("Authentication failed. Please check your credentials.")
-    }
-  }
-
-  const handleSocialLogin = async (provider) => {
-    toast.info(`Connecting to ${provider}... (mock)`)
-    // Mock social login trigger
-    await login(`${provider.toLowerCase()}user@example.com`, "socialpassword123")
-    toast.success(`Signed in with ${provider}!`)
-  }
 
   return (
     <div className="flex h-screen w-full bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300 relative overflow-hidden">
@@ -137,7 +83,7 @@ export function AuthPage() {
           </div>
         </div>
 
-        {/* Right Side: Authentication Panel */}
+        {/* Right Side: Welcome/Launcher Panel */}
         <div className="flex-1 flex flex-col justify-center items-center p-6 bg-[var(--bg-primary)] relative">
           
           {/* Logo only visible on mobile */}
@@ -148,182 +94,61 @@ export function AuthPage() {
             <span className="text-base font-bold text-[var(--text-primary)]">CodeExplainer</span>
           </div>
 
-          {/* Auth Card */}
-          <div className="w-full max-w-[400px] premium-card p-8 space-y-6 animate-fade-in relative">
+          {/* Welcome Sandbox Launcher Card */}
+          <div className="w-full max-w-[420px] premium-card p-8 space-y-6 animate-fade-in relative text-center">
             
             {/* Loading Cover Overlay */}
             {isLoading && (
               <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-[var(--bg-secondary)]/85 backdrop-blur-[1px] rounded-xl select-none">
                 <Loader2 size={28} className="animate-spin text-[var(--accent-primary)]" />
                 <p className="text-xs font-semibold text-[var(--text-secondary)]">
-                  {view === "login" ? "Signing in..." : "Creating account..."}
+                  Launching Sandbox...
                 </p>
               </div>
             )}
 
+            {/* Open Source Badge */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[color-mix(in_srgb,var(--accent-primary)_10%,transparent)] border border-[color-mix(in_srgb,var(--accent-primary)_20%,transparent)] text-[var(--accent-primary)] mx-auto select-none">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] animate-pulse"></span>
+              Open Source Sandbox
+            </div>
+
             {/* Header Text */}
-            <div className="text-center space-y-1.5">
-              <h2 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">
-                {view === "login" ? "Welcome back" : "Create an account"}
+            <div className="space-y-2 select-none">
+              <h2 className="text-2xl font-black tracking-tight text-[var(--text-primary)]">
+                Launch Workspace
               </h2>
-              <p className="text-xs text-[var(--text-secondary)]">
-                {view === "login"
-                  ? "Enter your details to access your account"
-                  : "Get started for free today"}
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                CodeExplainer is fully open-source and free to use. Explore visual execution timelines, code complexity structures, and comment generators instantly without an account.
               </p>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              
-              {/* Email */}
-              <div className="space-y-1">
-                <label htmlFor="email" className="text-xs font-semibold text-[var(--text-secondary)]">
-                  Email address
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[var(--text-muted)] pointer-events-none">
-                    <Mail size={14} />
-                  </span>
-                  <input
-                    id="email"
-                    type="email"
-                    disabled={isLoading}
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value)
-                      if (errors.email) setErrors({ ...errors, email: null })
-                    }}
-                    placeholder="you@example.com"
-                    className={`w-full text-sm rounded-lg border bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] pl-9 pr-3 py-2 border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-primary)] transition-all ${
-                      errors.email ? "border-[var(--error)] focus:ring-[var(--error)]" : ""
-                    }`}
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-[10px] font-medium text-[var(--error)]">{errors.email}</p>
-                )}
-              </div>
-
-              {/* Password */}
-              <div className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <label htmlFor="password" className="text-xs font-semibold text-[var(--text-secondary)]">
-                    Password
-                  </label>
-                  {view === "login" && (
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        toast.info("Password reset request sent... (mock)")
-                      }}
-                      className="text-[10px] text-[var(--accent-primary)] hover:underline font-medium"
-                    >
-                      Forgot password?
-                    </a>
-                  )}
-                </div>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[var(--text-muted)] pointer-events-none">
-                    <Lock size={14} />
-                  </span>
-                  <input
-                    id="password"
-                    type="password"
-                    disabled={isLoading}
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value)
-                      if (errors.password) setErrors({ ...errors, password: null })
-                    }}
-                    placeholder="••••••••"
-                    className={`w-full text-sm rounded-lg border bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] pl-9 pr-3 py-2 border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-primary)] transition-all ${
-                      errors.password ? "border-[var(--error)] focus:ring-[var(--error)]" : ""
-                    }`}
-                  />
-                </div>
-                {errors.password && (
-                  <p className="text-[10px] font-medium text-[var(--error)]">{errors.password}</p>
-                )}
-              </div>
-
-              {/* Remember Me */}
-              {view === "login" && (
-                <div className="flex items-center gap-2 select-none">
-                  <input
-                    id="remember"
-                    type="checkbox"
-                    disabled={isLoading}
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="accent-[var(--accent-primary)] h-3.5 w-3.5 rounded border-[var(--border)] bg-[var(--bg-primary)]"
-                  />
-                  <label htmlFor="remember" className="text-xs text-[var(--text-secondary)] cursor-pointer">
-                    Remember me for 30 days
-                  </label>
-                </div>
-              )}
-
-              {/* Action Button */}
+            {/* Primary Action Button */}
+            <div className="pt-2">
               <Button
-                type="submit"
+                type="button"
                 variant="primary"
-                size="md"
+                size="lg"
                 disabled={isLoading}
-                className="w-full justify-center"
-              >
-                {view === "login" ? "Sign In" : "Sign Up"}
-              </Button>
-            </form>
-
-            {/* Separator */}
-            <div className="relative flex items-center justify-center">
-              <span className="absolute w-full border-t border-[var(--border)]"></span>
-              <span className="relative bg-[var(--bg-secondary)] px-3 text-[10px] uppercase font-bold text-[var(--text-muted)] select-none">
-                Or continue with
-              </span>
-            </div>
-
-            {/* Social Logins */}
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => handleSocialLogin("GitHub")}
-                className="flex items-center justify-center gap-2 text-xs font-semibold rounded-lg py-2.5 border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors active:scale-[0.98] cursor-pointer"
-              >
-                <Github size={15} />
-                GitHub
-              </button>
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => handleSocialLogin("Google")}
-                className="flex items-center justify-center gap-2 text-xs font-semibold rounded-lg py-2.5 border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors active:scale-[0.98] cursor-pointer"
-              >
-                <Chrome size={15} />
-                Google
-              </button>
-            </div>
-
-            {/* Toggle View Link */}
-            <div className="text-center text-xs">
-              <span className="text-[var(--text-secondary)]">
-                {view === "login" ? "Don't have an account? " : "Already have an account? "}
-              </span>
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => {
-                  setView(view === "login" ? "signup" : "login")
-                  setErrors({})
+                onClick={async () => {
+                  try {
+                    await login("developer@codeexplainer.org", "guestpass123")
+                    toast.success("Welcome to the sandbox!")
+                  } catch (err) {
+                    toast.error("Failed to launch sandbox.")
+                  }
                 }}
-                className="text-[var(--accent-primary)] font-bold hover:underline"
+                className="w-full justify-center gap-2 group cursor-pointer shadow-md py-3 text-sm font-bold"
               >
-                {view === "login" ? "Sign Up" : "Sign In"}
-              </button>
+                <span>Enter Sandbox</span>
+                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+              </Button>
             </div>
+
+            {/* Telemetry/Disclaimers */}
+            <p className="text-[10px] text-[var(--text-muted)] leading-normal select-none">
+              All settings and preferences are saved locally in your browser storage. Zero tracking scripts or analytics are active.
+            </p>
           </div>
 
           {/* Footer links */}
