@@ -373,7 +373,7 @@ export function OptimizerWorkspace() {
 
           return (
             <>
-              <div className="premium-card p-5">
+              <div className="premium-card p-5 shrink-0">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
                   
                   {/* Optimization Score with SVG Progress Ring */}
@@ -412,7 +412,7 @@ export function OptimizerWorkspace() {
                   </div>
 
                   {/* Score Improvement Before vs After */}
-                  <div className="flex flex-col justify-between h-full md:border-l md:border-r border-[var(--border)] md:px-6 py-1">
+                  <div className="flex flex-col justify-between md:border-l md:border-r border-[var(--border)] md:px-6 py-1">
                     <div className="text-[10px] uppercase font-black text-[var(--text-muted)] tracking-wider mb-3">
                       Score Improvement
                     </div>
@@ -433,7 +433,7 @@ export function OptimizerWorkspace() {
                   </div>
 
                   {/* Key Benefits */}
-                  <div className="flex flex-col justify-between h-full py-1">
+                  <div className="flex flex-col justify-between py-1">
                     <div className="text-[10px] uppercase font-black text-[var(--text-muted)] tracking-wider mb-3">
                       Key Benefits
                     </div>
@@ -472,7 +472,7 @@ export function OptimizerWorkspace() {
               </div>
 
               {/* Optimization Summary Section */}
-              <div className="space-y-3 pt-2">
+              <div className="space-y-3 pt-2 shrink-0">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">Optimization Summary</h3>
                   

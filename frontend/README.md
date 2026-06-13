@@ -39,3 +39,5 @@ The compiled files will be output to the `dist/` directory.
 - **Auto-Language Detection**: The editor detects languages dynamically as you write.
 - **Robust Storage**: App settings and annotations persist session-to-session in localStorage safely (with try/catch fallbacks).
 - **Responsive Panels**: Built with `react-resizable-panels` to fit any viewport size.
+- **Interactive Code Optimizer**: Features progress scoring rings, comparative statistics grids, benefit summaries, and automated code modification views.
+- **Customizable Code Commenting**: Supports injecting comments in inline, block, or docstring styles tailored to beginner, intermediate, or expert explanation depths.
