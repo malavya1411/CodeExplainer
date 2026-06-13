@@ -1,0 +1,108 @@
+import { useState, useCallback } from "react"
+import { Loader2, AlertCircle, FileCode2 } from "lucide-react"
+import { useCodeStore } from "../../stores/codeStore.js"
+import { CodeToolbar } from "./CodeToolbar.jsx"
+import { CodeEditor } from "./CodeEditor.jsx"
+import { CodeStatusBar } from "./CodeStatusBar.jsx"
+import { ComplexityOverlay } from "./ComplexityOverlay.jsx"
+import { toast } from "../shared/Toast.jsx"
+
+export function CodePanel({ highlightLine, complexity, onFormat, onHighlightExplain }) {
+  const code = useCodeStore((s) => s.code)
+  const language = useCodeStore((s) => s.language)
+  const setCode = useCodeStore((s) => s.setCode)
+  const isAnalyzing = useCodeStore((s) => s.isAnalyzing)
+  const analysisError = useCodeStore((s) => s.analysisError)
+  const loadFile = useCodeStore((s) => s.loadFile)
+  const [cursorLine, setCursorLine] = useState(1)
+  const [dragActive, setDragActive] = useState(false)
+
+  const onDrop = useCallback(
+    async (e) => {
+      e.preventDefault()
+      setDragActive(false)
+      const file = e.dataTransfer.files?.[0]
+      if (file) {
+        const ok = await loadFile(file)
+        if (ok) toast.success(`Loaded ${file.name}`)
+        else toast.error(useCodeStore.getState().analysisError || "Could not load file")
+      }
+    },
+    [loadFile],
+  )
+
+  return (
+    <section
+      className="flex flex-col h-full min-h-0 bg-[var(--bg-secondary)] relative"
+      aria-label="Code input panel"
+      onDragOver={(e) => {
+        e.preventDefault()
+        setDragActive(true)
+      }}
+      onDragLeave={() => setDragActive(false)}
+      onDrop={onDrop}
+    >
+      <CodeToolbar onFormat={onFormat} onHighlightExplain={onHighlightExplain} />
+
+      <div className={"flex-1 min-h-0 relative " + (dragActive ? "drop-active" : "")}>
+        {analysisError && (
+          <div className="flex items-center gap-2 px-3 py-2 text-xs text-[var(--error)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] border-b border-[var(--error)]">
+            <AlertCircle size={14} />
+            {analysisError}
+          </div>
+        )}
+
+        {isAnalyzing && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-[var(--bg-secondary)]/80 backdrop-blur-sm">
+            <Loader2 size={28} className="animate-spin text-[var(--accent-primary)]" />
+            <p className="text-sm text-[var(--text-secondary)]">Analyzing code structure…</p>
+          </div>
+        )}
+
+        {!code.trim() && !isAnalyzing ? (
+          <EmptyState />
+        ) : (
+          <CodeEditor
+            value={code}
+            language={language}
+            onChange={setCode}
+            highlightLine={highlightLine}
+            onCursorLine={setCursorLine}
+          />
+        )}
+
+        {dragActive && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-[var(--accent-primary)]/10 pointer-events-none">
+            <p className="text-sm font-medium text-[var(--accent-primary)]">Drop file to load</p>
+          </div>
+        )}
+
+        <ComplexityOverlay complexity={complexity} />
+      </div>
+
+      <CodeStatusBar code={code} language={language} line={cursorLine} complexity={complexity} />
+    </section>
+  )
+}
+
+function EmptyState() {
+  const setCode = useCodeStore((s) => s.setCode)
+  return (
+    <div className="flex flex-col items-center justify-center h-full gap-3 p-8 text-center">
+      <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[var(--bg-tertiary)] text-[var(--text-muted)]">
+        <FileCode2 size={26} />
+      </div>
+      <p className="text-sm text-[var(--text-secondary)] max-w-xs">
+        Paste your code here, upload a file, or drop one in to get an instant interactive explanation.
+      </p>
+      <button
+        onClick={() =>
+          setCode(`function greet(name) {\n  return "Hello, " + name + "!"\n}`)
+        }
+        className="text-xs text-[var(--accent-primary)] hover:underline"
+      >
+        Or load a sample snippet
+      </button>
+    </div>
+  )
+}
