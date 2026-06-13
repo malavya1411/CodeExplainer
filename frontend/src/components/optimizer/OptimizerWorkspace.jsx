@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { DiffEditor } from "@monaco-editor/react"
+import Editor, { DiffEditor } from "@monaco-editor/react"
 import { Cpu, ArrowLeftRight, Check, RotateCcw, Copy, Download, FileText, ChevronDown, Award, Sparkles, Shield, Eye, HelpCircle } from "lucide-react"
 import { useOptimizerStore } from "../../stores/optimizerStore.js"
 import { useThemeStore } from "../../stores/themeStore.js"
@@ -34,6 +34,7 @@ export function OptimizerWorkspace() {
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false)
   const categoryRef = useRef(null)
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768)
+  const [viewMode, setViewMode] = useState("diff")
 
   useEffect(() => {
     const onClick = (e) => {
@@ -197,8 +198,29 @@ export function OptimizerWorkspace() {
         {/* Editor Toolbar */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border)] bg-[var(--bg-secondary)] shrink-0 select-none">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider">Comparison view</span>
-            <div className="text-[11px] font-semibold bg-[var(--bg-tertiary)] text-[var(--accent-primary)] rounded px-2 py-1 border border-[var(--border)]">
+            <div className="flex items-center gap-0.5 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl p-1 shadow-sm shrink-0">
+              <button
+                onClick={() => setViewMode("diff")}
+                className={`text-[10px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+                  viewMode === "diff"
+                    ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                }`}
+              >
+                Comparison
+              </button>
+              <button
+                onClick={() => setViewMode("code")}
+                className={`text-[10px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+                  viewMode === "code"
+                    ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                }`}
+              >
+                Final Code
+              </button>
+            </div>
+            <div className="text-[11px] font-semibold bg-[var(--bg-tertiary)] text-[var(--accent-primary)] rounded px-2 py-1.5 border border-[var(--border)] shrink-0">
               {getLanguageLabel(language)}
             </div>
           </div>
@@ -263,26 +285,44 @@ export function OptimizerWorkspace() {
           </div>
         </div>
 
-        {/* Side-by-side Diff Editor */}
+        {/* Editor Container */}
         <div className="flex-1 min-h-0 relative">
-          <DiffEditor
-            original={originalCode}
-            modified={modifiedCode}
-            language={language}
-            theme={resolvedTheme === "dark" ? "explainer-dark" : "explainer-light"}
-            onMount={defineThemeOnMount}
-            options={{
-              readOnly: true,
-              fontSize: 12,
-              lineHeight: 20,
-              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-              automaticLayout: true,
-              renderSideBySide: isDesktop,
-              scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 }
-            }}
-          />
+          {viewMode === "diff" ? (
+            <DiffEditor
+              original={originalCode}
+              modified={modifiedCode}
+              language={language}
+              theme={resolvedTheme === "dark" ? "explainer-dark" : "explainer-light"}
+              onMount={defineThemeOnMount}
+              options={{
+                readOnly: true,
+                fontSize: 12,
+                lineHeight: 20,
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                renderSideBySide: isDesktop,
+                scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 }
+              }}
+            />
+          ) : (
+            <Editor
+              value={modifiedCode}
+              language={language}
+              theme={resolvedTheme === "dark" ? "explainer-dark" : "explainer-light"}
+              options={{
+                readOnly: true,
+                fontSize: 12,
+                lineHeight: 20,
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 }
+              }}
+            />
+          )}
         </div>
       </div>
 
