@@ -26,11 +26,11 @@ export function MermaidDiagram({ definition, ariaLabel }) {
               background: "#0D1117",
             }
           : {
-              primaryColor: "#E9ECEF",
-              primaryTextColor: "#1A1D23",
+              primaryColor: "#F3F0E2",
+              primaryTextColor: "#3A3A35",
               primaryBorderColor: "#2D6A4F",
-              lineColor: "#495057",
-              background: "#F8F9FA",
+              lineColor: "#6B6B63",
+              background: "#FAF9F5",
             },
     })
     initialized = true

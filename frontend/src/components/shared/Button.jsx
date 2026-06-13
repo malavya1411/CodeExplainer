@@ -2,9 +2,9 @@ import { cn } from "../../utils/cn.js"
 
 const VARIANTS = {
   primary:
-    "bg-[var(--accent-primary)] text-[var(--accent-on)] hover:bg-[var(--accent-hover)]",
+    "premium-btn-primary bg-[var(--accent-primary)] text-[var(--accent-on)] hover:bg-[var(--accent-hover)]",
   secondary:
-    "bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:brightness-95 border border-[var(--border)]",
+    "premium-btn-secondary bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border)]",
   ghost:
     "bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]",
   danger: "bg-[var(--error)] text-white hover:brightness-110",
