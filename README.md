@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo/logo.png" alt="CodeExplainer Logo" width="180" />
+  <img src="assets/logo.png" alt="CodeExplainer Logo" width="180" />
 </p>
 
 <h1 align="center">CodeExplainer</h1>
