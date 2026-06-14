@@ -1,97 +1,167 @@
-# CodeExplainer Monorepo
+<p align="center">
+  <img src="assets/logo/logo.png" alt="CodeExplainer Logo" width="180" />
+</p>
 
-Welcome to the **CodeExplainer** repository! This project is structured as a professional, production-grade monorepo containing the frontend client application, placeholder backend services, reusable static assets, and extensive documentation.
+<h1 align="center">CodeExplainer</h1>
 
----
+<p align="center">
+  <strong>Transform complex code into interactive explanations, visual walkthroughs, optimization insights, and learning-friendly documentation.</strong>
+</p>
 
-## Key Features
-
-* **Interactive Code Explainer**: Dynamic editor layout with local language auto-detection.
-* **Automated Code Commenting**: Insert custom annotations with adjustable explanation depths (Beginner, Intermediate, Expert) and comment formats (Inline, Block, Docstring).
-* **Interactive Code Optimizer**:
-  * **SVG Score Ring**: Visual representation of code quality scores with dynamic transition animations.
-  * **Comparative Metric Stats**: Tables listing exact before/after complexity indicators (e.g. `Time: O(n) ➔ O(log n)`).
-  * **Overall Impact Grid**: At-a-glance performance, maintainability, security, and execution speed rating cards.
-  * **Automated Tab View-Mode Swap**: Automatically switches between Comparison (diff) and Final Code views when applying or reverting changes.
-* **Complexity Overlay**: Clean floating tooltip overlay inside the editor displaying complexity statistics.
-
----
-
-## Directory Structure
-
-```text
-code-explainer-app/
-├── assets/                  # Media and graphical assets
-│   ├── logo/                # Brand logo files
-│   ├── screenshots/         # App flow screenshots
-│   └── icons/               # Navigation & toolbar icon graphics
-├── backend/                 # AI service and backend server API (Python)
-│   ├── src/                 # Core server logic
-│   ├── api/                 # Endpoint routing layer
-│   ├── services/            # Explanation and AST analysis engines
-│   ├── models/              # DB schemas & models
-│   ├── requirements.txt     # Python server requirements
-│   └── README.md            # Backend documentation
-├── docs/                    # Architectural and developer documentation
-│   ├── architecture.md      # Client-server communication & flow
-│   ├── api.md               # API contracts & parameters reference
-│   ├── deployment.md        # Static build & hosting configurations
-│   └── screenshots/         # Walkthrough visuals
-├── frontend/                # Interactive explanation SPA (Vite + React)
-│   ├── src/                 # React source code components & stores
-│   ├── public/              # Public asset folder (favicon, index.html assets)
-│   ├── package.json         # Frontend Node package file
-│   ├── vite.config.js       # Vite bundler options
-│   ├── tailwind.config.js   # Style configurations
-│   └── README.md            # Frontend setup guide
-├── LICENSE                  # Open-source license terms (MIT)
-├── .gitignore               # Main monorepo git ignored files list
-└── README.md                # Root monorepo overview (this file)
-```
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react" />
+  <img src="https://img.shields.io/badge/Vite-Fast%20Build-purple?style=for-the-badge&logo=vite" />
+  <img src="https://img.shields.io/badge/Monaco-Editor-green?style=for-the-badge&logo=visualstudiocode" />
+  <img src="https://img.shields.io/badge/TailwindCSS-Styled-38BDF8?style=for-the-badge&logo=tailwindcss" />
+  <img src="https://img.shields.io/badge/AI-Powered-orange?style=for-the-badge" />
+</p>
 
 ---
 
-## Getting Started
+## 📖 Overview
 
-### 1. Frontend Client
-The frontend is built with React 18, Vite, Tailwind CSS, and Monaco Editor.
+CodeExplainer is an interactive code understanding platform designed to help developers, students, educators, and interview candidates understand code faster.
 
-To get started:
-```bash
-# Navigate to the frontend directory
-cd frontend
+Instead of returning large blocks of AI-generated text, CodeExplainer transforms source code into:
 
-# Install dependencies
-npm install
+- Visual explanations
+- Step-by-step execution walkthroughs
+- Complexity analysis
+- Variable tracking
+- Architecture diagrams
+- Automatic documentation
+- Optimization recommendations
 
-# Run the development server
-npm run dev
-
-# Compile production-ready assets
-npm run build
-```
-Once the dev server is running, open [http://localhost:5173](http://localhost:5173) in your browser.
-
-### 2. Backend Services
-The backend layout is structured and prepared for Python FastAPI integration.
-
-To setup virtual environment:
-```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+The platform adapts explanations for different skill levels, making it useful for both beginners and experienced developers.
 
 ---
 
-## Architecture Overview
-The system relies on an interactive client that detects languages locally and communicates with standard API services to generate code analyses. Detailed instructions are available in:
-- [docs/architecture.md](file:///Users/malavyamankar/Codes/code-explainer-app/docs/architecture.md)
-- [docs/api.md](file:///Users/malavyamankar/Codes/code-explainer-app/docs/api.md)
-- [docs/deployment.md](file:///Users/malavyamankar/Codes/code-explainer-app/docs/deployment.md)
+## ✨ Key Features
+
+### 🧠 Interactive Code Explanation
+
+- Multi-language code support
+- AI-generated explanations
+- Beginner, Intermediate, and Expert modes
+- Logical code block breakdown
+- Context-aware summaries
 
 ---
 
-## License
-This project is licensed under the terms of the MIT license. See the [LICENSE](file:///Users/malavyamankar/Codes/code-explainer-app/LICENSE) file for details.
+### 🔍 Step-by-Step Execution
+
+Understand exactly how code runs.
+
+Features include:
+
+- Execution timeline
+- Variable state tracking
+- Loop visualization
+- Conditional branch explanation
+- Function call walkthroughs
+
+---
+
+### 📊 Complexity Analysis
+
+Instant performance insights.
+
+Includes:
+
+- Time Complexity
+- Space Complexity
+- Bottleneck Detection
+- Optimization Suggestions
+- Performance Scoring
+
+---
+
+### ⚡ Code Optimizer
+
+Generate improved implementations automatically.
+
+Features:
+
+- Before vs After comparison
+- Code quality score
+- Complexity improvements
+- Maintainability analysis
+- Performance recommendations
+
+---
+
+### 📝 Smart Comment Generator
+
+Generate production-ready documentation.
+
+Supports:
+
+- Inline Comments
+- Block Comments
+- Docstrings
+- Function Documentation
+- Class Documentation
+
+---
+
+### 🌐 Visual Diagrams
+
+Convert code into diagrams automatically.
+
+Supported outputs:
+
+- Flowcharts
+- Logic Trees
+- Execution Graphs
+- Function Relationships
+- Mermaid Diagrams
+
+---
+
+### 🎯 Variable Inspector
+
+Track variables in real time.
+
+Displays:
+
+- Current values
+- Scope visibility
+- State transitions
+- Mutation history
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+flowchart LR
+
+    User[Developer]
+
+    Editor[Monaco Editor]
+
+    Analysis[Code Analysis Engine]
+
+    Explain[Explanation Generator]
+
+    Optimize[Optimization Engine]
+
+    Diagram[Diagram Generator]
+
+    Comment[Comment Generator]
+
+    UI[Interactive UI]
+
+    User --> Editor
+
+    Editor --> Analysis
+
+    Analysis --> Explain
+    Analysis --> Optimize
+    Analysis --> Diagram
+    Analysis --> Comment
+
+    Explain --> UI
+    Optimize --> UI
+    Diagram --> UI
+    Comment --> UI
