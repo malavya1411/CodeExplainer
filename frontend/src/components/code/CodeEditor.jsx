@@ -100,17 +100,7 @@ export function CodeEditor({ value, language, onChange, highlightLine, highlight
     const total = model.getLineCount()
     const decos = []
 
-    if (highlightRange && highlightRange.startLine <= total) {
-      const { startLine, endLine } = highlightRange
-      decos.push({
-        range: new monaco.Range(startLine, 1, Math.min(endLine, total), 1),
-        options: {
-          isWholeLine: true,
-          className: "exp-active-line",
-          linesDecorationsClassName: "exp-active-line-margin",
-        },
-      })
-    } else if (highlightLine && highlightLine <= total) {
+    if (highlightLine && highlightLine <= total) {
       decos.push({
         range: new monaco.Range(highlightLine, 1, highlightLine, 1),
         options: {
@@ -119,6 +109,22 @@ export function CodeEditor({ value, language, onChange, highlightLine, highlight
           linesDecorationsClassName: "exp-active-line-margin",
         },
       })
+    }
+
+    // Multi-line range highlight (from chunk/module selection)
+    if (highlightRange && highlightRange.start && highlightRange.end) {
+      const startLine = Math.min(highlightRange.start, total)
+      const endLine = Math.min(highlightRange.end, total)
+      for (let ln = startLine; ln <= endLine; ln++) {
+        decos.push({
+          range: new monaco.Range(ln, 1, ln, 1),
+          options: {
+            isWholeLine: true,
+            className: ln === startLine ? "exp-range-start" : ln === endLine ? "exp-range-end" : "exp-range-line",
+            overviewRuler: { color: "var(--accent-primary)", position: 4 },
+          },
+        })
+      }
     }
 
     Object.keys(annotations).forEach((ln) => {
@@ -151,37 +157,19 @@ export function CodeEditor({ value, language, onChange, highlightLine, highlight
   }, [updateDecorations])
 
   useEffect(() => {
-    if (highlightRange && editorRef.current) {
-      editorRef.current.revealLineInCenterIfOutsideViewport(highlightRange.startLine)
-    } else if (highlightLine && editorRef.current) {
+    if (highlightLine && editorRef.current) {
       editorRef.current.revealLineInCenterIfOutsideViewport(highlightLine)
     }
-  }, [highlightRange, highlightLine])
+    if (highlightRange?.start && editorRef.current) {
+      editorRef.current.revealLineInCenterIfOutsideViewport(highlightRange.start)
+    }
+  }, [highlightLine, highlightRange])
 
   useEffect(() => {
     if (monacoRef.current) {
       monacoRef.current.editor.setTheme(resolvedTheme === "dark" ? "explainer-dark" : "explainer-light")
     }
   }, [resolvedTheme])
-
-  useEffect(() => {
-    const editor = editorRef.current
-    if (editor && value) {
-      const currentVal = editor.getValue()
-      if (currentVal !== value) {
-        const position = editor.getPosition()
-        const scroll = editor.getScrollTop()
-        setTimeout(() => {
-          if (editorRef.current) {
-            if (position) {
-              editorRef.current.setPosition(position)
-            }
-            editorRef.current.setScrollTop(scroll)
-          }
-        }, 50)
-      }
-    }
-  }, [value])
 
   useEffect(() => {
     const editor = editorRef.current
@@ -299,8 +287,6 @@ export function CodeEditor({ value, language, onChange, highlightLine, highlight
           automaticLayout: true,
           wordWrap: "on",
           scrollbar: { verticalScrollbarSize: 10, horizontalScrollbarSize: 10 },
-          renderIndentGuides: false,
-          guides: { indentation: false },
         }}
       />
     </div>

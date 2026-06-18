@@ -1,8 +1,8 @@
-import { BookOpen, ListOrdered, Variable, Gauge, GitBranch, FileText } from "lucide-react"
+import { BookOpen, ListOrdered, Variable, Gauge, GitBranch, FileText, Layers, Network, Map } from "lucide-react"
 import { useExplanationStore } from "../../stores/explanationStore.js"
 import { cn } from "../../utils/cn.js"
 
-const TABS = [
+const BASE_TABS = [
   { id: "Overview", icon: BookOpen },
   { id: "Step-by-Step", icon: ListOrdered },
   { id: "Variables", icon: Variable },
@@ -11,9 +11,27 @@ const TABS = [
   { id: "Comments", icon: FileText },
 ]
 
-export function TabNavigation() {
+// Icons for adaptive step tab labels
+const ADAPTIVE_ICONS = {
+  "Code Sections": Layers,
+  "Architecture": Network,
+  "Explorer": Map,
+}
+
+export function TabNavigation({ adaptiveStepLabel }) {
   const activeTab = useExplanationStore((s) => s.activeTab)
   const setActiveTab = useExplanationStore((s) => s.setActiveTab)
+
+  const tabs = BASE_TABS.map((t) => {
+    if (t.id === "Step-by-Step" && adaptiveStepLabel && adaptiveStepLabel !== "Step-by-Step") {
+      return {
+        id: "Step-by-Step",
+        label: adaptiveStepLabel,
+        icon: ADAPTIVE_ICONS[adaptiveStepLabel] || ListOrdered,
+      }
+    }
+    return { ...t, label: t.id }
+  })
 
   return (
     <div
@@ -21,7 +39,7 @@ export function TabNavigation() {
       aria-label="Explanation views"
       className="flex items-center gap-0.5 px-2 border-b border-[var(--border)] bg-[var(--bg-secondary)] overflow-x-auto shrink-0"
     >
-      {TABS.map((t) => {
+      {tabs.map((t) => {
         const active = activeTab === t.id
         const Icon = t.icon
         return (
@@ -38,7 +56,7 @@ export function TabNavigation() {
             )}
           >
             <Icon size={15} />
-            <span className="hidden sm:inline">{t.id}</span>
+            <span className="hidden sm:inline">{t.label}</span>
             {active && (
               <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-[var(--accent-primary)]" />
             )}

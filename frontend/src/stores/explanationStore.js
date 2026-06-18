@@ -4,24 +4,9 @@ let playTimer = null
 
 const SPEED_MS = { 0.5: 2400, 1: 1200, 2: 600, 4: 300 }
 
-const syncBlockWithStep = (stepIdx, state) => {
-  const explanation = state.explanation
-  if (!explanation || !explanation.execution_steps || !explanation.blocks) return {}
-  const step = explanation.execution_steps[stepIdx]
-  if (!step) return {}
-  const blockIdx = explanation.blocks.findIndex(
-    (b) => step.line >= b.line_start && step.line <= b.line_end
-  )
-  if (blockIdx !== -1) {
-    return { activeBlockIndex: blockIdx }
-  }
-  return {}
-}
-
 export const useExplanationStore = create((set, get) => ({
   // null until user explicitly clicks Explain
   explanation: null,
-  analyzedCode: null,
 
   // Cache for each depth level — populated on Explain click
   explanations: {
@@ -30,97 +15,124 @@ export const useExplanationStore = create((set, get) => ({
     expert: null,
   },
 
+  // Adaptive mode: "detailed" | "chunk" | "architecture" | "explorer"
+  explanationMode: "detailed",
+
   depth: "intermediate",
   currentStep: 0,
-  activeBlockIndex: 0,
   isPlaying: false,
   playbackSpeed: 1,
   activeTab: "Overview",
 
+  // Navigation indices for adaptive modes
+  activeChunkIndex: 0,
+  activeModuleIndex: 0,
+  activeTreeNodeKey: null,
+  // Line range highlighted in Monaco (for chunk/module selection)
+  highlightRange: null,
+
   setActiveTab: (activeTab) => set({ activeTab }),
+
   setDepth: (depth) => {
     const cached = get().explanations[depth]
-    set({ depth, explanation: cached, currentStep: 0, activeBlockIndex: 0, isPlaying: false })
-  },
-
-  setActiveBlockIndex: (activeBlockIndex) => {
-    set({ activeBlockIndex })
-    const explanation = get().explanation
-    const block = explanation?.blocks?.[activeBlockIndex]
-    if (block && explanation?.execution_steps) {
-      const stepIdx = explanation.execution_steps.findIndex(
-        (s) => s.line >= block.line_start && s.line <= block.line_end
-      )
-      if (stepIdx !== -1) {
-        set({ currentStep: stepIdx })
-      }
-    }
+    set({ depth, explanation: cached, currentStep: 0, isPlaying: false })
   },
 
   /** Called once per Explain click — stores all three level results */
-  setAllExplanations: (beginner, intermediate, expert, analyzedCode = null) => {
+  setAllExplanations: (beginner, intermediate, expert, mode) => {
     const depth = get().depth
     const active = { beginner, intermediate, expert }[depth]
     set({
       explanations: { beginner, intermediate, expert },
       explanation: active,
+      explanationMode: mode || active?.mode || "detailed",
       currentStep: 0,
-      activeBlockIndex: 0,
       isPlaying: false,
-      analyzedCode,
+      activeChunkIndex: 0,
+      activeModuleIndex: 0,
+      activeTreeNodeKey: null,
+      highlightRange: null,
     })
   },
 
   setExplanation: (explanation) =>
-    set({ explanation, currentStep: 0, activeBlockIndex: 0, isPlaying: false }),
+    set({ explanation, currentStep: 0, isPlaying: false }),
 
   /** Reset everything — used when code changes after an analysis */
   clearExplanations: () =>
     set({
       explanation: null,
-      analyzedCode: null,
       explanations: { beginner: null, intermediate: null, expert: null },
+      explanationMode: "detailed",
       currentStep: 0,
-      activeBlockIndex: 0,
       isPlaying: false,
+      activeChunkIndex: 0,
+      activeModuleIndex: 0,
+      activeTreeNodeKey: null,
+      highlightRange: null,
     }),
+
+  // ── Adaptive navigation ──────────────────────────────────────────────────
+
+  /** Select a chunk by index — highlights its line range in Monaco */
+  selectChunk: (index) => {
+    const explanation = get().explanation
+    const chunks = explanation?.chunks
+    if (!chunks || !chunks[index]) return
+    const chunk = chunks[index]
+    set({
+      activeChunkIndex: index,
+      currentStep: index,
+      highlightRange: { start: chunk.line_start, end: chunk.line_end },
+    })
+  },
+
+  /** Select a module by index — highlights its line scope in Monaco */
+  selectModule: (index) => {
+    const explanation = get().explanation
+    const modules = explanation?.modules
+    if (!modules || !modules[index]) return
+    const mod = modules[index]
+    set({
+      activeModuleIndex: index,
+      highlightRange: { start: mod.lineStart, end: mod.lineEnd },
+    })
+  },
+
+  /** Select a tree node by key */
+  selectTreeNode: (key, lineStart, lineEnd) => {
+    set({
+      activeTreeNodeKey: key,
+      highlightRange: lineStart != null ? { start: lineStart, end: lineEnd } : null,
+    })
+  },
+
+  clearHighlightRange: () => set({ highlightRange: null }),
+
+  // ── Step-by-step playback ────────────────────────────────────────────────
 
   stepForward: () => {
     const { currentStep, explanation } = get()
-    const max = explanation.execution_steps.length - 1
-    if (currentStep < max) {
-      const nextStep = currentStep + 1
-      set({ 
-        currentStep: nextStep,
-        ...syncBlockWithStep(nextStep, get())
-      })
-    }
+    const steps = explanation?.execution_steps || []
+    const max = steps.length - 1
+    if (currentStep < max) set({ currentStep: currentStep + 1 })
     else get().pause()
   },
 
   stepBackward: () => {
     const { currentStep } = get()
-    if (currentStep > 0) {
-      const prevStep = currentStep - 1
-      set({ 
-        currentStep: prevStep,
-        ...syncBlockWithStep(prevStep, get())
-      })
-    }
+    if (currentStep > 0) set({ currentStep: currentStep - 1 })
   },
 
   reset: () => {
     get().pause()
-    set({ currentStep: 0, activeBlockIndex: 0 })
+    set({ currentStep: 0 })
   },
 
   toEnd: () => {
     get().pause()
-    const lastStep = get().explanation.execution_steps.length - 1
-    set({ 
-      currentStep: lastStep,
-      ...syncBlockWithStep(lastStep, get())
-    })
+    const steps = get().explanation?.execution_steps || []
+    set({ currentStep: Math.max(0, steps.length - 1) })
   },
 
   play: () => {
@@ -128,16 +140,13 @@ export const useExplanationStore = create((set, get) => ({
     set({ isPlaying: true })
     const tick = () => {
       const { currentStep, explanation } = get()
-      const max = explanation.execution_steps.length - 1
+      const steps = explanation?.execution_steps || []
+      const max = steps.length - 1
       if (currentStep >= max) {
         get().pause()
         return
       }
-      const nextStep = currentStep + 1
-      set({ 
-        currentStep: nextStep,
-        ...syncBlockWithStep(nextStep, get())
-      })
+      set({ currentStep: get().currentStep + 1 })
       playTimer = setTimeout(tick, SPEED_MS[get().playbackSpeed])
     }
     playTimer = setTimeout(tick, SPEED_MS[get().playbackSpeed])
@@ -160,18 +169,16 @@ export const useExplanationStore = create((set, get) => ({
 
   goToStep: (currentStep) => {
     get().pause()
-    set({ 
-      currentStep,
-      ...syncBlockWithStep(currentStep, get())
-    })
+    set({ currentStep })
   },
 }))
 
 // Derived helper: cumulative variable state up to current step.
 export function getActiveState(explanation, currentStep) {
   const state = {}
-  for (let i = 0; i <= currentStep && i < explanation.execution_steps.length; i++) {
-    const changes = explanation.execution_steps[i].state_changes || {}
+  const steps = explanation?.execution_steps || []
+  for (let i = 0; i <= currentStep && i < steps.length; i++) {
+    const changes = steps[i].state_changes || {}
     Object.entries(changes).forEach(([k, v]) => {
       state[k] = v
     })

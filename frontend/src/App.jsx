@@ -36,6 +36,7 @@ export default function App() {
   const depth = useExplanationStore((s) => s.depth)
   const currentStep = useExplanationStore((s) => s.currentStep)
   const setDepth = useExplanationStore((s) => s.setDepth)
+  const highlightRange = useExplanationStore((s) => s.highlightRange)
 
   const annotations = useAnnotationStore((s) => s.annotations)
 
@@ -45,19 +46,10 @@ export default function App() {
   
   const [complexity, setComplexity] = useState(null)
   
-  const activeTab = useExplanationStore((s) => s.activeTab)
-  const activeBlockIndex = useExplanationStore((s) => s.activeBlockIndex)
-
   // Highlight currently active line from explanation if available
   const activeLine = explanation?.execution_steps?.[currentStep]?.line
-
-  let highlightRange = null
-  if (activeWorkspace === "explainer" && activeTab === "Step-by-Step" && explanation?.blocks?.length > 0) {
-    const block = explanation.blocks[activeBlockIndex]
-    if (block) {
-      highlightRange = { startLine: block.line_start, endLine: block.line_end }
-    }
-  }
+  // Multi-line range from chunk/module selection overrides single-line highlight
+  const activeHighlightLine = highlightRange ? null : activeLine
 
   useEffect(() => {
     // Listen for system theme changes if needed
@@ -79,7 +71,7 @@ export default function App() {
 
     // Simulate API delay then generate all three depth levels
     setTimeout(() => {
-      const { beginner, intermediate, expert } = generateAllExplanations(code, language)
+      const { beginner, intermediate, expert, mode } = generateAllExplanations(code, language)
       
       // Generate comments for all three levels
       const commentSettings = useCommentStore.getState().commentSettings
@@ -95,7 +87,7 @@ export default function App() {
       }[activeDepth]
 
       // Set explanations
-      setAllExplanations(beginner, intermediate, expert, code)
+      setAllExplanations(beginner, intermediate, expert, mode)
       setComplexity(analyzeComplexity(code))
 
       // Set comments
@@ -106,6 +98,7 @@ export default function App() {
           intermediate: commentsIntermediate,
           expert: commentsExpert,
         },
+        showInlineComments: true,
         isGenerating: false,
         lastGenerated: new Date().toISOString(),
       })
@@ -225,18 +218,19 @@ export default function App() {
           <PanelGroup direction="horizontal" className="h-full">
             <Panel defaultSize={45} minSize={30} className="h-full">
               <CodePanel
-                highlightLine={activeLine}
+                highlightLine={activeHighlightLine}
                 highlightRange={highlightRange}
                 complexity={complexity}
                 onFormat={handleFormat}
                 onHighlightExplain={handleHighlightExplain}
+                onAnalyze={handleAnalyze}
               />
             </Panel>
             
             <PanelResizeHandle className="w-1.5 bg-[var(--border)] hover:bg-[var(--accent-primary)] transition-colors cursor-col-resize z-10" />
             
             <Panel defaultSize={55} minSize={30} className="h-full">
-              <ExplanationPanel complexity={complexity} onAnalyze={handleAnalyze} />
+              <ExplanationPanel complexity={complexity} />
             </Panel>
           </PanelGroup>
         ) : (

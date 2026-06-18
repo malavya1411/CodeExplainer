@@ -1,5 +1,21 @@
 import { defaultCode, mockExplanation } from "../data/mockExplanation.js"
 
+// ─── Mode thresholds ──────────────────────────────────────────────────────────
+export const MODE_THRESHOLDS = {
+  detailed: 100,       // 0–100   lines → full step-by-step
+  chunk: 500,          // 101–500 lines → chunk-based
+  architecture: 2000,  // 501–2000 lines → architecture view
+  // > 2000             → codebase explorer
+}
+
+export function detectMode(code) {
+  const lines = code.split("\n").filter((l) => l.trim()).length
+  if (lines <= MODE_THRESHOLDS.detailed) return "detailed"
+  if (lines <= MODE_THRESHOLDS.chunk) return "chunk"
+  if (lines <= MODE_THRESHOLDS.architecture) return "architecture"
+  return "explorer"
+}
+
 // ─── Level-specific mock explanations for the default binary-search sample ───
 
 const mockBeginner = {
@@ -23,7 +39,7 @@ const mockBeginner = {
   })),
   execution_steps: mockExplanation.execution_steps.map((s) => ({
     ...s,
-    what: s.why, // Use simpler "why" text as the main content for beginners
+    what: s.why,
     why: "This helps us find the answer step by step, just like solving a puzzle.",
   })),
   variables: mockExplanation.variables.map((v) => ({
@@ -119,449 +135,468 @@ const mockExpert = {
   })),
 }
 
-function parseLogicalBlocks(code, language) {
-  const lines = code.split("\n")
-  const cleaned = lines.map(l => l.trim())
-  const blocks = []
-  
-  const isPython = language === "python" || (code.includes("def ") && !code.includes("{"))
-  
-  const findEndIndex = (startIdx) => {
-    if (isPython) {
-      const startLine = lines[startIdx]
-      const startIndent = startLine.match(/^\s*/)[0].length
-      for (let i = startIdx + 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue
-        if (lines[i].trim().startsWith("#")) continue
-        const indent = lines[i].match(/^\s*/)[0].length
-        if (indent <= startIndent) return i - 1
-      }
-      return lines.length - 1
-    } else {
-      let braceCount = 0
-      let foundOpen = false
-      for (let i = startIdx; i < lines.length; i++) {
-        const line = cleaned[i]
-        const openMatches = (line.match(/\{/g) || []).length
-        const closeMatches = (line.match(/\}/g) || []).length
-        if (openMatches > 0) foundOpen = true
-        braceCount += openMatches - closeMatches
-        if (foundOpen && braceCount <= 0) return i
-      }
-      return lines.length - 1
+// ─── Intelligent Chunking Engine ──────────────────────────────────────────────
+
+// Semantic label classifier for structural landmarks
+const CHUNK_PATTERNS = [
+  { re: /\b(import|require|include|using)\b/i, label: "Imports & Dependencies", icon: "📦" },
+  { re: /\b(export\s+default|module\.exports|export\s+\{)/i, label: "Exports", icon: "📤" },
+  { re: /\b(interface|type\s+\w+\s*=|enum\b)/i, label: "Type Definitions", icon: "🔷" },
+  { re: /\b(class\s+\w)/i, label: "Class Definition", icon: "🏗️" },
+  { re: /\b(constructor)\s*\(/i, label: "Constructor", icon: "🔧" },
+  { re: /\b(auth|login|logout|token|jwt|session|password|credential)/i, label: "Authentication", icon: "🔐" },
+  { re: /\b(router|route|endpoint|app\.(get|post|put|delete|patch))/i, label: "API Routes", icon: "🌐" },
+  { re: /\b(middleware|next\(|req,\s*res)/i, label: "Middleware", icon: "⚡" },
+  { re: /\b(db\.|database|mongoose|sequelize|prisma|knex|sql|query)/i, label: "Database", icon: "🗄️" },
+  { re: /\b(model|schema|entity|document)\b/i, label: "Data Models", icon: "📊" },
+  { re: /\b(validate|sanitize|assert|check|verify)\b/i, label: "Validation", icon: "✅" },
+  { re: /\b(fetch|axios|http|request|response|api)\b/i, label: "API Calls", icon: "🔌" },
+  { re: /\b(useState|useEffect|useCallback|useMemo|useRef|useContext)/i, label: "React Hooks", icon: "⚛️" },
+  { re: /\b(component|render|jsx|tsx)\b/i, label: "UI Component", icon: "🎨" },
+  { re: /\b(test|describe|it\(|expect|assert|spec)\b/i, label: "Tests", icon: "🧪" },
+  { re: /\b(util|helper|format|parse|transform|convert)\b/i, label: "Utilities", icon: "🛠️" },
+  { re: /\b(config|settings|env|process\.env)\b/i, label: "Configuration", icon: "⚙️" },
+  { re: /\b(error|exception|catch|throw|try)\b/i, label: "Error Handling", icon: "🚨" },
+  { re: /\b(cache|redis|memcache|store)\b/i, label: "Caching", icon: "💾" },
+  { re: /\b(log|logger|console\.log|winston|debug)\b/i, label: "Logging", icon: "📝" },
+  { re: /\b(function\s+\w+|const\s+\w+\s*=\s*(async\s+)?\(|=>\s*\{|\w+\s*\(.*\)\s*\{)/i, label: "Functions", icon: "⚡" },
+]
+
+function classifyLines(lines) {
+  return lines.map((line) => {
+    const trimmed = line.trim()
+    for (const p of CHUNK_PATTERNS) {
+      if (p.re.test(trimmed)) return { label: p.label, icon: p.icon }
     }
-  }
+    return { label: "Logic", icon: "💡" }
+  })
+}
 
-  const findConditionalChainEnd = (startIdx) => {
-    let currentEnd = findEndIndex(startIdx)
-    while (currentEnd + 1 < lines.length) {
-      const nextLine = cleaned[currentEnd + 1]
-      if (nextLine.startsWith("else") || nextLine.startsWith("} else") || nextLine.startsWith("elif")) {
-        currentEnd = findEndIndex(currentEnd + 1)
-      } else {
-        break
-      }
-    }
-    return currentEnd
-  }
+// Detect all function definitions (name + line range)
+function detectFunctions(lines) {
+  const funcs = []
+  const funcPatterns = [
+    /\b(?:function|async function)\s+(\w+)\s*\(/,
+    /\bconst\s+(\w+)\s*=\s*(?:async\s*)?\(.*\)\s*=>/,
+    /\bconst\s+(\w+)\s*=\s*(?:async\s+)?function/,
+    /\b(?:public|private|protected|static)?\s+(?:async\s+)?(\w+)\s*\([^)]*\)\s*(?::\s*\w+)?\s*\{/,
+    /^\s*(\w+)\s*\([^)]*\)\s*\{/,
+    /\bdef\s+(\w+)\s*\(/,  // Python
+  ]
+  let depth = 0
+  let openFunc = null
 
-  const isFunctionStart = (line) => {
-    if (line.includes(";")) return false
-    if (line.startsWith("def ") || (line.includes("def ") && line.endsWith(":"))) return true
-    if (/\b(?:function|func|fn)\b/.test(line)) return true
-    if (/\w+\s*\(.*\)\s*\{/.test(line)) return true
-    if (/=\s*\(.*\)\s*=>/.test(line)) return true
-    return false
-  }
+  lines.forEach((line, i) => {
+    const trimmed = line.trim()
+    const opens = (line.match(/\{/g) || []).length + (line.match(/:/g) && line.endsWith(":") ? 1 : 0)
+    const closes = (line.match(/\}/g) || []).length
 
-  const getFunctionName = (line) => {
-    const match = line.match(/\b(?:function|def|func|fn)\s+(\w+)/) ||
-                  line.match(/(\w+)\s*\(/) ||
-                  line.match(/const\s+(\w+)\s*=/) ||
-                  line.match(/let\s+(\w+)\s*=/)
-    return match ? match[1] : "anonymous"
-  }
-
-  const checkIsRecursive = (name, body) => {
-    if (!name || name === "anonymous") return false
-    const regex = new RegExp(`\\b${name}\\s*\\(`, 'g')
-    return regex.test(body)
-  }
-
-  const isApiCall = (line) => {
-    return (
-      /\b(?:fetch|axios|ajax|http|got|request|superagent)\b/.test(line) ||
-      line.includes("fetch(") ||
-      line.includes("axios.") ||
-      line.includes("http.get") ||
-      line.includes("http.post")
-    )
-  }
-
-  const isVariableSetup = (line) => {
-    return (
-      /\b(?:let|const|var|int|double|float|String|boolean|char)\b.*=/.test(line) ||
-      /^\w+\s*(\+|-|\*|\/)?=/.test(line)
-    )
-  }
-
-  let i = 0
-  let functionCount = 0
-  while (i < lines.length) {
-    const line = cleaned[i]
-    if (!line || line.startsWith("//") || line.startsWith("/*") || line.startsWith("*") || line.startsWith("#")) {
-      i++
-      continue
-    }
-
-    if (/\bclass\s+(\w+)/.test(line)) {
-      const end = findEndIndex(i)
-      const className = line.match(/\bclass\s+(\w+)/)[1]
-      blocks.push({
-        type: "class",
-        title: `Class Definition: ${className}`,
-        start: i + 1,
-        end: end + 1
-      })
-      i++
-    } else if (isFunctionStart(line)) {
-      const end = findEndIndex(i)
-      const funcName = getFunctionName(line)
-      const bodyContent = lines.slice(i + 1, end + 1).join("\n")
-      const isRecursive = checkIsRecursive(funcName, bodyContent)
-      
-      const type = isRecursive ? "recursion" : (functionCount > 0 ? "helper_function" : "function")
-      const title = type === "recursion" 
-        ? `Recursion Block: ${funcName}` 
-        : (type === "helper_function" ? `Helper Function: ${funcName}` : `Function Definition: ${funcName}`)
-
-      blocks.push({
-        type,
-        title,
-        start: i + 1,
-        end: end + 1
-      })
-      functionCount++
-      i++
-    } else if (/\b(?:for|while|do)\b/.test(line)) {
-      const end = findEndIndex(i)
-      blocks.push({
-        type: "loop",
-        title: line.includes("while") ? "Binary Search Loop" : "Iteration Loop",
-        start: i + 1,
-        end: end + 1
-      })
-      i++
-    } else if (/\b(?:if)\b/.test(line)) {
-      const end = findConditionalChainEnd(i)
-      blocks.push({
-        type: "conditional",
-        title: "Decision Logic",
-        start: i + 1,
-        end: end + 1
-      })
-      i = end + 1
-    } else if (/\bswitch\b/.test(line)) {
-      const end = findEndIndex(i)
-      blocks.push({
-        type: "switch",
-        title: "Switch Block",
-        start: i + 1,
-        end: end + 1
-      })
-      i = end + 1
-    } else if (/\b(?:try|catch|finally|except)\b/.test(line)) {
-      const end = findEndIndex(i)
-      blocks.push({
-        type: "error_handling",
-        title: line.startsWith("try") ? "Error Boundary (Try)" : "Error Handler (Catch)",
-        start: i + 1,
-        end: end + 1
-      })
-      i = end + 1
-    } else if (isApiCall(line)) {
-      blocks.push({
-        type: "api",
-        title: "API Call Block",
-        start: i + 1,
-        end: i + 1
-      })
-      i++
-    } else if (/\breturn\b/.test(line)) {
-      blocks.push({
-        type: "return",
-        title: line.includes("-1") || line.includes("null") || line.includes("error") ? "Failure Case" : "Return Block",
-        start: i + 1,
-        end: i + 1
-      })
-      i++
-    } else if (isVariableSetup(line)) {
-      let start = i
-      let end = i
-      while (end + 1 < lines.length) {
-        const nextLine = cleaned[end + 1]
-        if (isVariableSetup(nextLine)) {
-          end++
-        } else {
+    if (!openFunc) {
+      for (const pat of funcPatterns) {
+        const m = trimmed.match(pat)
+        if (m && m[1] && m[1].length > 1) {
+          openFunc = { name: m[1], start: i + 1 }
+          depth = opens - closes
+          if (depth <= 0) {
+            funcs.push({ ...openFunc, end: i + 1, lines: 1 })
+            openFunc = null
+            depth = 0
+          }
           break
         }
       }
-      blocks.push({
-        type: "variable",
-        title: start === end && line.includes("mid") ? "Midpoint Calculation" : "Variable Initialization",
-        start: start + 1,
-        end: end + 1
-      })
-      i = end + 1
     } else {
-      i++
-    }
-  }
-
-  const uniqueBlocks = []
-  const seen = new Set()
-  blocks.forEach(b => {
-    const key = `${b.start}-${b.end}-${b.type}`
-    if (!seen.has(key)) {
-      seen.add(key)
-      uniqueBlocks.push(b)
+      depth += opens - closes
+      if (depth <= 0) {
+        funcs.push({ ...openFunc, end: i + 1, lines: (i + 1) - openFunc.start + 1 })
+        openFunc = null
+        depth = 0
+      }
     }
   })
-
-  return uniqueBlocks
+  return funcs
 }
 
-function getDynamicExplanationForBlock(b, text, variables, level) {
-  let beginner = ""
-  let intermediate = ""
-  let expert = ""
-  let analogy = ""
-  let key_concepts = []
-  let purpose = ""
+// Group consecutive lines with the same semantic label into chunks
+function buildChunks(lines, labels, functions) {
+  const chunks = []
+  let currentLabel = null
+  let currentIcon = null
+  let start = 0
+  let chunkLines = []
 
-  const varNames = variables.slice(0, 3).join(", ")
-
-  if (b.type === "function") {
-    const funcName = text.match(/\b(?:function|def|func|fn)\s+(\w+)/)?.[1] || 
-                     text.match(/(\w+)\s*\(/)?.[1] || "search"
-    purpose = `Defines a reusable entry point function called '${funcName}'.`
-    beginner = `We define a function called '${funcName}'. A function is a named set of instructions you can run whenever you need them — like pressing a button.`
-    intermediate = `Declares the function '${funcName}' with parameters: ${variables.join(", ") || "none"}. This is a reusable unit of logic that accepts input and performs calculations.`
-    expert = `Method signature definition for '${funcName}'. Binds arguments and sets up the stack frame context. Ensure preconditions are validated by the caller.`
-    analogy = "Like defining a recipe you can cook multiple times."
-    key_concepts = ["function definition", "reusability"]
-  } else if (b.type === "helper_function") {
-    const funcName = text.match(/\b(?:function|def|func|fn)\s+(\w+)/)?.[1] || 
-                     text.match(/(\w+)\s*\(/)?.[1] || "helper"
-    purpose = `Defines helper sub-routine '${funcName}' to assist the main operation.`
-    beginner = `This is a helper function called '${funcName}'. It performs a specific task to assist the main program, keeping our main code simple and clean.`
-    intermediate = `Declares helper function '${funcName}' to modularize logic. It encapsulates sub-operations called by other sections.`
-    expert = `Utility function '${funcName}'. Extracts sub-routine to reduce cyclomatic complexity of main entrypoint. Stack frame footprint is constant.`
-    analogy = "Like a kitchen assistant chopping vegetables for the main chef."
-    key_concepts = ["helper routine", "modularity"]
-  } else if (b.type === "recursion") {
-    const funcName = text.match(/\b(?:function|def|func|fn)\s+(\w+)/)?.[1] || 
-                     text.match(/(\w+)\s*\(/)?.[1] || "recurse"
-    purpose = `Solves sub-problems recursively by calling itself with adjusted arguments.`
-    beginner = `This is a recursive function called '${funcName}'. Recursion means the function solves a problem by calling itself with smaller inputs, like nested Russian dolls!`
-    intermediate = `Defines recursive function '${funcName}'. Operates by invoking itself on a reduced sub-problem, expecting to hit a base case to terminate.`
-    expert = `Recursive implementation of '${funcName}'. Guard against stack overflow by validating base-case coverage. Each call consumes stack frame space O(d) depth.`
-    analogy = "Like looking at two mirrors facing each other, creating infinite nested reflections."
-    key_concepts = ["recursion", "base case", "call stack"]
-  } else if (b.type === "class") {
-    const className = text.match(/\bclass\s+(\w+)/)?.[1] || "Class"
-    purpose = `Blueprint defining structural schema and object-oriented encapsulation.`
-    beginner = `We define a class called '${className}'. Think of a class as a blueprint or cookie cutter used to create objects of the same shape.`
-    intermediate = `Declares class '${className}' for data encapsulation and object-oriented structure. Acts as a type blueprint.`
-    expert = `Defines class '${className}' as the structural namespace and encapsulation boundary. Consider interface segregation.`
-    analogy = "Like a blueprint for building a specific type of machine."
-    key_concepts = ["class", "OOP", "encapsulation"]
-  } else if (b.type === "loop") {
-    purpose = "Repeatedly executes nested statement block while loop conditions are satisfied."
-    beginner = `This is a loop. It keeps repeating a set of steps over and over until a specific condition stops being true.`
-    intermediate = `Initializes a loop structure. The body executes repeatedly while the condition holds true. Ensure the termination condition is met.`
-    expert = `Loop header. Analyze termination guarantee, invariant, and potential for infinite loop states. Consider loop unrolling if performance-critical.`
-    analogy = "Like repeating a task until it's done, then stopping."
-    key_concepts = ["looping", "iteration", "termination"]
-  } else if (b.type === "conditional") {
-    purpose = "Branches execution logic conditionally based on comparisons."
-    beginner = `This block acts like a fork in the road. Depending on the result of the comparison, the algorithm chooses which direction to continue.`
-    intermediate = `Evaluates a conditional branch. Control flow is directed to one of the branches based on the Boolean outcome.`
-    expert = `Conditional branch instruction. Consider branch predictor impact for hot loops — predictable branches are nearly free on modern CPUs.`
-    analogy = "Like choosing a path at a junction based on weather conditions."
-    key_concepts = ["conditional logic", "branching", "control flow"]
-  } else if (b.type === "switch") {
-    purpose = "Selects one of several execution paths depending on switch variable value."
-    beginner = `This is a switch block. It acts like a multi-way junction, directing traffic to the matching case label.`
-    intermediate = `Evaluates a switch condition, jumping to the matching case branch. Avoids nested if-else structures.`
-    expert = `Switch dispatch block. Compiler may optimize this using a jump table (O(1) dispatch) rather than O(n) linear comparisons.`
-    analogy = "Like sorting mail into different bins depending on the postal code."
-    key_concepts = ["switch statement", "jump table", "dispatch"]
-  } else if (b.type === "api") {
-    purpose = "Triggers an external asynchronous network query."
-    beginner = `This block makes a network request to talk to another server over the internet. It fetches or sends data.`
-    intermediate = `Performs an HTTP request (API call). Handles asynchronous communication to retrieve or push remote resource representations.`
-    expert = `I/O bound network request. Returns a Promise/Future. Ensure proper handling of connection timeouts, status codes, and JSON serialization.`
-    analogy = "Like mailing a letter to a friend and waiting for a reply."
-    key_concepts = ["API call", "asynchronous I/O", "HTTP request"]
-  } else if (b.type === "error_handling") {
-    purpose = "Creates defensive boundary to capture and handle execution errors."
-    beginner = `This is error handling. It's like a safety net: if something goes wrong in the 'try' part, the program catches the error and keeps running without crashing.`
-    intermediate = `Error boundary. Catches exceptions thrown during execution inside the try block, redirecting execution to catch/finally blocks.`
-    expert = `Exception handler. Catches runtime anomalies. Be wary of swallowing errors without logging; ensure resource disposal in the finally block.`
-    analogy = "Like wearing a safety harness while rock climbing."
-    key_concepts = ["exception handling", "robustness", "try-catch"]
-  } else if (b.type === "return") {
-    const retVal = text.match(/return\s+([^;]+)/)?.[1]?.trim() || "nothing"
-    purpose = `Returns the result '${retVal}' and pops the call stack.`
-    beginner = `We're done! The function exits and hands back the result: ${retVal}.`
-    intermediate = `Returns control flow to the caller with the value '${retVal}', terminating this function's execution.`
-    expert = `Pops the current stack frame, writing '${retVal}' to the return register. If this is a sentinel value (e.g. -1), ensure caller handles it.`
-    analogy = "Like handing in a finished exam paper."
-    key_concepts = ["return statement", "exit point"]
-  } else if (b.type === "variable") {
-    purpose = `Initializes memory bindings for local variables: ${varNames || "state"}.`
-    beginner = `We set up variables (${varNames || "bounds"}) to act as storage boxes. We can store data here and check it later.`
-    intermediate = `Initializes state variables (${varNames || "bounds"}) to hold local values needed for calculations.`
-    expert = `Stack-bound bindings created for variables (${varNames || "bounds"}). Analyze mutability (const vs let vs var) and escape behavior.`
-    analogy = "Like labeling a jar and putting something inside it."
-    key_concepts = ["variables", "state initialization"]
-  } else {
-    purpose = "Executes computation step."
-    beginner = `This statement performs an action or calculation.`
-    intermediate = `Executes a standard statement.`
-    expert = `Evaluates expression with potential side effects.`
-    analogy = "Like carrying out a step in a set of instructions."
-    key_concepts = ["statement execution"]
+  const flushChunk = (end) => {
+    if (chunkLines.length === 0) return
+    const chunkFuncs = functions.filter(
+      (f) => f.start >= start + 1 && f.end <= end
+    )
+    const nonEmpty = chunkLines.filter((l) => l.trim())
+    chunks.push({
+      id: chunks.length + 1,
+      label: currentLabel,
+      icon: currentIcon,
+      line_start: start + 1,
+      line_end: end,
+      lineCount: nonEmpty.length,
+      functions: chunkFuncs,
+      preview: nonEmpty.slice(0, 3).map((l) => l.trimStart()),
+      dependencies: [],
+    })
+    chunkLines = []
   }
 
-  // Override for midpoint calculation
-  if (b.type === "variable" && text.includes("mid")) {
-    purpose = "Calculates search range midpoint to partition bounds."
-    beginner = "We find the middle item of our current search range. By checking the middle item, we can instantly throw away half of the remaining items!"
-    intermediate = "Calculates the midpoint index: Math.floor((left + right) / 2). This divides the current search range into two equal parts."
-    expert = "Computes the probe index mid using index arithmetic. Note: (left + right) / 2 can overflow in C++/Java. Safe alternative: left + ((right - left) >> 1)."
-    analogy = "Like opening a dictionary exactly in the middle."
-    key_concepts = ["midpoint calculation", "divide and conquer"]
-  }
+  lines.forEach((line, i) => {
+    const { label, icon } = labels[i]
+    if (label !== currentLabel) {
+      if (currentLabel !== null) flushChunk(i)
+      currentLabel = label
+      currentIcon = icon
+      start = i
+    }
+    chunkLines.push(line)
+  })
+  flushChunk(lines.length)
 
-  return { beginner, intermediate, expert, analogy, key_concepts, purpose }
+  return chunks
 }
+
+// Build a module tree for architecture mode
+function buildModuleTree(chunks, functions) {
+  const moduleMap = {}
+  chunks.forEach((chunk) => {
+    const key = chunk.label
+    if (!moduleMap[key]) {
+      moduleMap[key] = {
+        name: key,
+        icon: chunk.icon,
+        chunks: [],
+        functions: [],
+        lineStart: chunk.line_start,
+        lineEnd: chunk.line_end,
+      }
+    }
+    const m = moduleMap[key]
+    m.chunks.push(chunk)
+    m.functions.push(...chunk.functions)
+    m.lineEnd = Math.max(m.lineEnd, chunk.line_end)
+  })
+  return Object.values(moduleMap)
+}
+
+// Build architecture Mermaid flowchart from modules
+function buildArchitectureFlowchart(modules) {
+  const names = modules.map((m) => m.name.replace(/[^a-zA-Z0-9]/g, ""))
+  let chart = "flowchart TD\n"
+  names.forEach((name, i) => {
+    const label = modules[i].name
+    chart += `  ${name}["${modules[i].icon} ${label}"]\n`
+  })
+  // Connect consecutive modules with arrows to simulate data flow
+  for (let i = 0; i < names.length - 1; i++) {
+    chart += `  ${names[i]} --> ${names[i + 1]}\n`
+  }
+  return chart
+}
+
+// Build a knowledge tree for explorer mode
+function buildKnowledgeTree(modules, functions, lines) {
+  return modules.map((mod) => ({
+    key: mod.name,
+    icon: mod.icon,
+    label: mod.name,
+    lineStart: mod.lineStart,
+    lineEnd: mod.lineEnd,
+    children: mod.functions.map((fn) => ({
+      key: `${mod.name}::${fn.name}`,
+      icon: "⚡",
+      label: fn.name + `()`,
+      lineStart: fn.start,
+      lineEnd: fn.end,
+      lines: fn.lines,
+      children: [],
+    })),
+  }))
+}
+
+// Smart summary layers for all modes
+function buildSummaryLayers(code, lines, mode, functions, chunks, modules) {
+  const lineCount = lines.length
+  const funcCount = functions.length
+  const chunkCount = chunks.length
+  const moduleNames = modules.map((m) => m.name).join(", ")
+  const complexity = functions.reduce((acc, f) => acc + Math.ceil(f.lines / 10), 0)
+
+  return {
+    layer1: `This ${lineCount}-line codebase has ${funcCount} function${funcCount !== 1 ? "s" : ""} organized into ${chunkCount} logical section${chunkCount !== 1 ? "s" : ""}. ${
+      modules.length > 0
+        ? `Key areas: ${moduleNames}.`
+        : "The code follows a sequential structure."
+    } Think of it as a machine with parts working together to accomplish a goal.`,
+
+    layer2: `The file is ${lineCount} lines long and contains ${funcCount} callable function${funcCount !== 1 ? "s" : ""}. It is organized into ${chunkCount} logical groups: ${moduleNames || "general logic"}. ${
+      mode === "chunk"
+        ? "Each chunk handles a specific responsibility. Data flows top-to-bottom with clear separation of concerns."
+        : mode === "architecture"
+        ? "Modules are loosely coupled and follow a layered architecture pattern. Dependencies run downward."
+        : "The system exposes multiple entry points with hierarchical control flow across components."
+    } Total estimated cyclomatic complexity: ~${complexity}.`,
+
+    layer3: `${lineCount}-line source file. ${funcCount} functions, cyclomatic complexity ≈ ${complexity}. ${
+      mode === "chunk"
+        ? "Chunk-based organization detected. Review inter-chunk coupling and ensure single responsibility per chunk. Flag: shared state across chunks can introduce hidden dependencies."
+        : mode === "architecture"
+        ? "Multi-module architecture. Assess module boundaries for interface leakage. Dependency inversion principle should be verified. Circular imports may exist — use a dependency graph tool to confirm."
+        : "Large-scale codebase (explorer mode). Static analysis is limited without AST parsing. Recommended: extract to multiple files, apply domain-driven design, use interface segregation to reduce cognitive load."
+    } Areas to investigate: ${modules.slice(0, 3).map((m) => m.name).join(", ") || "general logic"}.`,
+  }
+}
+
+// ─── Detailed mode (≤ 100 lines) — original block builder ────────────────────
 
 function buildBlocksForLevel(code, level) {
   const lines = code.split("\n")
-  const extractedBlocks = parseLogicalBlocks(code, "javascript")
+  const blocks = []
+  const execution_steps = []
+  const variables = []
+  const potential_issues = []
 
+  let stepCounter = 1
   let blockCounter = 1
   let branchCount = 0
   let hasLoop = false
   const variableSet = new Set()
 
-  const blocks = extractedBlocks.map((b) => {
-    const blockLines = lines.slice(b.start - 1, b.end)
+  lines.forEach((originalLine, index) => {
+    const lineNum = index + 1
+    const line = originalLine.trim()
+    if (!line) return
+    if (
+      line.startsWith("//") ||
+      line.startsWith("/*") ||
+      line.startsWith("*") ||
+      line.startsWith("#")
+    )
+      return
+
+    let type = "statement"
+    let title = "Execute Line"
+
+    const defaults = {
+      beginner: `This line does something: '${line.slice(0, 60)}'.`,
+      intermediate: `Executes the statement: '${line.slice(0, 80)}'.`,
+      expert: `Evaluates expression with side effects: '${line.slice(0, 100)}'.`,
+    }
+
+    let displayText = defaults[level]
+    let analogy = "Like carrying out a step in a set of instructions."
+    let key_concepts = ["statement"]
     const variables_affected = []
 
-    blockLines.forEach(l => {
-      const words = l.trim().match(/\b[a-zA-Z_]\w*\b/g) || []
-      words.forEach(w => {
-        const keywords = [
-          "function","class","public","private","protected","int","double","float",
-          "boolean","char","void","return","if","else","for","while","const","let",
-          "var","static","new","import","package","System","out","println","length",
-          "search","target","nums","i","Solution","null","true","false",
-        ]
-        if (!keywords.includes(w) && w.length > 1) {
-          variableSet.add(w)
-          variables_affected.push(w)
-        }
-      })
+    const words = line.match(/\b[a-zA-Z_]\w*\b/g) || []
+    words.forEach((w) => {
+      const keywords = [
+        "function","class","public","private","protected","int","double","float",
+        "boolean","char","void","return","if","else","for","while","const","let",
+        "var","static","new","import","package","System","out","println","length",
+        "search","target","nums","i","Solution","null","true","false",
+      ]
+      if (!keywords.includes(w) && w.length > 1) {
+        variableSet.add(w)
+        variables_affected.push(w)
+      }
     })
 
-    if (b.type === "loop") hasLoop = true
-    if (b.type === "conditional") branchCount++
+    if (/\bclass\s+(\w+)/.test(line)) {
+      const className = line.match(/\bclass\s+(\w+)/)[1]
+      type = "class"
+      title = `Class Definition: ${className}`
+      displayText = {
+        beginner: `We create a new kind of object called '${className}'. Think of it like a cookie cutter that makes objects of the same shape.`,
+        intermediate: `Declares class '${className}' for data encapsulation and OOP structure. Acts as a type blueprint.`,
+        expert: `Defines class '${className}' as the structural namespace and encapsulation boundary. Consider whether this should be an interface or abstract class depending on extension requirements.`,
+      }[level]
+      analogy = "Like a blueprint for building a specific type of machine."
+      key_concepts =
+        level === "beginner"
+          ? ["class", "object"]
+          : level === "intermediate"
+          ? ["class declaration", "encapsulation", "OOP"]
+          : ["class declaration", "encapsulation", "OOP", "SOLID principles", "type hierarchy"]
+    } else if (
+      /\b(?:function|func|fn)\b|\w+\s+\w+\s*\(/.test(line) &&
+      !line.includes(";") &&
+      !line.includes("=") &&
+      line.includes("(")
+    ) {
+      const funcNameMatch =
+        line.match(/\b(?:function|func|fn)\s+(\w+)/) || line.match(/(\w+)\s*\(/)
+      const funcName = funcNameMatch ? funcNameMatch[1] : "method"
+      type = "function"
+      title = `Function: ${funcName}`
+      displayText = {
+        beginner: `We define a function called '${funcName}'. A function is a named set of instructions you can run whenever you need them — like pressing a button.`,
+        intermediate: `Declares the function '${funcName}' with its parameter list. This is a reusable unit of logic that can be called from other parts of the code.`,
+        expert: `Method declaration for '${funcName}'. Binds the function symbol, parameter types, and stack-frame layout. Check: is this pure or does it have side effects? Consider memoization if called frequently with same args.`,
+      }[level]
+      analogy = "Like defining a recipe you can cook multiple times."
+      key_concepts =
+        level === "beginner"
+          ? ["function", "reuse"]
+          : level === "intermediate"
+          ? ["function declaration", "parameters", "reusability", "scope"]
+          : ["function declaration", "call stack", "parameter binding", "pure functions", "side effects"]
+    } else if (/\b(?:if|else\s+if|switch)\b/.test(line)) {
+      type = "conditional"
+      title = "Conditional Check"
+      displayText = {
+        beginner: `We check something: if the condition is true, we do one thing; if not, we might do something else. Like deciding whether to bring an umbrella based on the weather.`,
+        intermediate: `Evaluates a conditional branch. Control flow is directed based on the Boolean result. This determines which code path is taken.`,
+        expert: `Conditional branch instruction. Branch predictor impact should be considered for hot loops — predictable branches (always-true or always-false) are nearly free on modern CPUs. Cyclomatic complexity increases by 1.`,
+      }[level]
+      analogy = "Like a fork in the road — you pick one path based on a condition."
+      key_concepts =
+        level === "beginner"
+          ? ["if-else", "decision"]
+          : level === "intermediate"
+          ? ["conditionals", "control flow", "boolean logic"]
+          : ["branch prediction", "cyclomatic complexity", "boolean evaluation", "short-circuit evaluation"]
+      branchCount++
+    } else if (/\belse\b/.test(line)) {
+      type = "conditional"
+      title = "Else Branch"
+      displayText = {
+        beginner: `This runs when the 'if' above was not true. It's the fallback option — like ordering pizza if the restaurant is closed.`,
+        intermediate: `Handles the alternative code path when the preceding if-condition evaluated to false.`,
+        expert: `Else-branch jump target. In branch-prediction terms, the else path is typically the cold path — verify this assumption for performance-critical code.`,
+      }[level]
+      analogy = "Like a backup plan when your first option doesn't work."
+      key_concepts =
+        level === "beginner"
+          ? ["else", "fallback"]
+          : level === "intermediate"
+          ? ["else branch", "alternative flow"]
+          : ["cold path", "branch prediction", "alternative execution"]
+    } else if (/\b(?:for|while|do)\b/.test(line)) {
+      type = "loop"
+      title = "Loop"
+      displayText = {
+        beginner: `We repeat a set of steps over and over until a condition stops being true. Like stirring a pot until the soup is ready.`,
+        intermediate: `Initializes a loop. The iteration continues while the condition holds. Loop body executes repeatedly — ensure the termination condition will eventually be met.`,
+        expert: `Loop header. Analyze termination guarantee, invariant, and potential for infinite loops under edge-case inputs. Consider loop unrolling or SIMD if this is a hot path. Time complexity contribution: typically O(n) unless bounded by a secondary constraint.`,
+      }[level]
+      analogy = "Like repeating a task until it's done, then stopping."
+      key_concepts =
+        level === "beginner"
+          ? ["loop", "repeat"]
+          : level === "intermediate"
+          ? ["loops", "iteration", "loop condition", "termination"]
+          : ["loop optimization", "termination proof", "loop invariant", "unrolling", "vectorization"]
+      hasLoop = true
+      branchCount++
+    } else if (/\breturn\b/.test(line)) {
+      type = "return"
+      title = "Return Value"
+      const retValMatch = line.match(/return\s+([^;]+)/)
+      const retVal = retValMatch ? retValMatch[1].trim() : "nothing"
+      displayText = {
+        beginner: `We're done! The function hands back a result: ${retVal}. Like finishing a task and reporting back what you found.`,
+        intermediate: `Returns control flow to the caller with the value '${retVal}'. This terminates the current function execution.`,
+        expert: `Pops the current stack frame, writes '${retVal}' to the return register. If this is -1 (sentinel), consider whether callers handle it consistently. An Optional<T> return type would be safer in typed languages.`,
+      }[level]
+      analogy = "Like handing in a finished exam paper."
+      key_concepts =
+        level === "beginner"
+          ? ["return", "output"]
+          : level === "intermediate"
+          ? ["return value", "function exit", "caller"]
+          : ["stack frame", "return register", "sentinel value", "type safety", "Optional types"]
+    } else if (
+      /\b(?:let|const|var|int|double|float|String|boolean)\b.*=/.test(line) ||
+      /\w+\s*(\+|-|\*|\/)?=/.test(line)
+    ) {
+      type = "variable"
+      title = "Variable Assignment"
+      const varNameMatch =
+        line.match(/\b([a-zA-Z_]\w*)\s*=/) ||
+        line.match(/\b(?:int|double|float|String|boolean)\s+([a-zA-Z_]\w*)\b/)
+      const varName = varNameMatch ? varNameMatch[1] : "variable"
+      displayText = {
+        beginner: `We create a box called '${varName}' and put a value inside it. Whenever we need that value, we open the box and look.`,
+        intermediate: `Assigns a value to '${varName}'. This stores data in memory that can be read or updated later in the function.`,
+        expert: `Writes a value to the heap/stack binding '${varName}'. Check mutability semantics (const vs let vs var). Consider whether this binding escapes the current scope and whether it creates a closure.`,
+      }[level]
+      analogy = "Like labeling a jar and putting something inside it."
+      key_concepts =
+        level === "beginner"
+          ? ["variable", "value"]
+          : level === "intermediate"
+          ? ["variables", "assignment", "memory", "scope"]
+          : ["binding", "mutability", "closure", "stack vs heap", "escape analysis"]
+    }
 
-    const { beginner, intermediate, expert, analogy, key_concepts, purpose } = getDynamicExplanationForBlock(b, blockLines.join(" "), variables_affected, level)
-    const displayText = { beginner, intermediate, expert }[level]
-
-    return {
+    blocks.push({
       id: blockCounter++,
-      line_start: b.start,
-      line_end: b.end,
-      type: b.type,
-      title: b.title,
-      purpose,
-      beginner,
-      intermediate,
-      expert,
+      line_start: lineNum,
+      line_end: lineNum,
+      type,
+      title,
       _displayText: displayText,
+      beginner: displayText,
+      intermediate: displayText,
+      expert: displayText,
       analogy,
       key_concepts,
-      variables_affected: Array.from(new Set(variables_affected)),
-    }
-  })
-
-  const execution_steps = blocks.map((b, idx) => ({
-    step: idx + 1,
-    line: b.line_start,
-    title: b.title,
-    what: b._displayText,
-    why: b.analogy,
-    description: `${b.title} (Lines ${b.line_start}-${b.line_end})`,
-    state_changes: b.variables_affected.reduce(
-      (acc, v) => ({ ...acc, [v]: "…" }),
-      {}
-    )
-  }))
-
-  const potential_issues = []
-  if (code.includes("Math.floor((left + right) / 2)")) {
-    potential_issues.push({
-      severity: "warning",
-      line: lines.findIndex(l => l.includes("Math.floor((left + right) / 2)")) + 1,
-      description: "Integer overflow possible in statically typed languages with (left + right) / 2.",
-      suggestion: "Use left + (right - left) / 2 for overflow-safe arithmetic."
+      variables_affected,
     })
-  }
+
+    execution_steps.push({
+      step: stepCounter++,
+      line: lineNum,
+      title,
+      what: displayText,
+      why: analogy,
+      description: `Line ${lineNum}: ${line.slice(0, 80)}`,
+      state_changes: variables_affected.reduce(
+        (acc, v) => ({ ...acc, [v]: "…" }),
+        {}
+      ),
+    })
+  })
 
   let timeComplexity = "O(1)"
   let spaceComplexity = "O(1)"
   let complexityExplanation = {
-    beginner: "This code runs super fast because it doesn't need to repeat any steps — it just goes through each instruction once and is done!",
-    intermediate: "The code executes in constant time O(1) — no loops or recursive calls, so the number of operations doesn't change regardless of input size.",
-    expert: "O(1) time and O(1) space: the code is loop-free and performs a fixed number of operations. No heap allocations detected; variables are stack-bound.",
+    beginner:
+      "This code runs super fast because it doesn't need to repeat any steps — it just goes through each instruction once and is done!",
+    intermediate:
+      "The code executes in constant time O(1) — no loops or recursive calls, so the number of operations doesn't change regardless of input size.",
+    expert:
+      "O(1) time and O(1) space: the code is loop-free and performs a fixed number of operations. No heap allocations detected; variables are stack-bound.",
   }[level]
 
   if (hasLoop) {
-    timeComplexity = "O(log n)"
-    const isBinarySearch = code.includes("mid") && code.includes("left") && code.includes("right")
-    if (!isBinarySearch) {
-      timeComplexity = "O(n)"
-    }
-    complexityExplanation = isBinarySearch 
-      ? {
-          beginner: "Each step cuts our search space in half. Think of searching a phone book: by opening to the middle, you discard half the pages each time. It takes very few steps even for huge lists!",
-          intermediate: "O(log n) time complexity. The search window is halved during each iteration, yielding logarithmic runtime efficiency.",
-          expert: "Logarithmic time O(log n). Each iteration reduces the search bounds [left, right] to half its current size, satisfying worst-case recursion T(n) = T(n/2) + O(1)."
-        }[level]
-      : {
-          beginner: "Because this code uses a loop, it has to do more work when given a bigger list. The execution time increases linearly.",
-          intermediate: "The code contains a loop that runs proportional to the input size n, giving O(n) time complexity.",
-          expert: "O(n) time complexity due to loop iteration proportional to input size. Space is O(1) assuming no dynamic allocation.",
-        }[level]
+    timeComplexity = "O(n)"
+    complexityExplanation = {
+      beginner:
+        "Because this code uses a loop, it has to do more work when given a bigger list. Imagine counting items in a pile — the bigger the pile, the longer it takes!",
+      intermediate:
+        "The code contains a loop that runs proportional to the input size n, giving O(n) time complexity. Space remains O(1) since no extra data structures are allocated.",
+      expert:
+        "O(n) time complexity due to unbounded loop iteration proportional to input size. Verify termination conditions. Space is O(1) assuming no dynamic allocation inside the loop body. Potential for SIMD or early-exit optimizations.",
+    }[level]
   }
 
-  const variables = []
   Array.from(variableSet).forEach((v, index) => {
     variables.push({
       name: v,
-      type: v === "nums" ? "number[]" : "number",
-      value: v === "nums" ? "[1, 3, 5, 7, 9]" : "dynamic",
-      scope: v === "nums" || v === "target" ? "parameter" : "local",
+      type: "variable",
+      value: "dynamic",
+      scope: "local",
       lastChanged: index + 1,
       description: {
         beginner: `'${v}' is a named storage box that holds a value used in this code.`,
         intermediate: `'${v}' is a local variable that stores an intermediate or final value used by the algorithm.`,
-        expert: `'${v}' — local binding. mutability and escape analysis.`,
+        expert: `'${v}' — local binding. Analyze escape behavior, mutability, and whether its type could be narrowed for better optimization.`,
       }[level],
     })
   })
@@ -587,22 +622,30 @@ function buildBlocksForLevel(code, level) {
   let classDiagram = "classDiagram\n  class CodeExplainerProgram {\n"
   blocks.forEach((b) => {
     if (b.type === "function") {
-      const cleanName = b.title.replace("Function Definition: ", "").replace(/[^a-zA-Z0-9]/g, "")
+      const cleanName = b.title.replace("Function: ", "").replace(/[^a-zA-Z0-9]/g, "")
       classDiagram += `    +${cleanName}() void\n`
     }
   })
   classDiagram += "  }\n"
 
   const summaryByLevel = {
-    beginner: `This program has ${lines.length} lines. It contains ${blocks.length} logical blocks: ${blocks.map(b => b.title).join(", ")}. These blocks split the code into logical phases to make it easy to learn.`,
-    intermediate: `This program consists of ${lines.length} lines, structured into ${blocks.length} logical components. The routine utilizes variable initialization, control loops, and conditionals to process input.`,
-    expert: `${lines.length}-line program parsed into ${blocks.length} logical control flows. Cyclomatic complexity is ${1 + branchCount}. Analysis covers loop invariants, index arithmetic safety, and performance constraints.`,
+    beginner: `This program has ${lines.length} lines. It has ${blocks.filter((b) => b.type === "function").length} function(s) and ${blocks.filter((b) => b.type === "loop").length} loop(s). Think of the functions as special helpers that do specific jobs, and the loops as tasks that repeat until they're done.`,
+    intermediate: `This program consists of ${lines.length} lines. It declares ${blocks.filter((b) => b.type === "function").length} function(s), contains ${blocks.filter((b) => b.type === "conditional").length} conditional branch(es), and ${blocks.filter((b) => b.type === "loop").length} loop(s). Overall control flow follows a ${hasLoop ? "linear iterative" : "sequential"} execution model.`,
+    expert: `${lines.length}-line program with ${blocks.filter((b) => b.type === "function").length} function(s), cyclomatic complexity ${1 + branchCount}, and ${blocks.filter((b) => b.type === "loop").length} loop construct(s). ${hasLoop ? "Iterative execution with O(n) time bound." : "Straight-line execution, O(1) time."} Review edge cases, null-safety, and potential for abstraction or generics.`,
   }
 
   return {
+    mode: "detailed",
     summary: summaryByLevel[level],
-    difficulty: level === "beginner" ? "beginner" : level === "intermediate" ? "intermediate" : "expert",
-    estimatedReadMinutes: Math.max(1, Math.ceil(lines.length / 7)),
+    difficulty: level,
+    estimatedReadMinutes: Math.max(
+      1,
+      level === "beginner"
+        ? Math.ceil(lines.length / 10)
+        : level === "intermediate"
+        ? Math.ceil(lines.length / 7)
+        : Math.ceil(lines.length / 5)
+    ),
     blocks,
     overall_complexity: {
       time: timeComplexity,
@@ -610,23 +653,192 @@ function buildBlocksForLevel(code, level) {
       cyclomatic: 1 + branchCount,
       explanation: complexityExplanation,
       comparison: {
-        beginner: "This is already a very efficient approach!",
-        intermediate: "Logarithmic lookup is optimal for static sorted lists. Brute force would cost linear time O(n).",
-        expert: "Time is O(log n), space is O(1). Hash index search can achieve O(1) time but requires O(n) auxiliary space.",
+        beginner: "This is already a good approach for getting things done!",
+        intermediate:
+          "Dynamic analysis generated. For comparison, a brute-force approach would likely be less efficient.",
+        expert:
+          "Static analysis only — profile in production to validate actual hot paths. Asymptotic complexity may differ from practical performance due to cache effects.",
       }[level],
-      breakdown: blocks.map(b => ({
-        name: b.title,
-        time: b.type === "loop" || b.type === "conditional" ? "O(log n)" : "O(1)",
-        space: "O(1)"
-      })),
+      breakdown: [{ name: "Control Flow", time: timeComplexity, space: spaceComplexity }],
       optimization: {
         beginner: "Great job keeping it simple! Try to reuse code by putting repeated actions into functions.",
-        intermediate: "Ensure loop bounds terminate early. Overflow safety check is recommended.",
-        expert: "Profile branch predictor misses. Consider bitwise shifts for midpoint computation.",
+        intermediate:
+          "Ensure loops terminate early where possible. Consider caching repeated computations.",
+        expert:
+          "Profile before optimizing. Consider loop unrolling, memoization, SIMD, and algorithm-level improvements before micro-optimizations.",
       }[level],
     },
-    patterns_detected: hasLoop ? ["loop iteration", "binary search window"] : ["sequential flow"],
+    patterns_detected: hasLoop ? ["loop iteration", "sequential execution"] : ["sequential execution"],
     potential_issues,
+    execution_steps,
+    variables,
+    diagrams: { flowchart, sequence, classDiagram },
+  }
+}
+
+// ─── Chunked / Architecture / Explorer builder ────────────────────────────────
+
+function buildAdaptiveExplanation(code, level, mode) {
+  const allLines = code.split("\n")
+  const nonEmptyLines = allLines.filter((l) => l.trim())
+  const lineCount = allLines.length
+
+  const functions = detectFunctions(allLines)
+  const labels = classifyLines(allLines)
+  const chunks = buildChunks(allLines, labels, functions)
+  const modules = buildModuleTree(chunks, functions)
+  const summaryLayers = buildSummaryLayers(code, allLines, mode, functions, chunks, modules)
+  const tree = buildKnowledgeTree(modules, functions, allLines)
+  const architectureChart = buildArchitectureFlowchart(modules)
+
+  // Level-calibrated description generators
+  const describeFn = (fn, level) => ({
+    beginner: `'${fn.name}' is a helper that does a specific job. It spans ${fn.lines} lines.`,
+    intermediate: `Function '${fn.name}' (lines ${fn.start}–${fn.end}, ${fn.lines} lines). Encapsulates a discrete unit of logic.`,
+    expert: `\`${fn.name}\` — ${fn.lines} LOC (L${fn.start}–L${fn.end}). Estimated cyclomatic complexity: ~${Math.max(1, Math.ceil(fn.lines / 8))}. Verify: pure function? Side effects? Testable in isolation?`,
+  })[level]
+
+  const describeChunk = (chunk, level) => ({
+    beginner: `This section (lines ${chunk.line_start}–${chunk.line_end}) is the "${chunk.label}" part of the code. It has ${chunk.functions.length} helper(s) inside.`,
+    intermediate: `${chunk.label} block spanning lines ${chunk.line_start}–${chunk.line_end} (${chunk.lineCount} non-empty lines). Contains ${chunk.functions.length} function definition(s).`,
+    expert: `Module segment: ${chunk.label} (L${chunk.line_start}–L${chunk.line_end}). ${chunk.lineCount} executable lines. ${chunk.functions.length} callables. Review inter-module coupling and single-responsibility principle compliance.`,
+  })[level]
+
+  // Complexity estimation
+  const estimatedCyclomatic = Math.max(1, functions.length + Math.floor(nonEmptyLines.length / 20))
+  const hasLoops = /\b(for|while|forEach|map|filter|reduce)\b/.test(code)
+  const timeComplexity = hasLoops ? "O(n)" : "O(1)"
+  const spaceComplexity = functions.length > 5 ? "O(n)" : "O(1)"
+
+  const complexityByLevel = {
+    beginner: `This codebase has ${lineCount} lines across ${modules.length} area(s). More code means more work — but good organization keeps things manageable!`,
+    intermediate: `${lineCount} lines, ~${estimatedCyclomatic} cyclomatic complexity, ${functions.length} functions across ${modules.length} module(s). ${hasLoops ? "Contains loop constructs (O(n) time potential)." : "No dominant loops detected (O(1) candidate)."}`,
+    expert: `${lineCount} LOC, estimated cyclomatic complexity ≈ ${estimatedCyclomatic}. ${functions.length} callables across ${modules.length} semantic module(s). Time: ${timeComplexity}, Space: ${spaceComplexity}. Static analysis only — instrument with profiler for production hot-path confirmation.`,
+  }
+
+  // Enriched chunks with descriptions
+  const enrichedChunks = chunks.map((chunk) => ({
+    ...chunk,
+    description: describeChunk(chunk, level),
+    functions: chunk.functions.map((fn) => ({
+      ...fn,
+      description: describeFn(fn, level),
+    })),
+  }))
+
+  const enrichedModules = modules.map((mod) => ({
+    ...mod,
+    description: {
+      beginner: `The "${mod.name}" area handles a specific job in this codebase.`,
+      intermediate: `Module: ${mod.name}. Spans lines ${mod.lineStart}–${mod.lineEnd} with ${mod.functions.length} function(s).`,
+      expert: `Semantic module: ${mod.name} (L${mod.lineStart}–L${mod.lineEnd}). ${mod.functions.length} callables. Assess cohesion and coupling metrics.`,
+    }[level],
+    functions: mod.functions.map((fn) => ({
+      ...fn,
+      description: describeFn(fn, level),
+    })),
+  }))
+
+  const summaryByLevel = {
+    beginner: summaryLayers.layer1,
+    intermediate: summaryLayers.layer2,
+    expert: summaryLayers.layer3,
+  }
+
+  // Maintain backward-compat fields (blocks, execution_steps, variables, diagrams)
+  // so existing tabs (Overview, Variables, Complexity, Diagrams) still render correctly
+  const blocks = enrichedChunks.map((chunk, i) => ({
+    id: i + 1,
+    line_start: chunk.line_start,
+    line_end: chunk.line_end,
+    type: "chunk",
+    title: `${chunk.icon} ${chunk.label}`,
+    _displayText: chunk.description,
+    beginner: chunk.description,
+    intermediate: chunk.description,
+    expert: chunk.description,
+    analogy: `This is the "${chunk.label}" section of your code.`,
+    key_concepts: [chunk.label, "modular design"],
+    variables_affected: [],
+  }))
+
+  const execution_steps = enrichedChunks.map((chunk, i) => ({
+    step: i + 1,
+    line: chunk.line_start,
+    title: `${chunk.icon} ${chunk.label}`,
+    what: chunk.description,
+    why: `This section handles "${chunk.label}" responsibilities.`,
+    description: `Lines ${chunk.line_start}–${chunk.line_end}: ${chunk.label}`,
+    state_changes: {},
+  }))
+
+  const variableSet = new Set()
+  allLines.forEach((line) => {
+    const m = line.match(/\b(?:let|const|var)\s+([a-zA-Z_]\w*)\b/)
+    if (m) variableSet.add(m[1])
+  })
+  const variables = Array.from(variableSet).map((v, i) => ({
+    name: v,
+    type: "variable",
+    value: "dynamic",
+    scope: "local",
+    lastChanged: i + 1,
+    description: {
+      beginner: `'${v}' stores a value used in this code.`,
+      intermediate: `'${v}' — a variable binding tracked across execution.`,
+      expert: `\`${v}\` — binding. Analyze scope, mutability, and escape analysis.`,
+    }[level],
+  }))
+
+  // Mermaid diagrams
+  let flowchart = architectureChart
+  let sequence = "sequenceDiagram\n  participant User\n  participant App\n"
+  enrichedModules.forEach((m) => {
+    sequence += `  App->>App: ${m.name}\n`
+  })
+  sequence += "  App-->>User: Done\n"
+
+  let classDiagram = "classDiagram\n"
+  enrichedModules.forEach((mod) => {
+    const cleanName = mod.name.replace(/[^a-zA-Z0-9]/g, "")
+    classDiagram += `  class ${cleanName || "Module"} {\n`
+    mod.functions.slice(0, 5).forEach((fn) => {
+      classDiagram += `    +${fn.name}() void\n`
+    })
+    classDiagram += "  }\n"
+  })
+
+  return {
+    mode,
+    summary: summaryByLevel[level],
+    summaryLayers,
+    difficulty: level,
+    estimatedReadMinutes: Math.max(1, Math.ceil(lineCount / (level === "beginner" ? 15 : level === "intermediate" ? 20 : 30))),
+    blocks,
+    chunks: enrichedChunks,
+    modules: enrichedModules,
+    tree,
+    functions,
+    architectureChart,
+    overall_complexity: {
+      time: timeComplexity,
+      space: spaceComplexity,
+      cyclomatic: estimatedCyclomatic,
+      explanation: complexityByLevel[level],
+      comparison: {
+        beginner: "Good code organization helps keep things manageable as the project grows!",
+        intermediate: `${lineCount} lines is a ${lineCount < 200 ? "small-medium" : lineCount < 1000 ? "medium" : "large"} codebase. Modular design improves maintainability.`,
+        expert: "Static analysis only. Profile hot paths in production. Consider architectural patterns (CQRS, event sourcing) for scale.",
+      }[level],
+      breakdown: enrichedModules.map((m) => ({ name: m.name, time: "O(n)", space: "O(1)" })),
+      optimization: {
+        beginner: "Break large sections into smaller, named functions to make the code easier to understand.",
+        intermediate: "Extract shared logic into utilities. Consider lazy loading for large modules.",
+        expert: "Evaluate tree-shaking, code-splitting, and module boundary optimization. Instrument with a profiler before optimizing.",
+      }[level],
+    },
+    patterns_detected: modules.map((m) => m.name),
+    potential_issues: [],
     execution_steps,
     variables,
     diagrams: { flowchart, sequence, classDiagram },
@@ -637,23 +849,37 @@ function buildBlocksForLevel(code, level) {
 
 /**
  * Generate explanations for all three depth levels.
- * Returns { beginner, intermediate, expert }.
+ * Automatically selects the right mode based on line count.
+ * Returns { beginner, intermediate, expert, mode }.
  */
 export function generateAllExplanations(code, language) {
   const isDefault = code.trim() === defaultCode.trim()
 
   if (isDefault) {
     return {
-      beginner: mockBeginner,
-      intermediate: mockIntermediate,
-      expert: mockExpert,
+      beginner: { ...mockBeginner, mode: "detailed" },
+      intermediate: { ...mockIntermediate, mode: "detailed" },
+      expert: { ...mockExpert, mode: "detailed" },
+      mode: "detailed",
+    }
+  }
+
+  const mode = detectMode(code)
+
+  if (mode === "detailed") {
+    return {
+      beginner: buildBlocksForLevel(code, "beginner"),
+      intermediate: buildBlocksForLevel(code, "intermediate"),
+      expert: buildBlocksForLevel(code, "expert"),
+      mode,
     }
   }
 
   return {
-    beginner: buildBlocksForLevel(code, "beginner"),
-    intermediate: buildBlocksForLevel(code, "intermediate"),
-    expert: buildBlocksForLevel(code, "expert"),
+    beginner: buildAdaptiveExplanation(code, "beginner", mode),
+    intermediate: buildAdaptiveExplanation(code, "intermediate", mode),
+    expert: buildAdaptiveExplanation(code, "expert", mode),
+    mode,
   }
 }
 
