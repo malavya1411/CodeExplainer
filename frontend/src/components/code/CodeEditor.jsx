@@ -299,6 +299,8 @@ export function CodeEditor({ value, language, onChange, highlightLine, highlight
           automaticLayout: true,
           wordWrap: "on",
           scrollbar: { verticalScrollbarSize: 10, horizontalScrollbarSize: 10 },
+          renderIndentGuides: false,
+          guides: { indentation: false },
         }}
       />
     </div>
