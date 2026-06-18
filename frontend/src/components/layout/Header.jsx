@@ -122,7 +122,7 @@ export function Header({
           {commentsMenuOpen && (
             <div
               role="menu"
-              className="absolute right-0 mt-1.5 w-56 premium-card shadow-xl py-1 z-50 animate-fade-in"
+              className="absolute left-1/2 -translate-x-1/2 mt-1.5 w-48 premium-card shadow-xl py-1 z-50 animate-fade-in"
             >
               <button
                 role="menuitem"
