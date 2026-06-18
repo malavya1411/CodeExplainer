@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react"
+import { Sparkles, Play, BookOpen, Settings2, Brain, BarChart3, MessageSquare } from "lucide-react"
 import { useExplanationStore } from "../../stores/explanationStore.js"
 import { useCodeStore } from "../../stores/codeStore.js"
 import { DepthSwitcher } from "./DepthSwitcher.jsx"
@@ -14,7 +14,11 @@ import { DiagramsTab } from "./DiagramsTab.jsx"
 import { CommentPreview } from "./CommentPreview.jsx"
 import { MinimapPanel } from "./MinimapPanel.jsx"
 
-export function ExplanationPanel({ complexity }) {
+// Feature card accent colours
+const FEATURE_COLORS = ["#7ed8a4", "#7baee8", "#b48ee8", "#e88e7b", "#e8c87b"]
+function getFeatureColor(i) { return FEATURE_COLORS[i % FEATURE_COLORS.length] }
+
+export function ExplanationPanel({ complexity, onAnalyze }) {
   const explanation = useExplanationStore((s) => s.explanation)
   const activeTab = useExplanationStore((s) => s.activeTab)
   const currentStep = useExplanationStore((s) => s.currentStep)
@@ -24,15 +28,24 @@ export function ExplanationPanel({ complexity }) {
 
   const isAdaptive = explanationMode !== "detailed"
 
+  // ── Feature cards shown in the hero ──────────────────────────────────────
+  const FEATURES = [
+    { Icon: BookOpen,      title: "Beginner\nExplanations", desc: "Simple language and guided learning" },
+    { Icon: Settings2,     title: "Intermediate\nInsights",  desc: "Logic, variables, and flow explained" },
+    { Icon: Brain,         title: "Expert\nAnalysis",        desc: "Complexity, optimizations, and tradeoffs" },
+    { Icon: BarChart3,     title: "Visual\nDiagrams",        desc: "Understand execution visually" },
+    { Icon: MessageSquare, title: "Smart\nComments",         desc: "Generate production-ready documentation" },
+  ]
+
   // ── Empty / loading state ──────────────────────────────────────────────────
   if (!explanation) {
     return (
       <section
         aria-label="Explanation panel"
-        className="flex flex-col h-full items-center justify-center bg-[var(--bg-primary)]"
+        className="flex flex-col h-full bg-[var(--bg-primary)] overflow-y-auto"
       >
         {isAnalyzing ? (
-          <div className="flex flex-col items-center gap-4 text-center px-8">
+          <div className="flex flex-col items-center justify-center flex-1 gap-4 text-center px-8">
             <div className="relative w-14 h-14">
               <div
                 className="absolute inset-0 rounded-full border-2 border-[var(--accent-primary)] opacity-30"
@@ -50,39 +63,120 @@ export function ExplanationPanel({ complexity }) {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-5 text-center px-10 max-w-sm">
-            {/* Decorative icon cluster */}
-            <div className="relative w-16 h-16 flex items-center justify-center">
-              <div
-                className="absolute inset-0 rounded-2xl rotate-12 opacity-10"
-                style={{ background: "var(--accent-primary)" }}
-              />
-              <div
-                className="absolute inset-0 rounded-2xl -rotate-12 opacity-10"
-                style={{ background: "var(--accent-secondary)" }}
-              />
-              <Sparkles size={28} className="relative text-[var(--accent-primary)]" />
+          <div className="flex flex-col items-center justify-between flex-1 px-6 py-10 gap-10 max-w-xl mx-auto w-full">
+
+            {/* ── Hero ── */}
+            <div className="flex flex-col items-center gap-6 text-center">
+
+              {/* Icon with floating sparkle dots */}
+              <div className="relative w-28 h-28 flex items-center justify-center select-none">
+                {/* Decorative dots */}
+                {[
+                  { top: "4px",  left:  "50%",  size: 5, delay: "0s" },
+                  { top: "12px", right: "10px", size: 4, delay: "0.4s" },
+                  { top: "50%",  right: "2px",  size: 3, delay: "0.8s" },
+                  { bottom:"10px", right:"14px", size: 5, delay: "0.2s" },
+                  { top: "30%",  left:  "4px",  size: 3, delay: "0.6s" },
+                ].map((d, i) => (
+                  <span
+                    key={i}
+                    className="absolute rounded-full"
+                    style={{
+                      width: d.size, height: d.size,
+                      top: d.top, left: d.left, right: d.right, bottom: d.bottom,
+                      background: "var(--accent-primary)",
+                      opacity: 0.6,
+                      animation: `pulse 2s ${d.delay} ease-in-out infinite`,
+                    }}
+                  />
+                ))}
+
+                {/* Icon box */}
+                <div
+                  className="w-20 h-20 rounded-2xl flex items-center justify-center relative"
+                  style={{ background: "color-mix(in srgb, var(--accent-primary) 18%, var(--bg-secondary))" }}
+                >
+                  <div
+                    className="absolute inset-0 rounded-2xl"
+                    style={{
+                      background: "color-mix(in srgb, var(--accent-primary) 10%, transparent)",
+                      filter: "blur(10px)",
+                    }}
+                  />
+                  <Sparkles size={36} className="relative" style={{ color: "var(--accent-primary)" }} />
+                </div>
+              </div>
+
+              {/* Title */}
+              <div className="space-y-3">
+                <h2 className="text-3xl font-bold tracking-tight leading-tight">
+                  <span className="text-[var(--text-primary)]">Understand </span>
+                  <span style={{ color: "var(--accent-primary)" }}>Your Code</span>
+                </h2>
+                <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-sm">
+                  Generate AI-powered explanations, step-by-step walkthroughs,
+                  complexity analysis, diagrams, and smart comments tailored
+                  to your skill level.
+                </p>
+              </div>
+
+              {/* CTA button */}
+              <div className="flex flex-col items-center gap-3">
+                <button
+                  id="hero-explain-btn"
+                  onClick={onAnalyze}
+                  className="flex items-center gap-2.5 px-8 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:opacity-90 active:scale-95 shadow-lg"
+                  style={{
+                    background: "var(--accent-primary)",
+                    color: "var(--accent-on)",
+                    boxShadow: "0 4px 24px color-mix(in srgb, var(--accent-primary) 35%, transparent)",
+                  }}
+                >
+                  <Play size={16} fill="currentColor" />
+                  Explain Code
+                </button>
+
+                {/* Keyboard hint */}
+                <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
+                  <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-tertiary)] font-mono text-[10px] border border-[var(--border)]">⌘</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-tertiary)] font-mono text-[10px] border border-[var(--border)]">Enter</kbd>
+                  <span>or</span>
+                  <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-tertiary)] font-mono text-[10px] border border-[var(--border)]">Ctrl</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-tertiary)] font-mono text-[10px] border border-[var(--border)]">Enter</kbd>
+                  <span>to analyze</span>
+                </div>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <p className="text-base font-semibold text-[var(--text-primary)]">
-                Ready to Explain
-              </p>
-              <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                Click{" "}
-                <span className="font-semibold text-[var(--accent-primary)]">Explain</span> to
-                analyze this code and get tailored explanations for 30s Summary, 5m Overview, and
-                Deep Dive levels.
-              </p>
+
+            {/* ── Feature cards ── */}
+            <div className="grid grid-cols-5 gap-2 w-full">
+              {FEATURES.map((f, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-3 text-center"
+                >
+                  <f.Icon
+                    size={24}
+                    strokeWidth={1.6}
+                    style={{ color: getFeatureColor(i) }}
+                  />
+                  <p
+                    className="text-[11px] font-semibold leading-tight whitespace-pre-line"
+                    style={{ color: getFeatureColor(i) }}
+                  >
+                    {f.title}
+                  </p>
+                  <p className="text-[10px] text-[var(--text-muted)] leading-snug">{f.desc}</p>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center gap-2 text-[11px] text-[var(--text-muted)] bg-[var(--bg-secondary)] rounded-lg px-3 py-2 border border-[var(--border)]">
-              <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-tertiary)] font-mono text-[10px] border border-[var(--border)]">
-                ⌘
-              </kbd>
-              <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-tertiary)] font-mono text-[10px] border border-[var(--border)]">
-                Enter
-              </kbd>
-              <span>to analyze instantly</span>
-            </div>
+
+            {/* ── Security note ── */}
+            <p className="text-[11px] text-[var(--text-muted)] flex items-center gap-1.5">
+              <span style={{ color: "var(--success)" }}>✓</span>
+              Your code is safe and secure. We never store or share your code.
+            </p>
+
           </div>
         )}
       </section>
