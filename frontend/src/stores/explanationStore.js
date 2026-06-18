@@ -7,6 +7,7 @@ const SPEED_MS = { 0.5: 2400, 1: 1200, 2: 600, 4: 300 }
 export const useExplanationStore = create((set, get) => ({
   // null until user explicitly clicks Explain
   explanation: null,
+  analyzedCode: null,
 
   // Cache for each depth level — populated on Explain click
   explanations: {
@@ -28,7 +29,7 @@ export const useExplanationStore = create((set, get) => ({
   },
 
   /** Called once per Explain click — stores all three level results */
-  setAllExplanations: (beginner, intermediate, expert) => {
+  setAllExplanations: (beginner, intermediate, expert, analyzedCode = null) => {
     const depth = get().depth
     const active = { beginner, intermediate, expert }[depth]
     set({
@@ -36,6 +37,7 @@ export const useExplanationStore = create((set, get) => ({
       explanation: active,
       currentStep: 0,
       isPlaying: false,
+      analyzedCode,
     })
   },
 
@@ -46,6 +48,7 @@ export const useExplanationStore = create((set, get) => ({
   clearExplanations: () =>
     set({
       explanation: null,
+      analyzedCode: null,
       explanations: { beginner: null, intermediate: null, expert: null },
       currentStep: 0,
       isPlaying: false,

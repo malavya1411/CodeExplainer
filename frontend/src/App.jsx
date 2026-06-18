@@ -84,7 +84,7 @@ export default function App() {
       }[activeDepth]
 
       // Set explanations
-      setAllExplanations(beginner, intermediate, expert)
+      setAllExplanations(beginner, intermediate, expert, code)
       setComplexity(analyzeComplexity(code))
 
       // Set comments
@@ -225,7 +225,7 @@ export default function App() {
             <PanelResizeHandle className="w-1.5 bg-[var(--border)] hover:bg-[var(--accent-primary)] transition-colors cursor-col-resize z-10" />
             
             <Panel defaultSize={55} minSize={30} className="h-full">
-              <ExplanationPanel complexity={complexity} />
+              <ExplanationPanel complexity={complexity} onAnalyze={handleAnalyze} />
             </Panel>
           </PanelGroup>
         ) : (
