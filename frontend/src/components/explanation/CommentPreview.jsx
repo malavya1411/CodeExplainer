@@ -5,6 +5,8 @@ import { useCommentStore } from "../../stores/commentStore.js"
 import { useCodeStore } from "../../stores/codeStore.js"
 import { useThemeStore } from "../../stores/themeStore.js"
 import { toast } from "../shared/Toast.jsx"
+import { Modal } from "../shared/Modal.jsx"
+import { Button } from "../shared/Button.jsx"
 import {
   buildCommentedMarkdown,
   buildCommentedHTML,
@@ -42,11 +44,18 @@ export function CommentPreview() {
     setHasAppliedChanges(false)
   }, [commentedCode])
 
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
   const handleApplyChanges = () => {
+    setConfirmOpen(true)
+  }
+
+  const confirmApply = () => {
     if (!generatedCode) return
     setCode(generatedCode)
     setPreviewMode("code")
     setHasAppliedChanges(true)
+    setConfirmOpen(false)
     toast.success("Changes applied successfully.")
   }
 
@@ -377,6 +386,27 @@ export function CommentPreview() {
           />
         )}
       </div>
+
+      <Modal
+        isOpen={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        title="Apply Changes"
+        width="max-w-md"
+        footer={
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={confirmApply}>
+              Apply
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+          Are you sure you want to apply these comments? This will overwrite your editor's current code.
+        </p>
+      </Modal>
     </div>
   )
 }
