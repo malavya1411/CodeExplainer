@@ -31,13 +31,15 @@ export function CommentPreview() {
   const [originalCode, setOriginalCode] = useState(code)
   const [generatedCode, setGeneratedCode] = useState(commentedCode)
   const [hasAppliedChanges, setHasAppliedChanges] = useState(false)
-  const [previewMode, setPreviewMode] = useState("diff") // "diff" or "code"
+  const [previewMode, setPreviewMode] = useState("diff") // "diff", "original", or "code"
   const [exportMenuOpen, setExportMenuOpen] = useState(false)
   const [stale, setStale] = useState(false)
 
   useEffect(() => {
-    setOriginalCode(code)
-  }, [code])
+    if (!hasAppliedChanges) {
+      setOriginalCode(code)
+    }
+  }, [code, hasAppliedChanges])
 
   useEffect(() => {
     setGeneratedCode(commentedCode)
@@ -228,6 +230,16 @@ export function CommentPreview() {
               Comparison
             </button>
             <button
+              onClick={() => setPreviewMode("original")}
+              className={`text-[10px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+                previewMode === "original"
+                  ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+              }`}
+            >
+              Original Code
+            </button>
+            <button
               onClick={() => setPreviewMode("code")}
               className={`text-[10px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
                 previewMode === "code"
@@ -353,8 +365,24 @@ export function CommentPreview() {
       <div className="flex-1 min-h-[300px] border border-[var(--border)] rounded-2xl overflow-hidden relative shadow-inner bg-[var(--bg-secondary)]">
         {previewMode === "diff" ? (
           <DiffEditor
-            original={code}
+            original={originalCode}
             modified={commentedCode}
+            language={language === "python" ? "python" : "javascript"}
+            theme={resolvedTheme === "dark" ? "explainer-dark" : "explainer-light"}
+            options={{
+              readOnly: true,
+              fontSize: 12.5,
+              lineHeight: 20,
+              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 }
+            }}
+          />
+        ) : previewMode === "original" ? (
+          <Editor
+            value={originalCode}
             language={language === "python" ? "python" : "javascript"}
             theme={resolvedTheme === "dark" ? "explainer-dark" : "explainer-light"}
             options={{
