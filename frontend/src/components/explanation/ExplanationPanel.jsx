@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Sparkles, Play, BookOpen, Settings, Brain, Activity, MessageSquare, Lock, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react"
+import { Sparkles, Play, Lock, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react"
 import { useExplanationStore } from "../../stores/explanationStore.js"
 import { useCodeStore } from "../../stores/codeStore.js"
 import { DepthSwitcher } from "./DepthSwitcher.jsx"
@@ -201,47 +201,47 @@ export function ExplanationPanel({ complexity, onAnalyze }) {
             {/* Feature cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 w-full max-w-5xl px-6 mt-12">
               {/* Card 1 */}
-              <div className="flex flex-col gap-2 p-4 premium-card border border-[var(--border)] rounded-2xl bg-[var(--bg-secondary)] text-left hover:border-[var(--accent-primary)]/50 transition-all duration-300 group">
-                <div className="w-8 h-8 flex items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 mb-1">
-                  <BookOpen size={16} />
+              <div className="flex flex-col gap-2.5 p-4 premium-card border border-[var(--border)] rounded-2xl bg-[var(--bg-secondary)] text-left hover:border-[var(--accent-primary)]/50 transition-all duration-300 group hover:-translate-y-0.5 shadow-sm">
+                <div className="font-bold text-xs text-[var(--text-primary)] flex items-center gap-1.5">
+                  <span className="text-sm group-hover:scale-115 transition-transform duration-300">📘</span>
+                  <span>Beginner Explanations</span>
                 </div>
-                <div className="font-bold text-xs text-[var(--text-primary)]">📘 Beginner Explanations</div>
                 <div className="text-[11px] text-[var(--text-muted)] leading-relaxed font-medium">Simple language and guided learning</div>
               </div>
               
               {/* Card 2 */}
-              <div className="flex flex-col gap-2 p-4 premium-card border border-[var(--border)] rounded-2xl bg-[var(--bg-secondary)] text-left hover:border-[var(--accent-primary)]/50 transition-all duration-300 group">
-                <div className="w-8 h-8 flex items-center justify-center rounded-xl bg-blue-500/10 text-blue-500 mb-1">
-                  <Settings size={16} className="group-hover:rotate-45 transition-transform duration-500" />
+              <div className="flex flex-col gap-2.5 p-4 premium-card border border-[var(--border)] rounded-2xl bg-[var(--bg-secondary)] text-left hover:border-[var(--accent-primary)]/50 transition-all duration-300 group hover:-translate-y-0.5 shadow-sm">
+                <div className="font-bold text-xs text-[var(--text-primary)] flex items-center gap-1.5">
+                  <span className="text-sm group-hover:rotate-12 transition-transform duration-300">⚙️</span>
+                  <span>Intermediate Insights</span>
                 </div>
-                <div className="font-bold text-xs text-[var(--text-primary)]">⚙️ Intermediate Insights</div>
                 <div className="text-[11px] text-[var(--text-muted)] leading-relaxed font-medium">Logic, variables, and flow explained</div>
               </div>
 
               {/* Card 3 */}
-              <div className="flex flex-col gap-2 p-4 premium-card border border-[var(--border)] rounded-2xl bg-[var(--bg-secondary)] text-left hover:border-[var(--accent-primary)]/50 transition-all duration-300 group">
-                <div className="w-8 h-8 flex items-center justify-center rounded-xl bg-purple-500/10 text-purple-500 mb-1">
-                  <Brain size={16} className="group-hover:scale-110 transition-transform duration-300" />
+              <div className="flex flex-col gap-2.5 p-4 premium-card border border-[var(--border)] rounded-2xl bg-[var(--bg-secondary)] text-left hover:border-[var(--accent-primary)]/50 transition-all duration-300 group hover:-translate-y-0.5 shadow-sm">
+                <div className="font-bold text-xs text-[var(--text-primary)] flex items-center gap-1.5">
+                  <span className="text-sm group-hover:scale-115 transition-transform duration-300">🧠</span>
+                  <span>Expert Analysis</span>
                 </div>
-                <div className="font-bold text-xs text-[var(--text-primary)]">🧠 Expert Analysis</div>
                 <div className="text-[11px] text-[var(--text-muted)] leading-relaxed font-medium">Complexity, optimizations, and tradeoffs</div>
               </div>
 
               {/* Card 4 */}
-              <div className="flex flex-col gap-2 p-4 premium-card border border-[var(--border)] rounded-2xl bg-[var(--bg-secondary)] text-left hover:border-[var(--accent-primary)]/50 transition-all duration-300 group">
-                <div className="w-8 h-8 flex items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 mb-1">
-                  <Activity size={16} className="group-hover:animate-pulse transition-transform duration-300" />
+              <div className="flex flex-col gap-2.5 p-4 premium-card border border-[var(--border)] rounded-2xl bg-[var(--bg-secondary)] text-left hover:border-[var(--accent-primary)]/50 transition-all duration-300 group hover:-translate-y-0.5 shadow-sm">
+                <div className="font-bold text-xs text-[var(--text-primary)] flex items-center gap-1.5">
+                  <span className="text-sm group-hover:scale-115 transition-transform duration-300">📊</span>
+                  <span>Visual Diagrams</span>
                 </div>
-                <div className="font-bold text-xs text-[var(--text-primary)]">📊 Visual Diagrams</div>
                 <div className="text-[11px] text-[var(--text-muted)] leading-relaxed font-medium">Understand execution visually</div>
               </div>
 
               {/* Card 5 */}
-              <div className="flex flex-col gap-2 p-4 premium-card border border-[var(--border)] rounded-2xl bg-[var(--bg-secondary)] text-left hover:border-[var(--accent-primary)]/50 transition-all duration-300 group">
-                <div className="w-8 h-8 flex items-center justify-center rounded-xl bg-pink-500/10 text-pink-500 mb-1">
-                  <MessageSquare size={16} />
+              <div className="flex flex-col gap-2.5 p-4 premium-card border border-[var(--border)] rounded-2xl bg-[var(--bg-secondary)] text-left hover:border-[var(--accent-primary)]/50 transition-all duration-300 group hover:-translate-y-0.5 shadow-sm">
+                <div className="font-bold text-xs text-[var(--text-primary)] flex items-center gap-1.5">
+                  <span className="text-sm group-hover:scale-115 transition-transform duration-300">💬</span>
+                  <span>Smart Comments</span>
                 </div>
-                <div className="font-bold text-xs text-[var(--text-primary)]">💬 Smart Comments</div>
                 <div className="text-[11px] text-[var(--text-muted)] leading-relaxed font-medium">Generate production-ready documentation</div>
               </div>
             </div>
