@@ -146,7 +146,13 @@ export function Header({
                 onClick={() => {
                   setCommentsMenuOpen(false)
                   updateSettings({ depth: "beginner" })
-                  generateComments(code, language)
+                  useExplanationStore.getState().setDepth("beginner")
+                  const comments = useCommentStore.getState().commentedCodes
+                  if (comments && comments["beginner"]) {
+                    useCommentStore.setState({ commentedCode: comments["beginner"] })
+                  } else {
+                    generateComments(code, language)
+                  }
                   useExplanationStore.getState().setActiveTab("Comments")
                   if (activeWorkspace !== "explainer" && onWorkspaceChange) {
                     onWorkspaceChange("explainer")
@@ -161,7 +167,13 @@ export function Header({
                 onClick={() => {
                   setCommentsMenuOpen(false)
                   updateSettings({ depth: "intermediate" })
-                  generateComments(code, language)
+                  useExplanationStore.getState().setDepth("intermediate")
+                  const comments = useCommentStore.getState().commentedCodes
+                  if (comments && comments["intermediate"]) {
+                    useCommentStore.setState({ commentedCode: comments["intermediate"] })
+                  } else {
+                    generateComments(code, language)
+                  }
                   useExplanationStore.getState().setActiveTab("Comments")
                   if (activeWorkspace !== "explainer" && onWorkspaceChange) {
                     onWorkspaceChange("explainer")
@@ -176,7 +188,13 @@ export function Header({
                 onClick={() => {
                   setCommentsMenuOpen(false)
                   updateSettings({ depth: "expert" })
-                  generateComments(code, language)
+                  useExplanationStore.getState().setDepth("expert")
+                  const comments = useCommentStore.getState().commentedCodes
+                  if (comments && comments["expert"]) {
+                    useCommentStore.setState({ commentedCode: comments["expert"] })
+                  } else {
+                    generateComments(code, language)
+                  }
                   useExplanationStore.getState().setActiveTab("Comments")
                   if (activeWorkspace !== "explainer" && onWorkspaceChange) {
                     onWorkspaceChange("explainer")

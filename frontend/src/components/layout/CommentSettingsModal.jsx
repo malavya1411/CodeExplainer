@@ -17,6 +17,11 @@ export function CommentSettingsModal({ isOpen, onClose, activeWorkspace, onWorks
 
   const handleDepthChange = (depth) => {
     updateSettings({ depth })
+    useExplanationStore.getState().setDepth(depth)
+    const comments = useCommentStore.getState().commentedCodes
+    if (comments && comments[depth]) {
+      useCommentStore.setState({ commentedCode: comments[depth] })
+    }
   }
 
   const handlePlacementToggle = (key) => {

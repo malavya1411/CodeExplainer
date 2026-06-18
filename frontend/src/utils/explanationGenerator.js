@@ -401,7 +401,6 @@ function buildBlocksForLevel(code, level) {
   })
   classDiagram += "  }\n"
 
-  const lines = code.split("\n")
   const summaryByLevel = {
     beginner: `This program has ${lines.length} lines. It has ${blocks.filter((b) => b.type === "function").length} function(s) and ${blocks.filter((b) => b.type === "loop").length} loop(s). Think of the functions as special helpers that do specific jobs, and the loops as tasks that repeat until they're done.`,
     intermediate: `This program consists of ${lines.length} lines. It declares ${blocks.filter((b) => b.type === "function").length} function(s), contains ${blocks.filter((b) => b.type === "conditional").length} conditional branch(es), and ${blocks.filter((b) => b.type === "loop").length} loop(s). Overall control flow follows a ${hasLoop ? "linear iterative" : "sequential"} execution model.`,

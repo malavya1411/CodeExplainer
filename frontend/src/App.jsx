@@ -19,6 +19,7 @@ import { OptimizerWorkspace } from "./components/optimizer/OptimizerWorkspace.js
 import { buildMarkdown, buildHTML, buildNotion, downloadText, downloadPDF } from "./utils/exportGenerator.js"
 import { analyzeComplexity } from "./utils/complexityAnalyzer.js"
 import { generateAllExplanations } from "./utils/explanationGenerator.js"
+import { generateCommentedCode } from "./utils/commentGenerator.js"
 
 export default function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -63,11 +64,42 @@ export default function App() {
       return
     }
     setAnalyzing(true)
+    useCommentStore.setState({ isGenerating: true, generationError: null })
+
     // Simulate API delay then generate all three depth levels
     setTimeout(() => {
       const { beginner, intermediate, expert } = generateAllExplanations(code, language)
+      
+      // Generate comments for all three levels
+      const commentSettings = useCommentStore.getState().commentSettings
+      const commentsBeginner = generateCommentedCode(code, language, { ...commentSettings, depth: "beginner" })
+      const commentsIntermediate = generateCommentedCode(code, language, { ...commentSettings, depth: "intermediate" })
+      const commentsExpert = generateCommentedCode(code, language, { ...commentSettings, depth: "expert" })
+      
+      const activeDepth = useExplanationStore.getState().depth
+      const activeCommentedCode = {
+        beginner: commentsBeginner,
+        intermediate: commentsIntermediate,
+        expert: commentsExpert,
+      }[activeDepth]
+
+      // Set explanations
       setAllExplanations(beginner, intermediate, expert)
       setComplexity(analyzeComplexity(code))
+
+      // Set comments
+      useCommentStore.setState({
+        commentedCode: activeCommentedCode,
+        commentedCodes: {
+          beginner: commentsBeginner,
+          intermediate: commentsIntermediate,
+          expert: commentsExpert,
+        },
+        showInlineComments: true,
+        isGenerating: false,
+        lastGenerated: new Date().toISOString(),
+      })
+
       setAnalyzing(false)
       toast.success("Code analyzed successfully")
     }, 1500)
