@@ -6,7 +6,7 @@ import { CodeEditor } from "./CodeEditor.jsx"
 import { CodeStatusBar } from "./CodeStatusBar.jsx"
 import { toast } from "../shared/Toast.jsx"
 
-export function CodePanel({ highlightLine, complexity, onFormat, onHighlightExplain }) {
+export function CodePanel({ highlightLine, highlightRange, complexity, onFormat, onHighlightExplain }) {
   const code = useCodeStore((s) => s.code)
   const language = useCodeStore((s) => s.language)
   const setCode = useCodeStore((s) => s.setCode)
@@ -71,6 +71,7 @@ export function CodePanel({ highlightLine, complexity, onFormat, onHighlightExpl
           language={language}
           onChange={setCode}
           highlightLine={highlightLine}
+          highlightRange={highlightRange}
           onCursorLine={setCursorLine}
         />
 

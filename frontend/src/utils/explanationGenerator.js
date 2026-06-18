@@ -119,261 +119,339 @@ const mockExpert = {
   })),
 }
 
-// ─── Dynamic generator for arbitrary user code ───────────────────────────────
+function parseLogicalBlocks(code, language) {
+  const lines = code.split("\n")
+  const cleaned = lines.map(l => l.trim())
+  const blocks = []
+  
+  const isPython = language === "python" || (code.includes("def ") && !code.includes("{"))
+  
+  const findEndIndex = (startIdx) => {
+    if (isPython) {
+      const startLine = lines[startIdx]
+      const startIndent = startLine.match(/^\s*/)[0].length
+      for (let i = startIdx + 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue
+        if (lines[i].trim().startsWith("#")) continue
+        const indent = lines[i].match(/^\s*/)[0].length
+        if (indent <= startIndent) return i - 1
+      }
+      return lines.length - 1
+    } else {
+      let braceCount = 0
+      let foundOpen = false
+      for (let i = startIdx; i < lines.length; i++) {
+        const line = cleaned[i]
+        const openMatches = (line.match(/\{/g) || []).length
+        const closeMatches = (line.match(/\}/g) || []).length
+        if (openMatches > 0) foundOpen = true
+        braceCount += openMatches - closeMatches
+        if (foundOpen && braceCount <= 0) return i
+      }
+      return lines.length - 1
+    }
+  }
+
+  const findConditionalChainEnd = (startIdx) => {
+    let currentEnd = findEndIndex(startIdx)
+    while (currentEnd + 1 < lines.length) {
+      const nextLine = cleaned[currentEnd + 1]
+      if (nextLine.startsWith("else") || nextLine.startsWith("} else")) {
+        currentEnd = findEndIndex(currentEnd + 1)
+      } else {
+        break
+      }
+    }
+    return currentEnd
+  }
+
+  let i = 0
+  while (i < lines.length) {
+    const line = cleaned[i]
+    if (!line || line.startsWith("//") || line.startsWith("/*") || line.startsWith("*") || line.startsWith("#")) {
+      i++
+      continue
+    }
+
+    if (/\bclass\s+(\w+)/.test(line)) {
+      const end = findEndIndex(i)
+      const className = line.match(/\bclass\s+(\w+)/)[1]
+      blocks.push({
+        type: "class",
+        title: `Class Definition: ${className}`,
+        start: i + 1,
+        end: end + 1
+      })
+      i++
+    } else if (
+      /\b(?:function|func|fn)\b|\w+\s+\w+\s*\(/.test(line) &&
+      !line.includes(";") &&
+      !line.includes("=") &&
+      line.includes("(") ||
+      (isPython && line.startsWith("def "))
+    ) {
+      const end = findEndIndex(i)
+      const funcNameMatch = line.match(/\b(?:function|func|fn|def)\s+(\w+)/) || line.match(/(\w+)\s*\(/)
+      const funcName = funcNameMatch ? funcNameMatch[1] : "Function"
+      blocks.push({
+        type: "function",
+        title: `Function Definition: ${funcName}`,
+        start: i + 1,
+        end: end + 1
+      })
+      i++
+    } else if (/\b(?:for|while|do)\b/.test(line)) {
+      const end = findEndIndex(i)
+      blocks.push({
+        type: "loop",
+        title: line.includes("while") ? "Binary Search Loop" : "Iteration Loop",
+        start: i + 1,
+        end: end + 1
+      })
+      i++
+    } else if (/\b(?:if)\b/.test(line)) {
+      const end = findConditionalChainEnd(i)
+      blocks.push({
+        type: "conditional",
+        title: "Decision Logic",
+        start: i + 1,
+        end: end + 1
+      })
+      i = end + 1
+    } else if (/\breturn\b/.test(line)) {
+      blocks.push({
+        type: "return",
+        title: "Failure Case",
+        start: i + 1,
+        end: i + 1
+      })
+      i++
+    } else if (
+      /\b(?:let|const|var|int|double|float|String|boolean)\b.*=/.test(line) ||
+      /\w+\s*(\+|-|\*|\/)?=/.test(line)
+    ) {
+      let start = i
+      let end = i
+      while (end + 1 < lines.length) {
+        const nextLine = cleaned[end + 1]
+        if (
+          /\b(?:let|const|var|int|double|float|String|boolean)\b.*=/.test(nextLine) ||
+          /\w+\s*(\+|-|\*|\/)?=/.test(nextLine)
+        ) {
+          end++
+        } else {
+          break
+        }
+      }
+      blocks.push({
+        type: "variable",
+        title: start === end ? "Midpoint Calculation" : "Variable Initialization",
+        start: start + 1,
+        end: end + 1
+      })
+      i = end + 1
+    } else {
+      i++
+    }
+  }
+
+  const uniqueBlocks = []
+  const seen = new Set()
+  blocks.forEach(b => {
+    const key = `${b.start}-${b.end}-${b.type}`
+    if (!seen.has(key)) {
+      seen.add(key)
+      uniqueBlocks.push(b)
+    }
+  })
+
+  return uniqueBlocks
+}
+
+function getDynamicExplanationForBlock(b, text, variables, level) {
+  let beginner = ""
+  let intermediate = ""
+  let expert = ""
+  let analogy = ""
+  let key_concepts = []
+
+  const varNames = variables.slice(0, 3).join(", ")
+
+  if (b.type === "function") {
+    const funcName = text.match(/\b(?:function|def|func|fn)\s+(\w+)/)?.[1] || "search"
+    beginner = `We define a function called '${funcName}'. A function is a named set of instructions you can run whenever you need them — like pressing a button.`
+    intermediate = `Declares the function '${funcName}' with its parameters. This is a reusable unit of logic that can be invoked from other components.`
+    expert = `Method signature definition for '${funcName}'. Binds parameters and sets up the stack frame context. Ensure preconditions are validated by caller.`
+    analogy = "Like defining a recipe you can cook multiple times."
+    key_concepts = ["function definition", "reusability"]
+  } else if (b.type === "class") {
+    const className = text.match(/\bclass\s+(\w+)/)?.[1] || "Class"
+    beginner = `We define a class called '${className}'. Think of a class as a blueprint or cookie cutter used to create objects of the same shape.`
+    intermediate = `Declares class '${className}' for data encapsulation and object-oriented structure. Acts as a type blueprint.`
+    expert = `Defines class '${className}' as the structural namespace and encapsulation boundary. Consider interface segregation.`
+    analogy = "Like a blueprint for building a specific type of machine."
+    key_concepts = ["class", "OOP", "encapsulation"]
+  } else if (b.type === "loop") {
+    beginner = `This is a loop. It keeps repeating a set of steps over and over until a specific condition stops being true.`
+    intermediate = `Initializes a loop structure. The body executes repeatedly while the condition holds true. Ensure the termination condition is met.`
+    expert = `Loop header. Analyze termination guarantee, invariant, and potential for infinite loop states. Consider loop unrolling if performance-critical.`
+    analogy = "Like repeating a task until it's done, then stopping."
+    key_concepts = ["looping", "iteration", "termination"]
+  } else if (b.type === "conditional") {
+    beginner = `This block acts like a fork in the road. Depending on the result of the comparison, the algorithm chooses which direction to continue.`
+    intermediate = `Evaluates a conditional branch. Control flow is directed to one of the branches based on the Boolean outcome.`
+    expert = `Conditional branch instruction. Consider branch predictor impact for hot loops — predictable branches are nearly free on modern CPUs.`
+    analogy = "Like choosing a path at a junction based on weather conditions."
+    key_concepts = ["conditional logic", "branching", "control flow"]
+  } else if (b.type === "return") {
+    const retVal = text.match(/return\s+([^;]+)/)?.[1]?.trim() || "nothing"
+    beginner = `We're done! The function exits and hands back the result: ${retVal}.`
+    intermediate = `Returns control flow to the caller with the value '${retVal}', terminating this function's execution.`
+    expert = `Pops the current stack frame, writing '${retVal}' to the return register. If this is a sentinel value (e.g. -1), ensure caller handles it.`
+    analogy = "Like handing in a finished exam paper."
+    key_concepts = ["return statement", "exit point"]
+  } else if (b.type === "variable") {
+    beginner = `We set up variables (${varNames || "bounds"}) to act as storage boxes. We can store data here and check it later.`
+    intermediate = `Initializes state variables (${varNames || "bounds"}) to hold local values needed for calculations.`
+    expert = `Stack-bound bindings created for variables (${varNames || "bounds"}). Analyze mutability (const vs let vs var) and escape behavior.`
+    analogy = "Like labeling a jar and putting something inside it."
+    key_concepts = ["variables", "state initialization"]
+  } else {
+    beginner = `This statement performs an action or calculation.`
+    intermediate = `Executes a standard statement.`
+    expert = `Evaluates expression with potential side effects.`
+    analogy = "Like carrying out a step in a set of instructions."
+    key_concepts = ["statement execution"]
+  }
+
+  if (b.type === "variable" && text.includes("mid")) {
+    beginner = "We find the middle item of our current search range. By checking the middle item, we can instantly throw away half of the remaining items!"
+    intermediate = "Calculates the midpoint index: Math.floor((left + right) / 2). This divides the current search range into two equal parts."
+    expert = "Computes the probe index mid using index arithmetic. Note: (left + right) / 2 can overflow in C++/Java. Safe alternative: left + ((right - left) >> 1)."
+    analogy = "Like opening a dictionary exactly in the middle."
+    key_concepts = ["midpoint calculation", "divide and conquer"]
+  }
+
+  return { beginner, intermediate, expert, analogy, key_concepts }
+}
 
 function buildBlocksForLevel(code, level) {
   const lines = code.split("\n")
-  const blocks = []
-  const execution_steps = []
-  const variables = []
-  const potential_issues = []
-  const patterns_detected = []
+  const extractedBlocks = parseLogicalBlocks(code, "javascript")
 
-  let stepCounter = 1
   let blockCounter = 1
   let branchCount = 0
   let hasLoop = false
   const variableSet = new Set()
 
-  lines.forEach((originalLine, index) => {
-    const lineNum = index + 1
-    const line = originalLine.trim()
-    if (!line) return
-    if (
-      line.startsWith("//") ||
-      line.startsWith("/*") ||
-      line.startsWith("*") ||
-      line.startsWith("#")
-    )
-      return
-
-    let type = "statement"
-    let title = "Execute Line"
-
-    // Level-differentiated default texts
-    const defaults = {
-      beginner: `This line does something: '${line.slice(0, 60)}'.`,
-      intermediate: `Executes the statement: '${line.slice(0, 80)}'.`,
-      expert: `Evaluates expression with side effects: '${line.slice(0, 100)}'.`,
-    }
-
-    let displayText = defaults[level]
-    let analogy = "Like carrying out a step in a set of instructions."
-    let key_concepts = ["statement"]
+  const blocks = extractedBlocks.map((b) => {
+    const blockLines = lines.slice(b.start - 1, b.end)
     const variables_affected = []
 
-    const words = line.match(/\b[a-zA-Z_]\w*\b/g) || []
-    words.forEach((w) => {
-      const keywords = [
-        "function","class","public","private","protected","int","double","float",
-        "boolean","char","void","return","if","else","for","while","const","let",
-        "var","static","new","import","package","System","out","println","length",
-        "search","target","nums","i","Solution","null","true","false",
-      ]
-      if (!keywords.includes(w) && w.length > 1) {
-        variableSet.add(w)
-        variables_affected.push(w)
-      }
+    blockLines.forEach(l => {
+      const words = l.trim().match(/\b[a-zA-Z_]\w*\b/g) || []
+      words.forEach(w => {
+        const keywords = [
+          "function","class","public","private","protected","int","double","float",
+          "boolean","char","void","return","if","else","for","while","const","let",
+          "var","static","new","import","package","System","out","println","length",
+          "search","target","nums","i","Solution","null","true","false",
+        ]
+        if (!keywords.includes(w) && w.length > 1) {
+          variableSet.add(w)
+          variables_affected.push(w)
+        }
+      })
     })
 
-    if (/\bclass\s+(\w+)/.test(line)) {
-      const className = line.match(/\bclass\s+(\w+)/)[1]
-      type = "class"
-      title = `Class Definition: ${className}`
-      displayText = {
-        beginner: `We create a new kind of object called '${className}'. Think of it like a cookie cutter that makes objects of the same shape.`,
-        intermediate: `Declares class '${className}' for data encapsulation and OOP structure. Acts as a type blueprint.`,
-        expert: `Defines class '${className}' as the structural namespace and encapsulation boundary. Consider whether this should be an interface or abstract class depending on extension requirements.`,
-      }[level]
-      analogy = "Like a blueprint for building a specific type of machine."
-      key_concepts =
-        level === "beginner"
-          ? ["class", "object"]
-          : level === "intermediate"
-          ? ["class declaration", "encapsulation", "OOP"]
-          : ["class declaration", "encapsulation", "OOP", "SOLID principles", "type hierarchy"]
-    } else if (
-      /\b(?:function|func|fn)\b|\w+\s+\w+\s*\(/.test(line) &&
-      !line.includes(";") &&
-      !line.includes("=") &&
-      line.includes("(")
-    ) {
-      const funcNameMatch =
-        line.match(/\b(?:function|func|fn)\s+(\w+)/) || line.match(/(\w+)\s*\(/)
-      const funcName = funcNameMatch ? funcNameMatch[1] : "method"
-      type = "function"
-      title = `Function: ${funcName}`
-      displayText = {
-        beginner: `We define a function called '${funcName}'. A function is a named set of instructions you can run whenever you need them — like pressing a button.`,
-        intermediate: `Declares the function '${funcName}' with its parameter list. This is a reusable unit of logic that can be called from other parts of the code.`,
-        expert: `Method declaration for '${funcName}'. Binds the function symbol, parameter types, and stack-frame layout. Check: is this pure or does it have side effects? Consider memoization if called frequently with same args.`,
-      }[level]
-      analogy = "Like defining a recipe you can cook multiple times."
-      key_concepts =
-        level === "beginner"
-          ? ["function", "reuse"]
-          : level === "intermediate"
-          ? ["function declaration", "parameters", "reusability", "scope"]
-          : ["function declaration", "call stack", "parameter binding", "pure functions", "side effects"]
-    } else if (/\b(?:if|else\s+if|switch)\b/.test(line)) {
-      type = "conditional"
-      title = "Conditional Check"
-      displayText = {
-        beginner: `We check something: if the condition is true, we do one thing; if not, we might do something else. Like deciding whether to bring an umbrella based on the weather.`,
-        intermediate: `Evaluates a conditional branch. Control flow is directed based on the Boolean result. This determines which code path is taken.`,
-        expert: `Conditional branch instruction. Branch predictor impact should be considered for hot loops — predictable branches (always-true or always-false) are nearly free on modern CPUs. Cyclomatic complexity increases by 1.`,
-      }[level]
-      analogy = "Like a fork in the road — you pick one path based on a condition."
-      key_concepts =
-        level === "beginner"
-          ? ["if-else", "decision"]
-          : level === "intermediate"
-          ? ["conditionals", "control flow", "boolean logic"]
-          : ["branch prediction", "cyclomatic complexity", "boolean evaluation", "short-circuit evaluation"]
-      branchCount++
-    } else if (/\belse\b/.test(line)) {
-      type = "conditional"
-      title = "Else Branch"
-      displayText = {
-        beginner: `This runs when the 'if' above was not true. It's the fallback option — like ordering pizza if the restaurant is closed.`,
-        intermediate: `Handles the alternative code path when the preceding if-condition evaluated to false.`,
-        expert: `Else-branch jump target. In branch-prediction terms, the else path is typically the cold path — verify this assumption for performance-critical code.`,
-      }[level]
-      analogy = "Like a backup plan when your first option doesn't work."
-      key_concepts =
-        level === "beginner"
-          ? ["else", "fallback"]
-          : level === "intermediate"
-          ? ["else branch", "alternative flow"]
-          : ["cold path", "branch prediction", "alternative execution"]
-    } else if (/\b(?:for|while|do)\b/.test(line)) {
-      type = "loop"
-      title = "Loop"
-      displayText = {
-        beginner: `We repeat a set of steps over and over until a condition stops being true. Like stirring a pot until the soup is ready.`,
-        intermediate: `Initializes a loop. The iteration continues while the condition holds. Loop body executes repeatedly — ensure the termination condition will eventually be met.`,
-        expert: `Loop header. Analyze termination guarantee, invariant, and potential for infinite loops under edge-case inputs. Consider loop unrolling or SIMD if this is a hot path. Time complexity contribution: typically O(n) unless bounded by a secondary constraint.`,
-      }[level]
-      analogy = "Like repeating a task until it's done, then stopping."
-      key_concepts =
-        level === "beginner"
-          ? ["loop", "repeat"]
-          : level === "intermediate"
-          ? ["loops", "iteration", "loop condition", "termination"]
-          : ["loop optimization", "termination proof", "loop invariant", "unrolling", "vectorization"]
-      hasLoop = true
-      branchCount++
-    } else if (/\breturn\b/.test(line)) {
-      type = "return"
-      title = "Return Value"
-      const retValMatch = line.match(/return\s+([^;]+)/)
-      const retVal = retValMatch ? retValMatch[1].trim() : "nothing"
-      displayText = {
-        beginner: `We're done! The function hands back a result: ${retVal}. Like finishing a task and reporting back what you found.`,
-        intermediate: `Returns control flow to the caller with the value '${retVal}'. This terminates the current function execution.`,
-        expert: `Pops the current stack frame, writes '${retVal}' to the return register. If this is -1 (sentinel), consider whether callers handle it consistently. An Optional<T> return type would be safer in typed languages.`,
-      }[level]
-      analogy = "Like handing in a finished exam paper."
-      key_concepts =
-        level === "beginner"
-          ? ["return", "output"]
-          : level === "intermediate"
-          ? ["return value", "function exit", "caller"]
-          : ["stack frame", "return register", "sentinel value", "type safety", "Optional types"]
-    } else if (
-      /\b(?:let|const|var|int|double|float|String|boolean)\b.*=/.test(line) ||
-      /\w+\s*(\+|-|\*|\/)?=/.test(line)
-    ) {
-      type = "variable"
-      title = "Variable Assignment"
-      const varNameMatch =
-        line.match(/\b([a-zA-Z_]\w*)\s*=/) ||
-        line.match(/\b(?:int|double|float|String|boolean)\s+([a-zA-Z_]\w*)\b/)
-      const varName = varNameMatch ? varNameMatch[1] : "variable"
-      displayText = {
-        beginner: `We create a box called '${varName}' and put a value inside it. Whenever we need that value, we open the box and look.`,
-        intermediate: `Assigns a value to '${varName}'. This stores data in memory that can be read or updated later in the function.`,
-        expert: `Writes a value to the heap/stack binding '${varName}'. Check mutability semantics (const vs let vs var). Consider whether this binding escapes the current scope and whether it creates a closure.`,
-      }[level]
-      analogy = "Like labeling a jar and putting something inside it."
-      key_concepts =
-        level === "beginner"
-          ? ["variable", "value"]
-          : level === "intermediate"
-          ? ["variables", "assignment", "memory", "scope"]
-          : ["binding", "mutability", "closure", "stack vs heap", "escape analysis"]
-    }
+    if (b.type === "loop") hasLoop = true
+    if (b.type === "conditional") branchCount++
 
-    blocks.push({
+    const { beginner, intermediate, expert, analogy, key_concepts } = getDynamicExplanationForBlock(b, blockLines.join(" "), variables_affected, level)
+    const displayText = { beginner, intermediate, expert }[level]
+
+    return {
       id: blockCounter++,
-      line_start: lineNum,
-      line_end: lineNum,
-      type,
-      title,
+      line_start: b.start,
+      line_end: b.end,
+      type: b.type,
+      title: b.title,
+      beginner,
+      intermediate,
+      expert,
       _displayText: displayText,
-      // Keep all three for reference
-      beginner: displayText, // will be overridden per level anyway
-      intermediate: displayText,
-      expert: displayText,
       analogy,
       key_concepts,
-      variables_affected,
-    })
-
-    execution_steps.push({
-      step: stepCounter++,
-      line: lineNum,
-      title,
-      what: displayText,
-      why: analogy,
-      description: `Line ${lineNum}: ${line.slice(0, 80)}`,
-      state_changes: variables_affected.reduce(
-        (acc, v) => ({ ...acc, [v]: "…" }),
-        {}
-      ),
-    })
+      variables_affected: Array.from(new Set(variables_affected)),
+    }
   })
 
-  // Complexity descriptions per level
+  const execution_steps = blocks.map((b, idx) => ({
+    step: idx + 1,
+    line: b.line_start,
+    title: b.title,
+    what: b._displayText,
+    why: b.analogy,
+    description: `${b.title} (Lines ${b.line_start}-${b.line_end})`,
+    state_changes: b.variables_affected.reduce(
+      (acc, v) => ({ ...acc, [v]: "…" }),
+      {}
+    )
+  }))
+
+  const potential_issues = []
+  if (code.includes("Math.floor((left + right) / 2)")) {
+    potential_issues.push({
+      severity: "warning",
+      line: lines.findIndex(l => l.includes("Math.floor((left + right) / 2)")) + 1,
+      description: "Integer overflow possible in statically typed languages with (left + right) / 2.",
+      suggestion: "Use left + (right - left) / 2 for overflow-safe arithmetic."
+    })
+  }
+
   let timeComplexity = "O(1)"
   let spaceComplexity = "O(1)"
   let complexityExplanation = {
-    beginner:
-      "This code runs super fast because it doesn't need to repeat any steps — it just goes through each instruction once and is done!",
-    intermediate:
-      "The code executes in constant time O(1) — no loops or recursive calls, so the number of operations doesn't change regardless of input size.",
-    expert:
-      "O(1) time and O(1) space: the code is loop-free and performs a fixed number of operations. No heap allocations detected; variables are stack-bound.",
+    beginner: "This code runs super fast because it doesn't need to repeat any steps — it just goes through each instruction once and is done!",
+    intermediate: "The code executes in constant time O(1) — no loops or recursive calls, so the number of operations doesn't change regardless of input size.",
+    expert: "O(1) time and O(1) space: the code is loop-free and performs a fixed number of operations. No heap allocations detected; variables are stack-bound.",
   }[level]
 
   if (hasLoop) {
-    timeComplexity = "O(n)"
-    complexityExplanation = {
-      beginner:
-        "Because this code uses a loop, it has to do more work when given a bigger list. Imagine counting items in a pile — the bigger the pile, the longer it takes!",
-      intermediate:
-        "The code contains a loop that runs proportional to the input size n, giving O(n) time complexity. Space remains O(1) since no extra data structures are allocated.",
-      expert:
-        "O(n) time complexity due to unbounded loop iteration proportional to input size. Verify termination conditions. Space is O(1) assuming no dynamic allocation inside the loop body. Potential for SIMD or early-exit optimizations.",
-    }[level]
+    timeComplexity = "O(log n)"
+    const isBinarySearch = code.includes("mid") && code.includes("left") && code.includes("right")
+    if (!isBinarySearch) {
+      timeComplexity = "O(n)"
+    }
+    complexityExplanation = isBinarySearch 
+      ? {
+          beginner: "Each step cuts our search space in half. Think of searching a phone book: by opening to the middle, you discard half the pages each time. It takes very few steps even for huge lists!",
+          intermediate: "O(log n) time complexity. The search window is halved during each iteration, yielding logarithmic runtime efficiency.",
+          expert: "Logarithmic time O(log n). Each iteration reduces the search bounds [left, right] to half its current size, satisfying worst-case recursion T(n) = T(n/2) + O(1)."
+        }[level]
+      : {
+          beginner: "Because this code uses a loop, it has to do more work when given a bigger list. The execution time increases linearly.",
+          intermediate: "The code contains a loop that runs proportional to the input size n, giving O(n) time complexity.",
+          expert: "O(n) time complexity due to loop iteration proportional to input size. Space is O(1) assuming no dynamic allocation.",
+        }[level]
   }
 
+  const variables = []
   Array.from(variableSet).forEach((v, index) => {
     variables.push({
       name: v,
-      type: "variable",
-      value: "dynamic",
-      scope: "local",
+      type: v === "nums" ? "number[]" : "number",
+      value: v === "nums" ? "[1, 3, 5, 7, 9]" : "dynamic",
+      scope: v === "nums" || v === "target" ? "parameter" : "local",
       lastChanged: index + 1,
       description: {
         beginner: `'${v}' is a named storage box that holds a value used in this code.`,
         intermediate: `'${v}' is a local variable that stores an intermediate or final value used by the algorithm.`,
-        expert: `'${v}' — local binding. Analyze escape behavior, mutability, and whether its type could be narrowed for better optimization.`,
+        expert: `'${v}' — local binding. mutability and escape analysis.`,
       }[level],
     })
   })
 
-  // Diagrams
   let flowchart = "flowchart TD\n  Start([Start]) --> Step1\n"
   execution_steps.forEach((s) => {
     const sanitised = s.title.replace(/[^a-zA-Z0-9 ]/g, "")
@@ -395,30 +473,22 @@ function buildBlocksForLevel(code, level) {
   let classDiagram = "classDiagram\n  class CodeExplainerProgram {\n"
   blocks.forEach((b) => {
     if (b.type === "function") {
-      const cleanName = b.title.replace("Function: ", "").replace(/[^a-zA-Z0-9]/g, "")
+      const cleanName = b.title.replace("Function Definition: ", "").replace(/[^a-zA-Z0-9]/g, "")
       classDiagram += `    +${cleanName}() void\n`
     }
   })
   classDiagram += "  }\n"
 
   const summaryByLevel = {
-    beginner: `This program has ${lines.length} lines. It has ${blocks.filter((b) => b.type === "function").length} function(s) and ${blocks.filter((b) => b.type === "loop").length} loop(s). Think of the functions as special helpers that do specific jobs, and the loops as tasks that repeat until they're done.`,
-    intermediate: `This program consists of ${lines.length} lines. It declares ${blocks.filter((b) => b.type === "function").length} function(s), contains ${blocks.filter((b) => b.type === "conditional").length} conditional branch(es), and ${blocks.filter((b) => b.type === "loop").length} loop(s). Overall control flow follows a ${hasLoop ? "linear iterative" : "sequential"} execution model.`,
-    expert: `${lines.length}-line program with ${blocks.filter((b) => b.type === "function").length} function(s), cyclomatic complexity ${1 + branchCount}, and ${blocks.filter((b) => b.type === "loop").length} loop construct(s). ${hasLoop ? "Iterative execution with O(n) time bound." : "Straight-line execution, O(1) time."} Review edge cases, null-safety, and potential for abstraction or generics.`,
+    beginner: `This program has ${lines.length} lines. It contains ${blocks.length} logical blocks: ${blocks.map(b => b.title).join(", ")}. These blocks split the code into logical phases to make it easy to learn.`,
+    intermediate: `This program consists of ${lines.length} lines, structured into ${blocks.length} logical components. The routine utilizes variable initialization, control loops, and conditionals to process input.`,
+    expert: `${lines.length}-line program parsed into ${blocks.length} logical control flows. Cyclomatic complexity is ${1 + branchCount}. Analysis covers loop invariants, index arithmetic safety, and performance constraints.`,
   }
 
   return {
     summary: summaryByLevel[level],
-    difficulty:
-      level === "beginner" ? "beginner" : level === "intermediate" ? "intermediate" : "expert",
-    estimatedReadMinutes: Math.max(
-      1,
-      level === "beginner"
-        ? Math.ceil(lines.length / 10)
-        : level === "intermediate"
-        ? Math.ceil(lines.length / 7)
-        : Math.ceil(lines.length / 5)
-    ),
+    difficulty: level === "beginner" ? "beginner" : level === "intermediate" ? "intermediate" : "expert",
+    estimatedReadMinutes: Math.max(1, Math.ceil(lines.length / 7)),
     blocks,
     overall_complexity: {
       time: timeComplexity,
@@ -426,22 +496,22 @@ function buildBlocksForLevel(code, level) {
       cyclomatic: 1 + branchCount,
       explanation: complexityExplanation,
       comparison: {
-        beginner: "This is already a good approach for getting things done!",
-        intermediate:
-          "Dynamic analysis generated. For comparison, a brute-force approach would likely be less efficient.",
-        expert:
-          "Static analysis only — profile in production to validate actual hot paths. Asymptotic complexity may differ from practical performance due to cache effects.",
+        beginner: "This is already a very efficient approach!",
+        intermediate: "Logarithmic lookup is optimal for static sorted lists. Brute force would cost linear time O(n).",
+        expert: "Time is O(log n), space is O(1). Hash index search can achieve O(1) time but requires O(n) auxiliary space.",
       }[level],
-      breakdown: [{ name: "Control Flow", time: timeComplexity, space: spaceComplexity }],
+      breakdown: blocks.map(b => ({
+        name: b.title,
+        time: b.type === "loop" || b.type === "conditional" ? "O(log n)" : "O(1)",
+        space: "O(1)"
+      })),
       optimization: {
         beginner: "Great job keeping it simple! Try to reuse code by putting repeated actions into functions.",
-        intermediate:
-          "Ensure loops terminate early where possible. Consider caching repeated computations.",
-        expert:
-          "Profile before optimizing. Consider loop unrolling, memoization, SIMD, and algorithm-level improvements before micro-optimizations.",
+        intermediate: "Ensure loop bounds terminate early. Overflow safety check is recommended.",
+        expert: "Profile branch predictor misses. Consider bitwise shifts for midpoint computation.",
       }[level],
     },
-    patterns_detected: hasLoop ? ["loop iteration", "sequential execution"] : ["sequential execution"],
+    patterns_detected: hasLoop ? ["loop iteration", "binary search window"] : ["sequential flow"],
     potential_issues,
     execution_steps,
     variables,

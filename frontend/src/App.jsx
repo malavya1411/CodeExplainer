@@ -45,8 +45,19 @@ export default function App() {
   
   const [complexity, setComplexity] = useState(null)
   
+  const activeTab = useExplanationStore((s) => s.activeTab)
+  const activeBlockIndex = useExplanationStore((s) => s.activeBlockIndex)
+
   // Highlight currently active line from explanation if available
   const activeLine = explanation?.execution_steps?.[currentStep]?.line
+
+  let highlightRange = null
+  if (activeWorkspace === "explainer" && activeTab === "Step-by-Step" && explanation?.blocks?.length > 0) {
+    const block = explanation.blocks[activeBlockIndex]
+    if (block) {
+      highlightRange = { startLine: block.line_start, endLine: block.line_end }
+    }
+  }
 
   useEffect(() => {
     // Listen for system theme changes if needed
@@ -95,7 +106,6 @@ export default function App() {
           intermediate: commentsIntermediate,
           expert: commentsExpert,
         },
-        showInlineComments: true,
         isGenerating: false,
         lastGenerated: new Date().toISOString(),
       })
@@ -216,6 +226,7 @@ export default function App() {
             <Panel defaultSize={45} minSize={30} className="h-full">
               <CodePanel
                 highlightLine={activeLine}
+                highlightRange={highlightRange}
                 complexity={complexity}
                 onFormat={handleFormat}
                 onHighlightExplain={handleHighlightExplain}

@@ -18,6 +18,7 @@ export const useExplanationStore = create((set, get) => ({
 
   depth: "intermediate",
   currentStep: 0,
+  activeBlockIndex: 0,
   isPlaying: false,
   playbackSpeed: 1,
   activeTab: "Overview",
@@ -25,7 +26,21 @@ export const useExplanationStore = create((set, get) => ({
   setActiveTab: (activeTab) => set({ activeTab }),
   setDepth: (depth) => {
     const cached = get().explanations[depth]
-    set({ depth, explanation: cached, currentStep: 0, isPlaying: false })
+    set({ depth, explanation: cached, currentStep: 0, activeBlockIndex: 0, isPlaying: false })
+  },
+
+  setActiveBlockIndex: (activeBlockIndex) => {
+    set({ activeBlockIndex })
+    const explanation = get().explanation
+    const block = explanation?.blocks?.[activeBlockIndex]
+    if (block && explanation?.execution_steps) {
+      const stepIdx = explanation.execution_steps.findIndex(
+        (s) => s.line >= block.line_start && s.line <= block.line_end
+      )
+      if (stepIdx !== -1) {
+        set({ currentStep: stepIdx })
+      }
+    }
   },
 
   /** Called once per Explain click — stores all three level results */
@@ -36,13 +51,14 @@ export const useExplanationStore = create((set, get) => ({
       explanations: { beginner, intermediate, expert },
       explanation: active,
       currentStep: 0,
+      activeBlockIndex: 0,
       isPlaying: false,
       analyzedCode,
     })
   },
 
   setExplanation: (explanation) =>
-    set({ explanation, currentStep: 0, isPlaying: false }),
+    set({ explanation, currentStep: 0, activeBlockIndex: 0, isPlaying: false }),
 
   /** Reset everything — used when code changes after an analysis */
   clearExplanations: () =>
@@ -51,6 +67,7 @@ export const useExplanationStore = create((set, get) => ({
       analyzedCode: null,
       explanations: { beginner: null, intermediate: null, expert: null },
       currentStep: 0,
+      activeBlockIndex: 0,
       isPlaying: false,
     }),
 

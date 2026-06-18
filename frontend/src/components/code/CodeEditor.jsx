@@ -5,7 +5,7 @@ import { useAnnotationStore } from "../../stores/annotationStore.js"
 import { useCommentStore } from "../../stores/commentStore.js"
 import { getMonacoLanguage } from "../../utils/languageDetector.js"
 
-export function CodeEditor({ value, language, onChange, highlightLine, onCursorLine, onSelectionText }) {
+export function CodeEditor({ value, language, onChange, highlightLine, highlightRange, onCursorLine, onSelectionText }) {
   const editorRef = useRef(null)
   const monacoRef = useRef(null)
   const decorationsRef = useRef([])
@@ -100,7 +100,17 @@ export function CodeEditor({ value, language, onChange, highlightLine, onCursorL
     const total = model.getLineCount()
     const decos = []
 
-    if (highlightLine && highlightLine <= total) {
+    if (highlightRange && highlightRange.startLine <= total) {
+      const { startLine, endLine } = highlightRange
+      decos.push({
+        range: new monaco.Range(startLine, 1, Math.min(endLine, total), 1),
+        options: {
+          isWholeLine: true,
+          className: "exp-active-line",
+          linesDecorationsClassName: "exp-active-line-margin",
+        },
+      })
+    } else if (highlightLine && highlightLine <= total) {
       decos.push({
         range: new monaco.Range(highlightLine, 1, highlightLine, 1),
         options: {
@@ -134,17 +144,19 @@ export function CodeEditor({ value, language, onChange, highlightLine, onCursorL
     })
 
     decorationsRef.current = editor.deltaDecorations(decorationsRef.current, decos)
-  }, [highlightLine, annotations, confusingLines])
+  }, [highlightLine, highlightRange, annotations, confusingLines])
 
   useEffect(() => {
     updateDecorations()
   }, [updateDecorations])
 
   useEffect(() => {
-    if (highlightLine && editorRef.current) {
+    if (highlightRange && editorRef.current) {
+      editorRef.current.revealLineInCenterIfOutsideViewport(highlightRange.startLine)
+    } else if (highlightLine && editorRef.current) {
       editorRef.current.revealLineInCenterIfOutsideViewport(highlightLine)
     }
-  }, [highlightLine])
+  }, [highlightRange, highlightLine])
 
   useEffect(() => {
     if (monacoRef.current) {
