@@ -18,7 +18,8 @@ import { AuthPage } from "./components/auth/AuthPage.jsx"
 import { OptimizerWorkspace } from "./components/optimizer/OptimizerWorkspace.jsx"
 import { buildMarkdown, buildHTML, buildNotion, downloadText, downloadPDF } from "./utils/exportGenerator.js"
 import { analyzeComplexity } from "./utils/complexityAnalyzer.js"
-import { generateDynamicExplanation } from "./utils/explanationGenerator.js"
+import { generateAllExplanations } from "./utils/explanationGenerator.js"
+import { generateCommentedCode } from "./utils/commentGenerator.js"
 
 export default function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -31,7 +32,7 @@ export default function App() {
   const runOptimization = useOptimizerStore((s) => s.runOptimization)
   
   const explanation = useExplanationStore((s) => s.explanation)
-  const setExplanation = useExplanationStore((s) => s.setExplanation)
+  const setAllExplanations = useExplanationStore((s) => s.setAllExplanations)
   const depth = useExplanationStore((s) => s.depth)
   const currentStep = useExplanationStore((s) => s.currentStep)
   const setDepth = useExplanationStore((s) => s.setDepth)
@@ -55,11 +56,7 @@ export default function App() {
     return () => mq.removeEventListener("change", handleChange)
   }, [])
 
-  useEffect(() => {
-    if (code) {
-      setComplexity(analyzeComplexity(code))
-    }
-  }, [code])
+  // Complexity is analyzed only when the user explicitly clicks Explain
 
   const handleAnalyze = async () => {
     if (!code.trim()) {
@@ -67,10 +64,42 @@ export default function App() {
       return
     }
     setAnalyzing(true)
-    // Simulate API delay
+    useCommentStore.setState({ isGenerating: true, generationError: null })
+
+    // Simulate API delay then generate all three depth levels
     setTimeout(() => {
-      const dynamicResult = generateDynamicExplanation(code, language)
-      setExplanation(dynamicResult)
+      const { beginner, intermediate, expert } = generateAllExplanations(code, language)
+      
+      // Generate comments for all three levels
+      const commentSettings = useCommentStore.getState().commentSettings
+      const commentsBeginner = generateCommentedCode(code, language, { ...commentSettings, depth: "beginner" })
+      const commentsIntermediate = generateCommentedCode(code, language, { ...commentSettings, depth: "intermediate" })
+      const commentsExpert = generateCommentedCode(code, language, { ...commentSettings, depth: "expert" })
+      
+      const activeDepth = useExplanationStore.getState().depth
+      const activeCommentedCode = {
+        beginner: commentsBeginner,
+        intermediate: commentsIntermediate,
+        expert: commentsExpert,
+      }[activeDepth]
+
+      // Set explanations
+      setAllExplanations(beginner, intermediate, expert)
+      setComplexity(analyzeComplexity(code))
+
+      // Set comments
+      useCommentStore.setState({
+        commentedCode: activeCommentedCode,
+        commentedCodes: {
+          beginner: commentsBeginner,
+          intermediate: commentsIntermediate,
+          expert: commentsExpert,
+        },
+        showInlineComments: true,
+        isGenerating: false,
+        lastGenerated: new Date().toISOString(),
+      })
+
       setAnalyzing(false)
       toast.success("Code analyzed successfully")
     }, 1500)

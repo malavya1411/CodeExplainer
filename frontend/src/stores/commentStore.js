@@ -27,6 +27,11 @@ const DEFAULT_SETTINGS = {
 
 export const useCommentStore = create((set, get) => ({
   commentedCode: null,
+  commentedCodes: {
+    beginner: null,
+    intermediate: null,
+    expert: null,
+  },
   isGenerating: false,
   generationError: null,
   showInlineComments: false,
@@ -64,7 +69,11 @@ export const useCommentStore = create((set, get) => ({
 
   generateComments: async (code, language) => {
     if (!code) {
-      set({ commentedCode: null, generationError: "No code provided to comment." })
+      set({
+        commentedCode: null,
+        commentedCodes: { beginner: null, intermediate: null, expert: null },
+        generationError: "No code provided to comment.",
+      })
       return
     }
 
@@ -75,10 +84,24 @@ export const useCommentStore = create((set, get) => ({
       await new Promise((resolve) => setTimeout(resolve, 1200))
       
       const { commentSettings } = get()
-      const commented = generateCommentedCode(code, language, commentSettings)
+      const beginnerCode = generateCommentedCode(code, language, { ...commentSettings, depth: "beginner" })
+      const intermediateCode = generateCommentedCode(code, language, { ...commentSettings, depth: "intermediate" })
+      const expertCode = generateCommentedCode(code, language, { ...commentSettings, depth: "expert" })
       
+      const activeDepth = commentSettings.depth || "intermediate"
+      const activeCommentedCode = {
+        beginner: beginnerCode,
+        intermediate: intermediateCode,
+        expert: expertCode,
+      }[activeDepth]
+
       set({
-        commentedCode: commented,
+        commentedCode: activeCommentedCode,
+        commentedCodes: {
+          beginner: beginnerCode,
+          intermediate: intermediateCode,
+          expert: expertCode,
+        },
         showInlineComments: true,
         isGenerating: false,
         lastGenerated: new Date().toISOString(),
@@ -93,6 +116,10 @@ export const useCommentStore = create((set, get) => ({
   },
 
   clearCommentedCode: () => {
-    set({ commentedCode: null, lastGenerated: null })
+    set({
+      commentedCode: null,
+      commentedCodes: { beginner: null, intermediate: null, expert: null },
+      lastGenerated: null,
+    })
   }
 }))

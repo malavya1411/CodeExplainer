@@ -1,12 +1,20 @@
 import { create } from "zustand"
-import { mockExplanation } from "../data/mockExplanation.js"
 
 let playTimer = null
 
 const SPEED_MS = { 0.5: 2400, 1: 1200, 2: 600, 4: 300 }
 
 export const useExplanationStore = create((set, get) => ({
-  explanation: mockExplanation,
+  // null until user explicitly clicks Explain
+  explanation: null,
+
+  // Cache for each depth level — populated on Explain click
+  explanations: {
+    beginner: null,
+    intermediate: null,
+    expert: null,
+  },
+
   depth: "intermediate",
   currentStep: 0,
   isPlaying: false,
@@ -14,9 +22,34 @@ export const useExplanationStore = create((set, get) => ({
   activeTab: "Overview",
 
   setActiveTab: (activeTab) => set({ activeTab }),
-  setDepth: (depth) => set({ depth }),
+  setDepth: (depth) => {
+    const cached = get().explanations[depth]
+    set({ depth, explanation: cached, currentStep: 0, isPlaying: false })
+  },
+
+  /** Called once per Explain click — stores all three level results */
+  setAllExplanations: (beginner, intermediate, expert) => {
+    const depth = get().depth
+    const active = { beginner, intermediate, expert }[depth]
+    set({
+      explanations: { beginner, intermediate, expert },
+      explanation: active,
+      currentStep: 0,
+      isPlaying: false,
+    })
+  },
+
   setExplanation: (explanation) =>
     set({ explanation, currentStep: 0, isPlaying: false }),
+
+  /** Reset everything — used when code changes after an analysis */
+  clearExplanations: () =>
+    set({
+      explanation: null,
+      explanations: { beginner: null, intermediate: null, expert: null },
+      currentStep: 0,
+      isPlaying: false,
+    }),
 
   stepForward: () => {
     const { currentStep, explanation } = get()

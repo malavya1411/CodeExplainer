@@ -6,7 +6,7 @@ import { cn } from "../../utils/cn.js"
 
 const FILTERS = ["All", "Local", "Global", "Changed"]
 
-export function VariablesTab({ explanation, currentStep }) {
+export function VariablesTab({ explanation, currentStep, depth }) {
   const [filter, setFilter] = useState("All")
   const [query, setQuery] = useState("")
   const variables = explanation.variables || []
@@ -81,7 +81,14 @@ export function VariablesTab({ explanation, currentStep }) {
               <tbody>
                 {filtered.map((v) => (
                   <tr key={v.name} className="border-b border-[var(--border)] last:border-0">
-                    <td className="py-2 pr-3 font-mono text-[var(--accent-primary)]">{v.name}</td>
+                    <td className="py-2 pr-3">
+                      <div className="font-mono text-[var(--accent-primary)]">{v.name}</div>
+                      {v.description && (
+                        <div className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-snug max-w-[180px]">
+                          {v.description}
+                        </div>
+                      )}
+                    </td>
                     <td className="py-2 pr-3 font-mono text-xs text-[var(--text-secondary)]">{v.type}</td>
                     <td className="py-2 pr-3 font-mono text-xs text-[var(--text-primary)]">{v.value}</td>
                     <td className="py-2 pr-3">

@@ -1,5 +1,6 @@
 import { motion } from "framer-motion"
 import { useExplanationStore } from "../../stores/explanationStore.js"
+import { useCommentStore } from "../../stores/commentStore.js"
 
 const OPTIONS = [
   { id: "beginner", label: "Beginner" },
@@ -24,7 +25,15 @@ export function DepthSwitcher() {
             key={o.id}
             role="radio"
             aria-checked={active}
-            onClick={() => setDepth(o.id)}
+            onClick={() => {
+              setDepth(o.id)
+              const commentStore = useCommentStore.getState()
+              commentStore.updateSettings({ depth: o.id })
+              const cachedComments = commentStore.commentedCodes
+              if (cachedComments && cachedComments[o.id]) {
+                useCommentStore.setState({ commentedCode: cachedComments[o.id] })
+              }
+            }}
             className="relative flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors z-10"
             style={{ color: active ? "var(--accent-on)" : "var(--text-secondary)" }}
           >
