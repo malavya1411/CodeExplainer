@@ -36,6 +36,7 @@ export default function App() {
   const depth = useExplanationStore((s) => s.depth)
   const currentStep = useExplanationStore((s) => s.currentStep)
   const setDepth = useExplanationStore((s) => s.setDepth)
+  const highlightRange = useExplanationStore((s) => s.highlightRange)
 
   const annotations = useAnnotationStore((s) => s.annotations)
 
@@ -47,6 +48,8 @@ export default function App() {
   
   // Highlight currently active line from explanation if available
   const activeLine = explanation?.execution_steps?.[currentStep]?.line
+  // Multi-line range from chunk/module selection overrides single-line highlight
+  const activeHighlightLine = highlightRange ? null : activeLine
 
   useEffect(() => {
     // Listen for system theme changes if needed
@@ -68,7 +71,7 @@ export default function App() {
 
     // Simulate API delay then generate all three depth levels
     setTimeout(() => {
-      const { beginner, intermediate, expert } = generateAllExplanations(code, language)
+      const { beginner, intermediate, expert, mode } = generateAllExplanations(code, language)
       
       // Generate comments for all three levels
       const commentSettings = useCommentStore.getState().commentSettings
@@ -84,7 +87,7 @@ export default function App() {
       }[activeDepth]
 
       // Set explanations
-      setAllExplanations(beginner, intermediate, expert)
+      setAllExplanations(beginner, intermediate, expert, mode)
       setComplexity(analyzeComplexity(code))
 
       // Set comments
@@ -215,10 +218,12 @@ export default function App() {
           <PanelGroup direction="horizontal" className="h-full">
             <Panel defaultSize={45} minSize={30} className="h-full">
               <CodePanel
-                highlightLine={activeLine}
+                highlightLine={activeHighlightLine}
+                highlightRange={highlightRange}
                 complexity={complexity}
                 onFormat={handleFormat}
                 onHighlightExplain={handleHighlightExplain}
+                onAnalyze={handleAnalyze}
               />
             </Panel>
             

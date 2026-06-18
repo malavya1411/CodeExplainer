@@ -5,17 +5,24 @@ import { DepthSwitcher } from "./DepthSwitcher.jsx"
 import { TabNavigation } from "./TabNavigation.jsx"
 import { OverviewTab } from "./OverviewTab.jsx"
 import { StepByStepTab } from "./StepByStepTab.jsx"
+import { ChunksTab } from "./ChunksTab.jsx"
+import { ArchitectureTab } from "./ArchitectureTab.jsx"
+import { ExplorerTab } from "./ExplorerTab.jsx"
 import { VariablesTab } from "./VariablesTab.jsx"
 import { ComplexityTab } from "./ComplexityTab.jsx"
 import { DiagramsTab } from "./DiagramsTab.jsx"
 import { CommentPreview } from "./CommentPreview.jsx"
+import { MinimapPanel } from "./MinimapPanel.jsx"
 
 export function ExplanationPanel({ complexity }) {
   const explanation = useExplanationStore((s) => s.explanation)
   const activeTab = useExplanationStore((s) => s.activeTab)
   const currentStep = useExplanationStore((s) => s.currentStep)
   const depth = useExplanationStore((s) => s.depth)
+  const explanationMode = useExplanationStore((s) => s.explanationMode)
   const isAnalyzing = useCodeStore((s) => s.isAnalyzing)
+
+  const isAdaptive = explanationMode !== "detailed"
 
   // ── Empty / loading state ──────────────────────────────────────────────────
   if (!explanation) {
@@ -39,7 +46,7 @@ export function ExplanationPanel({ complexity }) {
             </div>
             <p className="text-sm font-medium text-[var(--text-primary)]">Analyzing code…</p>
             <p className="text-xs text-[var(--text-muted)]">
-              Generating Beginner, Intermediate &amp; Expert explanations
+              Generating 30s Summary, 5m Overview &amp; Deep Dive explanations
             </p>
           </div>
         ) : (
@@ -63,8 +70,8 @@ export function ExplanationPanel({ complexity }) {
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                 Click{" "}
                 <span className="font-semibold text-[var(--accent-primary)]">Explain</span> to
-                analyze this code and get tailored explanations for Beginner, Intermediate, and
-                Expert levels.
+                analyze this code and get tailored explanations for 30s Summary, 5m Overview, and
+                Deep Dive levels.
               </p>
             </div>
             <div className="flex items-center gap-2 text-[11px] text-[var(--text-muted)] bg-[var(--bg-secondary)] rounded-lg px-3 py-2 border border-[var(--border)]">
@@ -82,33 +89,75 @@ export function ExplanationPanel({ complexity }) {
     )
   }
 
+  // ── Active explanation state ───────────────────────────────────────────────
+
+  // The "Step-by-Step" tab adapts its content based on explanationMode
+  const renderStepTab = () => {
+    if (explanationMode === "chunk") return <ChunksTab />
+    if (explanationMode === "architecture") return <ArchitectureTab />
+    if (explanationMode === "explorer") return <ExplorerTab />
+    return <StepByStepTab />
+  }
+
+  // Adaptive tab label
+  const stepTabLabel =
+    explanationMode === "chunk"
+      ? "Code Sections"
+      : explanationMode === "architecture"
+      ? "Architecture"
+      : explanationMode === "explorer"
+      ? "Explorer"
+      : "Step-by-Step"
+
   return (
     <section
       aria-label="Explanation panel"
       className="flex flex-col h-full min-h-0 bg-[var(--bg-primary)]"
     >
+      {/* Mode badge (only in adaptive modes) */}
+      {isAdaptive && (
+        <div className="shrink-0 flex items-center gap-2 px-4 py-1.5 bg-[color-mix(in_srgb,var(--accent-primary)_6%,transparent)] border-b border-[color-mix(in_srgb,var(--accent-primary)_20%,transparent)]">
+          <span
+            className="text-[10px] font-semibold uppercase tracking-widest"
+            style={{ color: "var(--accent-primary)" }}
+          >
+            {explanationMode === "chunk"
+              ? "⚡ Chunk Mode — 101–500 lines"
+              : explanationMode === "architecture"
+              ? "🏗️ Architecture Mode — 501–2000 lines"
+              : "🗺️ Codebase Explorer — 2000+ lines"}
+          </span>
+        </div>
+      )}
+
       {/* Depth switcher + tab bar */}
       <div className="shrink-0 flex flex-col gap-0 border-b border-[var(--border)]">
         <div className="px-4 py-2 bg-[var(--bg-secondary)]">
           <DepthSwitcher />
         </div>
-        <TabNavigation />
+        <TabNavigation adaptiveStepLabel={stepTabLabel} />
       </div>
 
-      {/* Tab content */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-4">
-        {activeTab === "Overview" && (
-          <OverviewTab explanation={explanation} complexity={complexity} depth={depth} />
-        )}
-        {activeTab === "Step-by-Step" && <StepByStepTab />}
-        {activeTab === "Variables" && (
-          <VariablesTab explanation={explanation} currentStep={currentStep} depth={depth} />
-        )}
-        {activeTab === "Complexity" && (
-          <ComplexityTab explanation={explanation} complexity={complexity} depth={depth} />
-        )}
-        {activeTab === "Diagrams" && <DiagramsTab explanation={explanation} />}
-        {activeTab === "Comments" && <CommentPreview />}
+      {/* Main content area — minimap sidebar + tab content */}
+      <div className="flex-1 min-h-0 flex overflow-hidden">
+        {/* Minimap sidebar — only in adaptive modes */}
+        {isAdaptive && <MinimapPanel explanation={explanation} />}
+
+        {/* Tab content */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-4">
+          {activeTab === "Overview" && (
+            <OverviewTab explanation={explanation} complexity={complexity} depth={depth} />
+          )}
+          {activeTab === "Step-by-Step" && renderStepTab()}
+          {activeTab === "Variables" && (
+            <VariablesTab explanation={explanation} currentStep={currentStep} depth={depth} />
+          )}
+          {activeTab === "Complexity" && (
+            <ComplexityTab explanation={explanation} complexity={complexity} depth={depth} />
+          )}
+          {activeTab === "Diagrams" && <DiagramsTab explanation={explanation} />}
+          {activeTab === "Comments" && <CommentPreview />}
+        </div>
       </div>
     </section>
   )
