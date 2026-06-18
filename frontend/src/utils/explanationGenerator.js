@@ -156,7 +156,7 @@ function parseLogicalBlocks(code, language) {
     let currentEnd = findEndIndex(startIdx)
     while (currentEnd + 1 < lines.length) {
       const nextLine = cleaned[currentEnd + 1]
-      if (nextLine.startsWith("else") || nextLine.startsWith("} else")) {
+      if (nextLine.startsWith("else") || nextLine.startsWith("} else") || nextLine.startsWith("elif")) {
         currentEnd = findEndIndex(currentEnd + 1)
       } else {
         break
@@ -165,7 +165,48 @@ function parseLogicalBlocks(code, language) {
     return currentEnd
   }
 
+  const isFunctionStart = (line) => {
+    if (line.includes(";")) return false
+    if (line.startsWith("def ") || (line.includes("def ") && line.endsWith(":"))) return true
+    if (/\b(?:function|func|fn)\b/.test(line)) return true
+    if (/\w+\s*\(.*\)\s*\{/.test(line)) return true
+    if (/=\s*\(.*\)\s*=>/.test(line)) return true
+    return false
+  }
+
+  const getFunctionName = (line) => {
+    const match = line.match(/\b(?:function|def|func|fn)\s+(\w+)/) ||
+                  line.match(/(\w+)\s*\(/) ||
+                  line.match(/const\s+(\w+)\s*=/) ||
+                  line.match(/let\s+(\w+)\s*=/)
+    return match ? match[1] : "anonymous"
+  }
+
+  const checkIsRecursive = (name, body) => {
+    if (!name || name === "anonymous") return false
+    const regex = new RegExp(`\\b${name}\\s*\\(`, 'g')
+    return regex.test(body)
+  }
+
+  const isApiCall = (line) => {
+    return (
+      /\b(?:fetch|axios|ajax|http|got|request|superagent)\b/.test(line) ||
+      line.includes("fetch(") ||
+      line.includes("axios.") ||
+      line.includes("http.get") ||
+      line.includes("http.post")
+    )
+  }
+
+  const isVariableSetup = (line) => {
+    return (
+      /\b(?:let|const|var|int|double|float|String|boolean|char)\b.*=/.test(line) ||
+      /^\w+\s*(\+|-|\*|\/)?=/.test(line)
+    )
+  }
+
   let i = 0
+  let functionCount = 0
   while (i < lines.length) {
     const line = cleaned[i]
     if (!line || line.startsWith("//") || line.startsWith("/*") || line.startsWith("*") || line.startsWith("#")) {
@@ -183,22 +224,24 @@ function parseLogicalBlocks(code, language) {
         end: end + 1
       })
       i++
-    } else if (
-      /\b(?:function|func|fn)\b|\w+\s+\w+\s*\(/.test(line) &&
-      !line.includes(";") &&
-      !line.includes("=") &&
-      line.includes("(") ||
-      (isPython && line.startsWith("def "))
-    ) {
+    } else if (isFunctionStart(line)) {
       const end = findEndIndex(i)
-      const funcNameMatch = line.match(/\b(?:function|func|fn|def)\s+(\w+)/) || line.match(/(\w+)\s*\(/)
-      const funcName = funcNameMatch ? funcNameMatch[1] : "Function"
+      const funcName = getFunctionName(line)
+      const bodyContent = lines.slice(i + 1, end + 1).join("\n")
+      const isRecursive = checkIsRecursive(funcName, bodyContent)
+      
+      const type = isRecursive ? "recursion" : (functionCount > 0 ? "helper_function" : "function")
+      const title = type === "recursion" 
+        ? `Recursion Block: ${funcName}` 
+        : (type === "helper_function" ? `Helper Function: ${funcName}` : `Function Definition: ${funcName}`)
+
       blocks.push({
-        type: "function",
-        title: `Function Definition: ${funcName}`,
+        type,
+        title,
         start: i + 1,
         end: end + 1
       })
+      functionCount++
       i++
     } else if (/\b(?:for|while|do)\b/.test(line)) {
       const end = findEndIndex(i)
@@ -218,26 +261,46 @@ function parseLogicalBlocks(code, language) {
         end: end + 1
       })
       i = end + 1
-    } else if (/\breturn\b/.test(line)) {
+    } else if (/\bswitch\b/.test(line)) {
+      const end = findEndIndex(i)
       blocks.push({
-        type: "return",
-        title: "Failure Case",
+        type: "switch",
+        title: "Switch Block",
+        start: i + 1,
+        end: end + 1
+      })
+      i = end + 1
+    } else if (/\b(?:try|catch|finally|except)\b/.test(line)) {
+      const end = findEndIndex(i)
+      blocks.push({
+        type: "error_handling",
+        title: line.startsWith("try") ? "Error Boundary (Try)" : "Error Handler (Catch)",
+        start: i + 1,
+        end: end + 1
+      })
+      i = end + 1
+    } else if (isApiCall(line)) {
+      blocks.push({
+        type: "api",
+        title: "API Call Block",
         start: i + 1,
         end: i + 1
       })
       i++
-    } else if (
-      /\b(?:let|const|var|int|double|float|String|boolean)\b.*=/.test(line) ||
-      /\w+\s*(\+|-|\*|\/)?=/.test(line)
-    ) {
+    } else if (/\breturn\b/.test(line)) {
+      blocks.push({
+        type: "return",
+        title: line.includes("-1") || line.includes("null") || line.includes("error") ? "Failure Case" : "Return Block",
+        start: i + 1,
+        end: i + 1
+      })
+      i++
+    } else if (isVariableSetup(line)) {
       let start = i
       let end = i
       while (end + 1 < lines.length) {
         const nextLine = cleaned[end + 1]
-        if (
-          /\b(?:let|const|var|int|double|float|String|boolean)\b.*=/.test(nextLine) ||
-          /\w+\s*(\+|-|\*|\/)?=/.test(nextLine)
-        ) {
+        if (isVariableSetup(nextLine)) {
           end++
         } else {
           break
@@ -245,7 +308,7 @@ function parseLogicalBlocks(code, language) {
       }
       blocks.push({
         type: "variable",
-        title: start === end ? "Midpoint Calculation" : "Variable Initialization",
+        title: start === end && line.includes("mid") ? "Midpoint Calculation" : "Variable Initialization",
         start: start + 1,
         end: end + 1
       })
@@ -274,49 +337,97 @@ function getDynamicExplanationForBlock(b, text, variables, level) {
   let expert = ""
   let analogy = ""
   let key_concepts = []
+  let purpose = ""
 
   const varNames = variables.slice(0, 3).join(", ")
 
   if (b.type === "function") {
-    const funcName = text.match(/\b(?:function|def|func|fn)\s+(\w+)/)?.[1] || "search"
+    const funcName = text.match(/\b(?:function|def|func|fn)\s+(\w+)/)?.[1] || 
+                     text.match(/(\w+)\s*\(/)?.[1] || "search"
+    purpose = `Defines a reusable entry point function called '${funcName}'.`
     beginner = `We define a function called '${funcName}'. A function is a named set of instructions you can run whenever you need them — like pressing a button.`
-    intermediate = `Declares the function '${funcName}' with its parameters. This is a reusable unit of logic that can be invoked from other components.`
-    expert = `Method signature definition for '${funcName}'. Binds parameters and sets up the stack frame context. Ensure preconditions are validated by caller.`
+    intermediate = `Declares the function '${funcName}' with parameters: ${variables.join(", ") || "none"}. This is a reusable unit of logic that accepts input and performs calculations.`
+    expert = `Method signature definition for '${funcName}'. Binds arguments and sets up the stack frame context. Ensure preconditions are validated by the caller.`
     analogy = "Like defining a recipe you can cook multiple times."
     key_concepts = ["function definition", "reusability"]
+  } else if (b.type === "helper_function") {
+    const funcName = text.match(/\b(?:function|def|func|fn)\s+(\w+)/)?.[1] || 
+                     text.match(/(\w+)\s*\(/)?.[1] || "helper"
+    purpose = `Defines helper sub-routine '${funcName}' to assist the main operation.`
+    beginner = `This is a helper function called '${funcName}'. It performs a specific task to assist the main program, keeping our main code simple and clean.`
+    intermediate = `Declares helper function '${funcName}' to modularize logic. It encapsulates sub-operations called by other sections.`
+    expert = `Utility function '${funcName}'. Extracts sub-routine to reduce cyclomatic complexity of main entrypoint. Stack frame footprint is constant.`
+    analogy = "Like a kitchen assistant chopping vegetables for the main chef."
+    key_concepts = ["helper routine", "modularity"]
+  } else if (b.type === "recursion") {
+    const funcName = text.match(/\b(?:function|def|func|fn)\s+(\w+)/)?.[1] || 
+                     text.match(/(\w+)\s*\(/)?.[1] || "recurse"
+    purpose = `Solves sub-problems recursively by calling itself with adjusted arguments.`
+    beginner = `This is a recursive function called '${funcName}'. Recursion means the function solves a problem by calling itself with smaller inputs, like nested Russian dolls!`
+    intermediate = `Defines recursive function '${funcName}'. Operates by invoking itself on a reduced sub-problem, expecting to hit a base case to terminate.`
+    expert = `Recursive implementation of '${funcName}'. Guard against stack overflow by validating base-case coverage. Each call consumes stack frame space O(d) depth.`
+    analogy = "Like looking at two mirrors facing each other, creating infinite nested reflections."
+    key_concepts = ["recursion", "base case", "call stack"]
   } else if (b.type === "class") {
     const className = text.match(/\bclass\s+(\w+)/)?.[1] || "Class"
+    purpose = `Blueprint defining structural schema and object-oriented encapsulation.`
     beginner = `We define a class called '${className}'. Think of a class as a blueprint or cookie cutter used to create objects of the same shape.`
     intermediate = `Declares class '${className}' for data encapsulation and object-oriented structure. Acts as a type blueprint.`
     expert = `Defines class '${className}' as the structural namespace and encapsulation boundary. Consider interface segregation.`
     analogy = "Like a blueprint for building a specific type of machine."
     key_concepts = ["class", "OOP", "encapsulation"]
   } else if (b.type === "loop") {
+    purpose = "Repeatedly executes nested statement block while loop conditions are satisfied."
     beginner = `This is a loop. It keeps repeating a set of steps over and over until a specific condition stops being true.`
     intermediate = `Initializes a loop structure. The body executes repeatedly while the condition holds true. Ensure the termination condition is met.`
     expert = `Loop header. Analyze termination guarantee, invariant, and potential for infinite loop states. Consider loop unrolling if performance-critical.`
     analogy = "Like repeating a task until it's done, then stopping."
     key_concepts = ["looping", "iteration", "termination"]
   } else if (b.type === "conditional") {
+    purpose = "Branches execution logic conditionally based on comparisons."
     beginner = `This block acts like a fork in the road. Depending on the result of the comparison, the algorithm chooses which direction to continue.`
     intermediate = `Evaluates a conditional branch. Control flow is directed to one of the branches based on the Boolean outcome.`
     expert = `Conditional branch instruction. Consider branch predictor impact for hot loops — predictable branches are nearly free on modern CPUs.`
     analogy = "Like choosing a path at a junction based on weather conditions."
     key_concepts = ["conditional logic", "branching", "control flow"]
+  } else if (b.type === "switch") {
+    purpose = "Selects one of several execution paths depending on switch variable value."
+    beginner = `This is a switch block. It acts like a multi-way junction, directing traffic to the matching case label.`
+    intermediate = `Evaluates a switch condition, jumping to the matching case branch. Avoids nested if-else structures.`
+    expert = `Switch dispatch block. Compiler may optimize this using a jump table (O(1) dispatch) rather than O(n) linear comparisons.`
+    analogy = "Like sorting mail into different bins depending on the postal code."
+    key_concepts = ["switch statement", "jump table", "dispatch"]
+  } else if (b.type === "api") {
+    purpose = "Triggers an external asynchronous network query."
+    beginner = `This block makes a network request to talk to another server over the internet. It fetches or sends data.`
+    intermediate = `Performs an HTTP request (API call). Handles asynchronous communication to retrieve or push remote resource representations.`
+    expert = `I/O bound network request. Returns a Promise/Future. Ensure proper handling of connection timeouts, status codes, and JSON serialization.`
+    analogy = "Like mailing a letter to a friend and waiting for a reply."
+    key_concepts = ["API call", "asynchronous I/O", "HTTP request"]
+  } else if (b.type === "error_handling") {
+    purpose = "Creates defensive boundary to capture and handle execution errors."
+    beginner = `This is error handling. It's like a safety net: if something goes wrong in the 'try' part, the program catches the error and keeps running without crashing.`
+    intermediate = `Error boundary. Catches exceptions thrown during execution inside the try block, redirecting execution to catch/finally blocks.`
+    expert = `Exception handler. Catches runtime anomalies. Be wary of swallowing errors without logging; ensure resource disposal in the finally block.`
+    analogy = "Like wearing a safety harness while rock climbing."
+    key_concepts = ["exception handling", "robustness", "try-catch"]
   } else if (b.type === "return") {
     const retVal = text.match(/return\s+([^;]+)/)?.[1]?.trim() || "nothing"
+    purpose = `Returns the result '${retVal}' and pops the call stack.`
     beginner = `We're done! The function exits and hands back the result: ${retVal}.`
     intermediate = `Returns control flow to the caller with the value '${retVal}', terminating this function's execution.`
     expert = `Pops the current stack frame, writing '${retVal}' to the return register. If this is a sentinel value (e.g. -1), ensure caller handles it.`
     analogy = "Like handing in a finished exam paper."
     key_concepts = ["return statement", "exit point"]
   } else if (b.type === "variable") {
+    purpose = `Initializes memory bindings for local variables: ${varNames || "state"}.`
     beginner = `We set up variables (${varNames || "bounds"}) to act as storage boxes. We can store data here and check it later.`
     intermediate = `Initializes state variables (${varNames || "bounds"}) to hold local values needed for calculations.`
     expert = `Stack-bound bindings created for variables (${varNames || "bounds"}). Analyze mutability (const vs let vs var) and escape behavior.`
     analogy = "Like labeling a jar and putting something inside it."
     key_concepts = ["variables", "state initialization"]
   } else {
+    purpose = "Executes computation step."
     beginner = `This statement performs an action or calculation.`
     intermediate = `Executes a standard statement.`
     expert = `Evaluates expression with potential side effects.`
@@ -324,7 +435,9 @@ function getDynamicExplanationForBlock(b, text, variables, level) {
     key_concepts = ["statement execution"]
   }
 
+  // Override for midpoint calculation
   if (b.type === "variable" && text.includes("mid")) {
+    purpose = "Calculates search range midpoint to partition bounds."
     beginner = "We find the middle item of our current search range. By checking the middle item, we can instantly throw away half of the remaining items!"
     intermediate = "Calculates the midpoint index: Math.floor((left + right) / 2). This divides the current search range into two equal parts."
     expert = "Computes the probe index mid using index arithmetic. Note: (left + right) / 2 can overflow in C++/Java. Safe alternative: left + ((right - left) >> 1)."
@@ -332,7 +445,7 @@ function getDynamicExplanationForBlock(b, text, variables, level) {
     key_concepts = ["midpoint calculation", "divide and conquer"]
   }
 
-  return { beginner, intermediate, expert, analogy, key_concepts }
+  return { beginner, intermediate, expert, analogy, key_concepts, purpose }
 }
 
 function buildBlocksForLevel(code, level) {
@@ -367,7 +480,7 @@ function buildBlocksForLevel(code, level) {
     if (b.type === "loop") hasLoop = true
     if (b.type === "conditional") branchCount++
 
-    const { beginner, intermediate, expert, analogy, key_concepts } = getDynamicExplanationForBlock(b, blockLines.join(" "), variables_affected, level)
+    const { beginner, intermediate, expert, analogy, key_concepts, purpose } = getDynamicExplanationForBlock(b, blockLines.join(" "), variables_affected, level)
     const displayText = { beginner, intermediate, expert }[level]
 
     return {
@@ -376,6 +489,7 @@ function buildBlocksForLevel(code, level) {
       line_end: b.end,
       type: b.type,
       title: b.title,
+      purpose,
       beginner,
       intermediate,
       expert,

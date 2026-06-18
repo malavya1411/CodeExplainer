@@ -4,6 +4,20 @@ let playTimer = null
 
 const SPEED_MS = { 0.5: 2400, 1: 1200, 2: 600, 4: 300 }
 
+const syncBlockWithStep = (stepIdx, state) => {
+  const explanation = state.explanation
+  if (!explanation || !explanation.execution_steps || !explanation.blocks) return {}
+  const step = explanation.execution_steps[stepIdx]
+  if (!step) return {}
+  const blockIdx = explanation.blocks.findIndex(
+    (b) => step.line >= b.line_start && step.line <= b.line_end
+  )
+  if (blockIdx !== -1) {
+    return { activeBlockIndex: blockIdx }
+  }
+  return {}
+}
+
 export const useExplanationStore = create((set, get) => ({
   // null until user explicitly clicks Explain
   explanation: null,
@@ -74,23 +88,39 @@ export const useExplanationStore = create((set, get) => ({
   stepForward: () => {
     const { currentStep, explanation } = get()
     const max = explanation.execution_steps.length - 1
-    if (currentStep < max) set({ currentStep: currentStep + 1 })
+    if (currentStep < max) {
+      const nextStep = currentStep + 1
+      set({ 
+        currentStep: nextStep,
+        ...syncBlockWithStep(nextStep, get())
+      })
+    }
     else get().pause()
   },
 
   stepBackward: () => {
     const { currentStep } = get()
-    if (currentStep > 0) set({ currentStep: currentStep - 1 })
+    if (currentStep > 0) {
+      const prevStep = currentStep - 1
+      set({ 
+        currentStep: prevStep,
+        ...syncBlockWithStep(prevStep, get())
+      })
+    }
   },
 
   reset: () => {
     get().pause()
-    set({ currentStep: 0 })
+    set({ currentStep: 0, activeBlockIndex: 0 })
   },
 
   toEnd: () => {
     get().pause()
-    set({ currentStep: get().explanation.execution_steps.length - 1 })
+    const lastStep = get().explanation.execution_steps.length - 1
+    set({ 
+      currentStep: lastStep,
+      ...syncBlockWithStep(lastStep, get())
+    })
   },
 
   play: () => {
@@ -103,7 +133,11 @@ export const useExplanationStore = create((set, get) => ({
         get().pause()
         return
       }
-      set({ currentStep: get().currentStep + 1 })
+      const nextStep = currentStep + 1
+      set({ 
+        currentStep: nextStep,
+        ...syncBlockWithStep(nextStep, get())
+      })
       playTimer = setTimeout(tick, SPEED_MS[get().playbackSpeed])
     }
     playTimer = setTimeout(tick, SPEED_MS[get().playbackSpeed])
@@ -126,7 +160,10 @@ export const useExplanationStore = create((set, get) => ({
 
   goToStep: (currentStep) => {
     get().pause()
-    set({ currentStep })
+    set({ 
+      currentStep,
+      ...syncBlockWithStep(currentStep, get())
+    })
   },
 }))
 
