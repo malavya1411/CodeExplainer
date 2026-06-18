@@ -68,26 +68,33 @@ export function Header({
             Understand code, visually
           </p>
         </div>
+
+        {/* Workspace Switcher */}
+        <div className="flex items-center bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl p-0.5 shadow-sm ml-4 select-none shrink-0">
+          <button
+            onClick={() => onWorkspaceChange("explainer")}
+            className={`text-[11px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+              activeWorkspace === "explainer"
+                ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+            }`}
+          >
+            Explainer
+          </button>
+          <button
+            onClick={() => onWorkspaceChange("optimizer")}
+            className={`text-[11px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+              activeWorkspace === "optimizer"
+                ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+            }`}
+          >
+            Optimizer
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-1.5">
-        <Button
-          variant={activeWorkspace === "explainer" ? "primary" : "secondary"}
-          size="sm"
-          icon={Play}
-          onClick={() => {
-            if (activeWorkspace !== "explainer") {
-              onWorkspaceChange("explainer")
-            } else {
-              onAnalyze()
-            }
-          }}
-          disabled={isAnalyzing}
-          className="hidden sm:inline-flex"
-        >
-          {isAnalyzing ? "Analyzing…" : "Explain"}
-        </Button>
-
         <Button
           variant={activeWorkspace === "optimizer" ? "primary" : "secondary"}
           size="sm"
@@ -122,7 +129,7 @@ export function Header({
           {commentsMenuOpen && (
             <div
               role="menu"
-              className="absolute right-0 mt-1.5 w-56 premium-card shadow-xl py-1 z-50 animate-fade-in"
+              className="absolute left-1/2 -translate-x-1/2 mt-1.5 w-48 premium-card shadow-xl py-1 z-50 animate-fade-in"
             >
               <button
                 role="menuitem"

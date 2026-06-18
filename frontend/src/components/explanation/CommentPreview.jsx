@@ -5,6 +5,8 @@ import { useCommentStore } from "../../stores/commentStore.js"
 import { useCodeStore } from "../../stores/codeStore.js"
 import { useThemeStore } from "../../stores/themeStore.js"
 import { toast } from "../shared/Toast.jsx"
+import { Modal } from "../shared/Modal.jsx"
+import { Button } from "../shared/Button.jsx"
 import {
   buildCommentedMarkdown,
   buildCommentedHTML,
@@ -25,9 +27,39 @@ export function CommentPreview() {
 
   const resolvedTheme = useThemeStore((s) => s.resolvedTheme)
 
-  const [previewMode, setPreviewMode] = useState("diff") // "diff" or "code"
+  const setCode = useCodeStore((s) => s.setCode)
+  const [originalCode, setOriginalCode] = useState(code)
+  const [generatedCode, setGeneratedCode] = useState(commentedCode)
+  const [hasAppliedChanges, setHasAppliedChanges] = useState(false)
+  const [previewMode, setPreviewMode] = useState("diff") // "diff", "original", or "code"
   const [exportMenuOpen, setExportMenuOpen] = useState(false)
   const [stale, setStale] = useState(false)
+
+  useEffect(() => {
+    if (!hasAppliedChanges) {
+      setOriginalCode(code)
+    }
+  }, [code, hasAppliedChanges])
+
+  useEffect(() => {
+    setGeneratedCode(commentedCode)
+    setHasAppliedChanges(false)
+  }, [commentedCode])
+
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
+  const handleApplyChanges = () => {
+    setConfirmOpen(true)
+  }
+
+  const confirmApply = () => {
+    if (!generatedCode) return
+    setCode(generatedCode)
+    setPreviewMode("code")
+    setHasAppliedChanges(true)
+    setConfirmOpen(false)
+    toast.success("Changes applied successfully.")
+  }
 
   // Auto-generate comments on mount if none exist
   useEffect(() => {
@@ -184,27 +216,52 @@ export function CommentPreview() {
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-3 shadow-sm select-none">
         
-        {/* View mode buttons */}
-        <div className="flex items-center gap-1 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl p-1 shadow-sm shrink-0">
+        {/* View mode + Apply changes buttons */}
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl p-1 shadow-sm shrink-0">
+            <button
+              onClick={() => setPreviewMode("diff")}
+              className={`text-[10px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+                previewMode === "diff"
+                  ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+              }`}
+            >
+              Comparison
+            </button>
+            <button
+              onClick={() => setPreviewMode("original")}
+              className={`text-[10px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+                previewMode === "original"
+                  ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+              }`}
+            >
+              Original Code
+            </button>
+            <button
+              onClick={() => setPreviewMode("code")}
+              className={`text-[10px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+                previewMode === "code"
+                  ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+              }`}
+            >
+              Final Code
+            </button>
+          </div>
+
           <button
-            onClick={() => setPreviewMode("diff")}
-            className={`text-[10px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
-              previewMode === "diff"
-                ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
-                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+            onClick={handleApplyChanges}
+            disabled={hasAppliedChanges}
+            className={`flex items-center gap-1.5 text-[10px] font-bold uppercase rounded-lg px-3 py-2 border transition-all cursor-pointer shadow-sm active:scale-95 ${
+              hasAppliedChanges
+                ? "bg-green-500/10 border-green-500/20 text-green-500 opacity-80 cursor-default"
+                : "bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] border-[var(--accent-primary)] text-[var(--accent-on)]"
             }`}
           >
-            Comparison
-          </button>
-          <button
-            onClick={() => setPreviewMode("code")}
-            className={`text-[10px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
-              previewMode === "code"
-                ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
-                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-            }`}
-          >
-            Final Code
+            <Check size={12} strokeWidth={3} />
+            {hasAppliedChanges ? "Applied" : "Apply Changes"}
           </button>
         </div>
 
@@ -308,8 +365,24 @@ export function CommentPreview() {
       <div className="flex-1 min-h-[300px] border border-[var(--border)] rounded-2xl overflow-hidden relative shadow-inner bg-[var(--bg-secondary)]">
         {previewMode === "diff" ? (
           <DiffEditor
-            original={code}
+            original={originalCode}
             modified={commentedCode}
+            language={language === "python" ? "python" : "javascript"}
+            theme={resolvedTheme === "dark" ? "explainer-dark" : "explainer-light"}
+            options={{
+              readOnly: true,
+              fontSize: 12.5,
+              lineHeight: 20,
+              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 }
+            }}
+          />
+        ) : previewMode === "original" ? (
+          <Editor
+            value={originalCode}
             language={language === "python" ? "python" : "javascript"}
             theme={resolvedTheme === "dark" ? "explainer-dark" : "explainer-light"}
             options={{
@@ -341,6 +414,27 @@ export function CommentPreview() {
           />
         )}
       </div>
+
+      <Modal
+        isOpen={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        title="Apply Changes"
+        width="max-w-md"
+        footer={
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={confirmApply}>
+              Apply
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+          Are you sure you want to apply these comments? This will overwrite your editor's current code.
+        </p>
+      </Modal>
     </div>
   )
 }
