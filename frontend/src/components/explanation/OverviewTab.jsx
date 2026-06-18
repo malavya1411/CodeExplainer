@@ -1,4 +1,4 @@
-import { Clock, Lightbulb, AlertTriangle } from "lucide-react"
+import { Clock, Lightbulb, AlertTriangle, BookOpen, Zap, Code2 } from "lucide-react"
 import { Card } from "../shared/Card.jsx"
 import { Badge } from "../shared/Badge.jsx"
 
@@ -6,16 +6,53 @@ const DIFFICULTY = {
   beginner: { type: "success", label: "Beginner" },
   intermediate: { type: "info", label: "Intermediate" },
   advanced: { type: "warning", label: "Advanced" },
-  expert: { type: "warning", label: "Advanced" },
+  expert: { type: "warning", label: "Expert" },
 }
 
-export function OverviewTab({ explanation, complexity }) {
+const DEPTH_META = {
+  beginner: {
+    icon: BookOpen,
+    label: "Beginner Explanation",
+    hint: "Simple language with real-world analogies",
+    color: "var(--success)",
+  },
+  intermediate: {
+    icon: Code2,
+    label: "Intermediate Explanation",
+    hint: "Logic flow, variables, and algorithm tradeoffs",
+    color: "var(--accent-primary)",
+  },
+  expert: {
+    icon: Zap,
+    label: "Expert Explanation",
+    hint: "Deep technical analysis, optimizations, and production considerations",
+    color: "var(--warning)",
+  },
+}
+
+export function OverviewTab({ explanation, complexity, depth }) {
   const diff = DIFFICULTY[explanation.difficulty] || DIFFICULTY.intermediate
   const time = complexity?.time || explanation.overall_complexity.time
   const space = complexity?.space || explanation.overall_complexity.space
+  const meta = DEPTH_META[depth] || DEPTH_META.intermediate
+  const MetaIcon = meta.icon
 
   return (
     <div className="space-y-4">
+      {/* Depth indicator badge */}
+      <div
+        className="flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium"
+        style={{
+          background: `color-mix(in srgb, ${meta.color} 8%, transparent)`,
+          borderColor: `color-mix(in srgb, ${meta.color} 30%, transparent)`,
+          color: meta.color,
+        }}
+      >
+        <MetaIcon size={13} />
+        <span>{meta.label}</span>
+        <span className="text-[var(--text-muted)] font-normal">— {meta.hint}</span>
+      </div>
+
       <Card title="Summary">
         <p className="text-base text-[var(--text-primary)] leading-relaxed text-pretty">
           {explanation.summary}
@@ -60,6 +97,60 @@ export function OverviewTab({ explanation, complexity }) {
           {explanation.overall_complexity.explanation}
         </p>
       </Card>
+
+      {/* Code blocks with depth-specific text */}
+      {explanation.blocks?.length > 0 && (
+        <Card title="Code Walkthrough">
+          <div className="space-y-3">
+            {explanation.blocks.map((block) => {
+              const text =
+                block._displayText ||
+                block[depth] ||
+                block.intermediate ||
+                block.beginner ||
+                ""
+              return (
+                <div
+                  key={block.id}
+                  className="rounded-lg bg-[var(--bg-tertiary)] p-3 border border-[var(--border)]"
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-[10px] font-mono text-[var(--text-muted)] bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded border border-[var(--border)]">
+                      L{block.line_start}
+                      {block.line_end !== block.line_start ? `–${block.line_end}` : ""}
+                    </span>
+                    <span className="text-xs font-semibold text-[var(--text-primary)]">
+                      {block.title}
+                    </span>
+                    <Badge type="outline" size="sm">
+                      {block.type}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{text}</p>
+                  {block.analogy && depth === "beginner" && (
+                    <p className="flex items-center gap-1.5 text-xs text-[var(--accent-secondary)] mt-2">
+                      <Lightbulb size={11} />
+                      {block.analogy}
+                    </p>
+                  )}
+                  {block.key_concepts?.length > 0 && depth !== "beginner" && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {block.key_concepts.map((c) => (
+                        <span
+                          key={c}
+                          className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-muted)] font-mono"
+                        >
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </Card>
+      )}
 
       {explanation.potential_issues?.length > 0 && (
         <Card title="Potential Issues">

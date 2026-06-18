@@ -12,7 +12,7 @@ import { Card } from "../shared/Card.jsx"
 import { Badge } from "../shared/Badge.jsx"
 import { growthData, ratingColor } from "../../utils/complexityAnalyzer.js"
 
-export function ComplexityTab({ explanation, complexity }) {
+export function ComplexityTab({ explanation, complexity, depth }) {
   const oc = explanation.overall_complexity
   const time = complexity?.time || oc.time
   const space = complexity?.space || oc.space
@@ -111,7 +111,7 @@ export function ComplexityTab({ explanation, complexity }) {
       </Card>
 
       {oc.optimization && (
-        <Card title="Optimization Suggestion">
+        <Card title={depth === "expert" ? "Expert Optimization Notes" : depth === "beginner" ? "Tips for Improvement" : "Optimization Suggestion"}>
           <p className="flex items-start gap-2 text-sm text-[var(--text-secondary)] leading-relaxed">
             <Lightbulb size={15} className="mt-0.5 shrink-0" style={{ color: "var(--accent-secondary)" }} />
             {oc.optimization}
