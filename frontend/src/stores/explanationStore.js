@@ -15,27 +15,43 @@ export const useExplanationStore = create((set, get) => ({
     expert: null,
   },
 
+  // Adaptive mode: "detailed" | "chunk" | "architecture" | "explorer"
+  explanationMode: "detailed",
+
   depth: "intermediate",
   currentStep: 0,
   isPlaying: false,
   playbackSpeed: 1,
   activeTab: "Overview",
 
+  // Navigation indices for adaptive modes
+  activeChunkIndex: 0,
+  activeModuleIndex: 0,
+  activeTreeNodeKey: null,
+  // Line range highlighted in Monaco (for chunk/module selection)
+  highlightRange: null,
+
   setActiveTab: (activeTab) => set({ activeTab }),
+
   setDepth: (depth) => {
     const cached = get().explanations[depth]
     set({ depth, explanation: cached, currentStep: 0, isPlaying: false })
   },
 
   /** Called once per Explain click — stores all three level results */
-  setAllExplanations: (beginner, intermediate, expert) => {
+  setAllExplanations: (beginner, intermediate, expert, mode) => {
     const depth = get().depth
     const active = { beginner, intermediate, expert }[depth]
     set({
       explanations: { beginner, intermediate, expert },
       explanation: active,
+      explanationMode: mode || active?.mode || "detailed",
       currentStep: 0,
       isPlaying: false,
+      activeChunkIndex: 0,
+      activeModuleIndex: 0,
+      activeTreeNodeKey: null,
+      highlightRange: null,
     })
   },
 
@@ -47,13 +63,58 @@ export const useExplanationStore = create((set, get) => ({
     set({
       explanation: null,
       explanations: { beginner: null, intermediate: null, expert: null },
+      explanationMode: "detailed",
       currentStep: 0,
       isPlaying: false,
+      activeChunkIndex: 0,
+      activeModuleIndex: 0,
+      activeTreeNodeKey: null,
+      highlightRange: null,
     }),
+
+  // ── Adaptive navigation ──────────────────────────────────────────────────
+
+  /** Select a chunk by index — highlights its line range in Monaco */
+  selectChunk: (index) => {
+    const explanation = get().explanation
+    const chunks = explanation?.chunks
+    if (!chunks || !chunks[index]) return
+    const chunk = chunks[index]
+    set({
+      activeChunkIndex: index,
+      currentStep: index,
+      highlightRange: { start: chunk.line_start, end: chunk.line_end },
+    })
+  },
+
+  /** Select a module by index — highlights its line scope in Monaco */
+  selectModule: (index) => {
+    const explanation = get().explanation
+    const modules = explanation?.modules
+    if (!modules || !modules[index]) return
+    const mod = modules[index]
+    set({
+      activeModuleIndex: index,
+      highlightRange: { start: mod.lineStart, end: mod.lineEnd },
+    })
+  },
+
+  /** Select a tree node by key */
+  selectTreeNode: (key, lineStart, lineEnd) => {
+    set({
+      activeTreeNodeKey: key,
+      highlightRange: lineStart != null ? { start: lineStart, end: lineEnd } : null,
+    })
+  },
+
+  clearHighlightRange: () => set({ highlightRange: null }),
+
+  // ── Step-by-step playback ────────────────────────────────────────────────
 
   stepForward: () => {
     const { currentStep, explanation } = get()
-    const max = explanation.execution_steps.length - 1
+    const steps = explanation?.execution_steps || []
+    const max = steps.length - 1
     if (currentStep < max) set({ currentStep: currentStep + 1 })
     else get().pause()
   },
@@ -70,7 +131,8 @@ export const useExplanationStore = create((set, get) => ({
 
   toEnd: () => {
     get().pause()
-    set({ currentStep: get().explanation.execution_steps.length - 1 })
+    const steps = get().explanation?.execution_steps || []
+    set({ currentStep: Math.max(0, steps.length - 1) })
   },
 
   play: () => {
@@ -78,7 +140,8 @@ export const useExplanationStore = create((set, get) => ({
     set({ isPlaying: true })
     const tick = () => {
       const { currentStep, explanation } = get()
-      const max = explanation.execution_steps.length - 1
+      const steps = explanation?.execution_steps || []
+      const max = steps.length - 1
       if (currentStep >= max) {
         get().pause()
         return
@@ -113,8 +176,9 @@ export const useExplanationStore = create((set, get) => ({
 // Derived helper: cumulative variable state up to current step.
 export function getActiveState(explanation, currentStep) {
   const state = {}
-  for (let i = 0; i <= currentStep && i < explanation.execution_steps.length; i++) {
-    const changes = explanation.execution_steps[i].state_changes || {}
+  const steps = explanation?.execution_steps || []
+  for (let i = 0; i <= currentStep && i < steps.length; i++) {
+    const changes = steps[i].state_changes || {}
     Object.entries(changes).forEach(([k, v]) => {
       state[k] = v
     })

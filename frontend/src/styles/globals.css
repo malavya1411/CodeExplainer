@@ -319,6 +319,19 @@ pre,
   width: 4px !important;
 }
 
+/* Multi-line range highlight (chunk / module selection) */
+.exp-range-start,
+.exp-range-line,
+.exp-range-end {
+  background-color: color-mix(in srgb, var(--accent-primary) 10%, transparent) !important;
+}
+.exp-range-start {
+  border-top: 1px solid color-mix(in srgb, var(--accent-primary) 40%, transparent) !important;
+}
+.exp-range-end {
+  border-bottom: 1px solid color-mix(in srgb, var(--accent-primary) 40%, transparent) !important;
+}
+
 /* Drag-over highlight */
 .drop-active {
   outline: 2px dashed var(--accent-primary);

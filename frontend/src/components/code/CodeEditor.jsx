@@ -5,7 +5,7 @@ import { useAnnotationStore } from "../../stores/annotationStore.js"
 import { useCommentStore } from "../../stores/commentStore.js"
 import { getMonacoLanguage } from "../../utils/languageDetector.js"
 
-export function CodeEditor({ value, language, onChange, highlightLine, onCursorLine, onSelectionText }) {
+export function CodeEditor({ value, language, onChange, highlightLine, highlightRange, onCursorLine, onSelectionText }) {
   const editorRef = useRef(null)
   const monacoRef = useRef(null)
   const decorationsRef = useRef([])
@@ -111,6 +111,22 @@ export function CodeEditor({ value, language, onChange, highlightLine, onCursorL
       })
     }
 
+    // Multi-line range highlight (from chunk/module selection)
+    if (highlightRange && highlightRange.start && highlightRange.end) {
+      const startLine = Math.min(highlightRange.start, total)
+      const endLine = Math.min(highlightRange.end, total)
+      for (let ln = startLine; ln <= endLine; ln++) {
+        decos.push({
+          range: new monaco.Range(ln, 1, ln, 1),
+          options: {
+            isWholeLine: true,
+            className: ln === startLine ? "exp-range-start" : ln === endLine ? "exp-range-end" : "exp-range-line",
+            overviewRuler: { color: "var(--accent-primary)", position: 4 },
+          },
+        })
+      }
+    }
+
     Object.keys(annotations).forEach((ln) => {
       const n = Number(ln)
       if (n <= total) {
@@ -134,7 +150,7 @@ export function CodeEditor({ value, language, onChange, highlightLine, onCursorL
     })
 
     decorationsRef.current = editor.deltaDecorations(decorationsRef.current, decos)
-  }, [highlightLine, annotations, confusingLines])
+  }, [highlightLine, highlightRange, annotations, confusingLines])
 
   useEffect(() => {
     updateDecorations()
@@ -144,7 +160,10 @@ export function CodeEditor({ value, language, onChange, highlightLine, onCursorL
     if (highlightLine && editorRef.current) {
       editorRef.current.revealLineInCenterIfOutsideViewport(highlightLine)
     }
-  }, [highlightLine])
+    if (highlightRange?.start && editorRef.current) {
+      editorRef.current.revealLineInCenterIfOutsideViewport(highlightRange.start)
+    }
+  }, [highlightLine, highlightRange])
 
   useEffect(() => {
     if (monacoRef.current) {

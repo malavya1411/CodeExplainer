@@ -1,5 +1,21 @@
 import { defaultCode, mockExplanation } from "../data/mockExplanation.js"
 
+// ─── Mode thresholds ──────────────────────────────────────────────────────────
+export const MODE_THRESHOLDS = {
+  detailed: 100,       // 0–100   lines → full step-by-step
+  chunk: 500,          // 101–500 lines → chunk-based
+  architecture: 2000,  // 501–2000 lines → architecture view
+  // > 2000             → codebase explorer
+}
+
+export function detectMode(code) {
+  const lines = code.split("\n").filter((l) => l.trim()).length
+  if (lines <= MODE_THRESHOLDS.detailed) return "detailed"
+  if (lines <= MODE_THRESHOLDS.chunk) return "chunk"
+  if (lines <= MODE_THRESHOLDS.architecture) return "architecture"
+  return "explorer"
+}
+
 // ─── Level-specific mock explanations for the default binary-search sample ───
 
 const mockBeginner = {
@@ -23,7 +39,7 @@ const mockBeginner = {
   })),
   execution_steps: mockExplanation.execution_steps.map((s) => ({
     ...s,
-    what: s.why, // Use simpler "why" text as the main content for beginners
+    what: s.why,
     why: "This helps us find the answer step by step, just like solving a puzzle.",
   })),
   variables: mockExplanation.variables.map((v) => ({
@@ -119,7 +135,223 @@ const mockExpert = {
   })),
 }
 
-// ─── Dynamic generator for arbitrary user code ───────────────────────────────
+// ─── Intelligent Chunking Engine ──────────────────────────────────────────────
+
+// Semantic label classifier for structural landmarks
+const CHUNK_PATTERNS = [
+  { re: /\b(import|require|include|using)\b/i, label: "Imports & Dependencies", icon: "📦" },
+  { re: /\b(export\s+default|module\.exports|export\s+\{)/i, label: "Exports", icon: "📤" },
+  { re: /\b(interface|type\s+\w+\s*=|enum\b)/i, label: "Type Definitions", icon: "🔷" },
+  { re: /\b(class\s+\w)/i, label: "Class Definition", icon: "🏗️" },
+  { re: /\b(constructor)\s*\(/i, label: "Constructor", icon: "🔧" },
+  { re: /\b(auth|login|logout|token|jwt|session|password|credential)/i, label: "Authentication", icon: "🔐" },
+  { re: /\b(router|route|endpoint|app\.(get|post|put|delete|patch))/i, label: "API Routes", icon: "🌐" },
+  { re: /\b(middleware|next\(|req,\s*res)/i, label: "Middleware", icon: "⚡" },
+  { re: /\b(db\.|database|mongoose|sequelize|prisma|knex|sql|query)/i, label: "Database", icon: "🗄️" },
+  { re: /\b(model|schema|entity|document)\b/i, label: "Data Models", icon: "📊" },
+  { re: /\b(validate|sanitize|assert|check|verify)\b/i, label: "Validation", icon: "✅" },
+  { re: /\b(fetch|axios|http|request|response|api)\b/i, label: "API Calls", icon: "🔌" },
+  { re: /\b(useState|useEffect|useCallback|useMemo|useRef|useContext)/i, label: "React Hooks", icon: "⚛️" },
+  { re: /\b(component|render|jsx|tsx)\b/i, label: "UI Component", icon: "🎨" },
+  { re: /\b(test|describe|it\(|expect|assert|spec)\b/i, label: "Tests", icon: "🧪" },
+  { re: /\b(util|helper|format|parse|transform|convert)\b/i, label: "Utilities", icon: "🛠️" },
+  { re: /\b(config|settings|env|process\.env)\b/i, label: "Configuration", icon: "⚙️" },
+  { re: /\b(error|exception|catch|throw|try)\b/i, label: "Error Handling", icon: "🚨" },
+  { re: /\b(cache|redis|memcache|store)\b/i, label: "Caching", icon: "💾" },
+  { re: /\b(log|logger|console\.log|winston|debug)\b/i, label: "Logging", icon: "📝" },
+  { re: /\b(function\s+\w+|const\s+\w+\s*=\s*(async\s+)?\(|=>\s*\{|\w+\s*\(.*\)\s*\{)/i, label: "Functions", icon: "⚡" },
+]
+
+function classifyLines(lines) {
+  return lines.map((line) => {
+    const trimmed = line.trim()
+    for (const p of CHUNK_PATTERNS) {
+      if (p.re.test(trimmed)) return { label: p.label, icon: p.icon }
+    }
+    return { label: "Logic", icon: "💡" }
+  })
+}
+
+// Detect all function definitions (name + line range)
+function detectFunctions(lines) {
+  const funcs = []
+  const funcPatterns = [
+    /\b(?:function|async function)\s+(\w+)\s*\(/,
+    /\bconst\s+(\w+)\s*=\s*(?:async\s*)?\(.*\)\s*=>/,
+    /\bconst\s+(\w+)\s*=\s*(?:async\s+)?function/,
+    /\b(?:public|private|protected|static)?\s+(?:async\s+)?(\w+)\s*\([^)]*\)\s*(?::\s*\w+)?\s*\{/,
+    /^\s*(\w+)\s*\([^)]*\)\s*\{/,
+    /\bdef\s+(\w+)\s*\(/,  // Python
+  ]
+  let depth = 0
+  let openFunc = null
+
+  lines.forEach((line, i) => {
+    const trimmed = line.trim()
+    const opens = (line.match(/\{/g) || []).length + (line.match(/:/g) && line.endsWith(":") ? 1 : 0)
+    const closes = (line.match(/\}/g) || []).length
+
+    if (!openFunc) {
+      for (const pat of funcPatterns) {
+        const m = trimmed.match(pat)
+        if (m && m[1] && m[1].length > 1) {
+          openFunc = { name: m[1], start: i + 1 }
+          depth = opens - closes
+          if (depth <= 0) {
+            funcs.push({ ...openFunc, end: i + 1, lines: 1 })
+            openFunc = null
+            depth = 0
+          }
+          break
+        }
+      }
+    } else {
+      depth += opens - closes
+      if (depth <= 0) {
+        funcs.push({ ...openFunc, end: i + 1, lines: (i + 1) - openFunc.start + 1 })
+        openFunc = null
+        depth = 0
+      }
+    }
+  })
+  return funcs
+}
+
+// Group consecutive lines with the same semantic label into chunks
+function buildChunks(lines, labels, functions) {
+  const chunks = []
+  let currentLabel = null
+  let currentIcon = null
+  let start = 0
+  let chunkLines = []
+
+  const flushChunk = (end) => {
+    if (chunkLines.length === 0) return
+    const chunkFuncs = functions.filter(
+      (f) => f.start >= start + 1 && f.end <= end
+    )
+    const nonEmpty = chunkLines.filter((l) => l.trim())
+    chunks.push({
+      id: chunks.length + 1,
+      label: currentLabel,
+      icon: currentIcon,
+      line_start: start + 1,
+      line_end: end,
+      lineCount: nonEmpty.length,
+      functions: chunkFuncs,
+      preview: nonEmpty.slice(0, 3).map((l) => l.trimStart()),
+      dependencies: [],
+    })
+    chunkLines = []
+  }
+
+  lines.forEach((line, i) => {
+    const { label, icon } = labels[i]
+    if (label !== currentLabel) {
+      if (currentLabel !== null) flushChunk(i)
+      currentLabel = label
+      currentIcon = icon
+      start = i
+    }
+    chunkLines.push(line)
+  })
+  flushChunk(lines.length)
+
+  return chunks
+}
+
+// Build a module tree for architecture mode
+function buildModuleTree(chunks, functions) {
+  const moduleMap = {}
+  chunks.forEach((chunk) => {
+    const key = chunk.label
+    if (!moduleMap[key]) {
+      moduleMap[key] = {
+        name: key,
+        icon: chunk.icon,
+        chunks: [],
+        functions: [],
+        lineStart: chunk.line_start,
+        lineEnd: chunk.line_end,
+      }
+    }
+    const m = moduleMap[key]
+    m.chunks.push(chunk)
+    m.functions.push(...chunk.functions)
+    m.lineEnd = Math.max(m.lineEnd, chunk.line_end)
+  })
+  return Object.values(moduleMap)
+}
+
+// Build architecture Mermaid flowchart from modules
+function buildArchitectureFlowchart(modules) {
+  const names = modules.map((m) => m.name.replace(/[^a-zA-Z0-9]/g, ""))
+  let chart = "flowchart TD\n"
+  names.forEach((name, i) => {
+    const label = modules[i].name
+    chart += `  ${name}["${modules[i].icon} ${label}"]\n`
+  })
+  // Connect consecutive modules with arrows to simulate data flow
+  for (let i = 0; i < names.length - 1; i++) {
+    chart += `  ${names[i]} --> ${names[i + 1]}\n`
+  }
+  return chart
+}
+
+// Build a knowledge tree for explorer mode
+function buildKnowledgeTree(modules, functions, lines) {
+  return modules.map((mod) => ({
+    key: mod.name,
+    icon: mod.icon,
+    label: mod.name,
+    lineStart: mod.lineStart,
+    lineEnd: mod.lineEnd,
+    children: mod.functions.map((fn) => ({
+      key: `${mod.name}::${fn.name}`,
+      icon: "⚡",
+      label: fn.name + `()`,
+      lineStart: fn.start,
+      lineEnd: fn.end,
+      lines: fn.lines,
+      children: [],
+    })),
+  }))
+}
+
+// Smart summary layers for all modes
+function buildSummaryLayers(code, lines, mode, functions, chunks, modules) {
+  const lineCount = lines.length
+  const funcCount = functions.length
+  const chunkCount = chunks.length
+  const moduleNames = modules.map((m) => m.name).join(", ")
+  const complexity = functions.reduce((acc, f) => acc + Math.ceil(f.lines / 10), 0)
+
+  return {
+    layer1: `This ${lineCount}-line codebase has ${funcCount} function${funcCount !== 1 ? "s" : ""} organized into ${chunkCount} logical section${chunkCount !== 1 ? "s" : ""}. ${
+      modules.length > 0
+        ? `Key areas: ${moduleNames}.`
+        : "The code follows a sequential structure."
+    } Think of it as a machine with parts working together to accomplish a goal.`,
+
+    layer2: `The file is ${lineCount} lines long and contains ${funcCount} callable function${funcCount !== 1 ? "s" : ""}. It is organized into ${chunkCount} logical groups: ${moduleNames || "general logic"}. ${
+      mode === "chunk"
+        ? "Each chunk handles a specific responsibility. Data flows top-to-bottom with clear separation of concerns."
+        : mode === "architecture"
+        ? "Modules are loosely coupled and follow a layered architecture pattern. Dependencies run downward."
+        : "The system exposes multiple entry points with hierarchical control flow across components."
+    } Total estimated cyclomatic complexity: ~${complexity}.`,
+
+    layer3: `${lineCount}-line source file. ${funcCount} functions, cyclomatic complexity ≈ ${complexity}. ${
+      mode === "chunk"
+        ? "Chunk-based organization detected. Review inter-chunk coupling and ensure single responsibility per chunk. Flag: shared state across chunks can introduce hidden dependencies."
+        : mode === "architecture"
+        ? "Multi-module architecture. Assess module boundaries for interface leakage. Dependency inversion principle should be verified. Circular imports may exist — use a dependency graph tool to confirm."
+        : "Large-scale codebase (explorer mode). Static analysis is limited without AST parsing. Recommended: extract to multiple files, apply domain-driven design, use interface segregation to reduce cognitive load."
+    } Areas to investigate: ${modules.slice(0, 3).map((m) => m.name).join(", ") || "general logic"}.`,
+  }
+}
+
+// ─── Detailed mode (≤ 100 lines) — original block builder ────────────────────
 
 function buildBlocksForLevel(code, level) {
   const lines = code.split("\n")
@@ -127,7 +359,6 @@ function buildBlocksForLevel(code, level) {
   const execution_steps = []
   const variables = []
   const potential_issues = []
-  const patterns_detected = []
 
   let stepCounter = 1
   let blockCounter = 1
@@ -150,7 +381,6 @@ function buildBlocksForLevel(code, level) {
     let type = "statement"
     let title = "Execute Line"
 
-    // Level-differentiated default texts
     const defaults = {
       beginner: `This line does something: '${line.slice(0, 60)}'.`,
       intermediate: `Executes the statement: '${line.slice(0, 80)}'.`,
@@ -311,8 +541,7 @@ function buildBlocksForLevel(code, level) {
       type,
       title,
       _displayText: displayText,
-      // Keep all three for reference
-      beginner: displayText, // will be overridden per level anyway
+      beginner: displayText,
       intermediate: displayText,
       expert: displayText,
       analogy,
@@ -334,7 +563,6 @@ function buildBlocksForLevel(code, level) {
     })
   })
 
-  // Complexity descriptions per level
   let timeComplexity = "O(1)"
   let spaceComplexity = "O(1)"
   let complexityExplanation = {
@@ -373,7 +601,6 @@ function buildBlocksForLevel(code, level) {
     })
   })
 
-  // Diagrams
   let flowchart = "flowchart TD\n  Start([Start]) --> Step1\n"
   execution_steps.forEach((s) => {
     const sanitised = s.title.replace(/[^a-zA-Z0-9 ]/g, "")
@@ -408,9 +635,9 @@ function buildBlocksForLevel(code, level) {
   }
 
   return {
+    mode: "detailed",
     summary: summaryByLevel[level],
-    difficulty:
-      level === "beginner" ? "beginner" : level === "intermediate" ? "intermediate" : "expert",
+    difficulty: level,
     estimatedReadMinutes: Math.max(
       1,
       level === "beginner"
@@ -449,27 +676,210 @@ function buildBlocksForLevel(code, level) {
   }
 }
 
+// ─── Chunked / Architecture / Explorer builder ────────────────────────────────
+
+function buildAdaptiveExplanation(code, level, mode) {
+  const allLines = code.split("\n")
+  const nonEmptyLines = allLines.filter((l) => l.trim())
+  const lineCount = allLines.length
+
+  const functions = detectFunctions(allLines)
+  const labels = classifyLines(allLines)
+  const chunks = buildChunks(allLines, labels, functions)
+  const modules = buildModuleTree(chunks, functions)
+  const summaryLayers = buildSummaryLayers(code, allLines, mode, functions, chunks, modules)
+  const tree = buildKnowledgeTree(modules, functions, allLines)
+  const architectureChart = buildArchitectureFlowchart(modules)
+
+  // Level-calibrated description generators
+  const describeFn = (fn, level) => ({
+    beginner: `'${fn.name}' is a helper that does a specific job. It spans ${fn.lines} lines.`,
+    intermediate: `Function '${fn.name}' (lines ${fn.start}–${fn.end}, ${fn.lines} lines). Encapsulates a discrete unit of logic.`,
+    expert: `\`${fn.name}\` — ${fn.lines} LOC (L${fn.start}–L${fn.end}). Estimated cyclomatic complexity: ~${Math.max(1, Math.ceil(fn.lines / 8))}. Verify: pure function? Side effects? Testable in isolation?`,
+  })[level]
+
+  const describeChunk = (chunk, level) => ({
+    beginner: `This section (lines ${chunk.line_start}–${chunk.line_end}) is the "${chunk.label}" part of the code. It has ${chunk.functions.length} helper(s) inside.`,
+    intermediate: `${chunk.label} block spanning lines ${chunk.line_start}–${chunk.line_end} (${chunk.lineCount} non-empty lines). Contains ${chunk.functions.length} function definition(s).`,
+    expert: `Module segment: ${chunk.label} (L${chunk.line_start}–L${chunk.line_end}). ${chunk.lineCount} executable lines. ${chunk.functions.length} callables. Review inter-module coupling and single-responsibility principle compliance.`,
+  })[level]
+
+  // Complexity estimation
+  const estimatedCyclomatic = Math.max(1, functions.length + Math.floor(nonEmptyLines.length / 20))
+  const hasLoops = /\b(for|while|forEach|map|filter|reduce)\b/.test(code)
+  const timeComplexity = hasLoops ? "O(n)" : "O(1)"
+  const spaceComplexity = functions.length > 5 ? "O(n)" : "O(1)"
+
+  const complexityByLevel = {
+    beginner: `This codebase has ${lineCount} lines across ${modules.length} area(s). More code means more work — but good organization keeps things manageable!`,
+    intermediate: `${lineCount} lines, ~${estimatedCyclomatic} cyclomatic complexity, ${functions.length} functions across ${modules.length} module(s). ${hasLoops ? "Contains loop constructs (O(n) time potential)." : "No dominant loops detected (O(1) candidate)."}`,
+    expert: `${lineCount} LOC, estimated cyclomatic complexity ≈ ${estimatedCyclomatic}. ${functions.length} callables across ${modules.length} semantic module(s). Time: ${timeComplexity}, Space: ${spaceComplexity}. Static analysis only — instrument with profiler for production hot-path confirmation.`,
+  }
+
+  // Enriched chunks with descriptions
+  const enrichedChunks = chunks.map((chunk) => ({
+    ...chunk,
+    description: describeChunk(chunk, level),
+    functions: chunk.functions.map((fn) => ({
+      ...fn,
+      description: describeFn(fn, level),
+    })),
+  }))
+
+  const enrichedModules = modules.map((mod) => ({
+    ...mod,
+    description: {
+      beginner: `The "${mod.name}" area handles a specific job in this codebase.`,
+      intermediate: `Module: ${mod.name}. Spans lines ${mod.lineStart}–${mod.lineEnd} with ${mod.functions.length} function(s).`,
+      expert: `Semantic module: ${mod.name} (L${mod.lineStart}–L${mod.lineEnd}). ${mod.functions.length} callables. Assess cohesion and coupling metrics.`,
+    }[level],
+    functions: mod.functions.map((fn) => ({
+      ...fn,
+      description: describeFn(fn, level),
+    })),
+  }))
+
+  const summaryByLevel = {
+    beginner: summaryLayers.layer1,
+    intermediate: summaryLayers.layer2,
+    expert: summaryLayers.layer3,
+  }
+
+  // Maintain backward-compat fields (blocks, execution_steps, variables, diagrams)
+  // so existing tabs (Overview, Variables, Complexity, Diagrams) still render correctly
+  const blocks = enrichedChunks.map((chunk, i) => ({
+    id: i + 1,
+    line_start: chunk.line_start,
+    line_end: chunk.line_end,
+    type: "chunk",
+    title: `${chunk.icon} ${chunk.label}`,
+    _displayText: chunk.description,
+    beginner: chunk.description,
+    intermediate: chunk.description,
+    expert: chunk.description,
+    analogy: `This is the "${chunk.label}" section of your code.`,
+    key_concepts: [chunk.label, "modular design"],
+    variables_affected: [],
+  }))
+
+  const execution_steps = enrichedChunks.map((chunk, i) => ({
+    step: i + 1,
+    line: chunk.line_start,
+    title: `${chunk.icon} ${chunk.label}`,
+    what: chunk.description,
+    why: `This section handles "${chunk.label}" responsibilities.`,
+    description: `Lines ${chunk.line_start}–${chunk.line_end}: ${chunk.label}`,
+    state_changes: {},
+  }))
+
+  const variableSet = new Set()
+  allLines.forEach((line) => {
+    const m = line.match(/\b(?:let|const|var)\s+([a-zA-Z_]\w*)\b/)
+    if (m) variableSet.add(m[1])
+  })
+  const variables = Array.from(variableSet).map((v, i) => ({
+    name: v,
+    type: "variable",
+    value: "dynamic",
+    scope: "local",
+    lastChanged: i + 1,
+    description: {
+      beginner: `'${v}' stores a value used in this code.`,
+      intermediate: `'${v}' — a variable binding tracked across execution.`,
+      expert: `\`${v}\` — binding. Analyze scope, mutability, and escape analysis.`,
+    }[level],
+  }))
+
+  // Mermaid diagrams
+  let flowchart = architectureChart
+  let sequence = "sequenceDiagram\n  participant User\n  participant App\n"
+  enrichedModules.forEach((m) => {
+    sequence += `  App->>App: ${m.name}\n`
+  })
+  sequence += "  App-->>User: Done\n"
+
+  let classDiagram = "classDiagram\n"
+  enrichedModules.forEach((mod) => {
+    const cleanName = mod.name.replace(/[^a-zA-Z0-9]/g, "")
+    classDiagram += `  class ${cleanName || "Module"} {\n`
+    mod.functions.slice(0, 5).forEach((fn) => {
+      classDiagram += `    +${fn.name}() void\n`
+    })
+    classDiagram += "  }\n"
+  })
+
+  return {
+    mode,
+    summary: summaryByLevel[level],
+    summaryLayers,
+    difficulty: level,
+    estimatedReadMinutes: Math.max(1, Math.ceil(lineCount / (level === "beginner" ? 15 : level === "intermediate" ? 20 : 30))),
+    blocks,
+    chunks: enrichedChunks,
+    modules: enrichedModules,
+    tree,
+    functions,
+    architectureChart,
+    overall_complexity: {
+      time: timeComplexity,
+      space: spaceComplexity,
+      cyclomatic: estimatedCyclomatic,
+      explanation: complexityByLevel[level],
+      comparison: {
+        beginner: "Good code organization helps keep things manageable as the project grows!",
+        intermediate: `${lineCount} lines is a ${lineCount < 200 ? "small-medium" : lineCount < 1000 ? "medium" : "large"} codebase. Modular design improves maintainability.`,
+        expert: "Static analysis only. Profile hot paths in production. Consider architectural patterns (CQRS, event sourcing) for scale.",
+      }[level],
+      breakdown: enrichedModules.map((m) => ({ name: m.name, time: "O(n)", space: "O(1)" })),
+      optimization: {
+        beginner: "Break large sections into smaller, named functions to make the code easier to understand.",
+        intermediate: "Extract shared logic into utilities. Consider lazy loading for large modules.",
+        expert: "Evaluate tree-shaking, code-splitting, and module boundary optimization. Instrument with a profiler before optimizing.",
+      }[level],
+    },
+    patterns_detected: modules.map((m) => m.name),
+    potential_issues: [],
+    execution_steps,
+    variables,
+    diagrams: { flowchart, sequence, classDiagram },
+  }
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
  * Generate explanations for all three depth levels.
- * Returns { beginner, intermediate, expert }.
+ * Automatically selects the right mode based on line count.
+ * Returns { beginner, intermediate, expert, mode }.
  */
 export function generateAllExplanations(code, language) {
   const isDefault = code.trim() === defaultCode.trim()
 
   if (isDefault) {
     return {
-      beginner: mockBeginner,
-      intermediate: mockIntermediate,
-      expert: mockExpert,
+      beginner: { ...mockBeginner, mode: "detailed" },
+      intermediate: { ...mockIntermediate, mode: "detailed" },
+      expert: { ...mockExpert, mode: "detailed" },
+      mode: "detailed",
+    }
+  }
+
+  const mode = detectMode(code)
+
+  if (mode === "detailed") {
+    return {
+      beginner: buildBlocksForLevel(code, "beginner"),
+      intermediate: buildBlocksForLevel(code, "intermediate"),
+      expert: buildBlocksForLevel(code, "expert"),
+      mode,
     }
   }
 
   return {
-    beginner: buildBlocksForLevel(code, "beginner"),
-    intermediate: buildBlocksForLevel(code, "intermediate"),
-    expert: buildBlocksForLevel(code, "expert"),
+    beginner: buildAdaptiveExplanation(code, "beginner", mode),
+    intermediate: buildAdaptiveExplanation(code, "intermediate", mode),
+    expert: buildAdaptiveExplanation(code, "expert", mode),
+    mode,
   }
 }
 
