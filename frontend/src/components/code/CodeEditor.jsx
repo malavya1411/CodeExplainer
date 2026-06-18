@@ -154,6 +154,25 @@ export function CodeEditor({ value, language, onChange, highlightLine, onCursorL
 
   useEffect(() => {
     const editor = editorRef.current
+    if (editor && value) {
+      const currentVal = editor.getValue()
+      if (currentVal !== value) {
+        const position = editor.getPosition()
+        const scroll = editor.getScrollTop()
+        setTimeout(() => {
+          if (editorRef.current) {
+            if (position) {
+              editorRef.current.setPosition(position)
+            }
+            editorRef.current.setScrollTop(scroll)
+          }
+        }, 50)
+      }
+    }
+  }, [value])
+
+  useEffect(() => {
+    const editor = editorRef.current
     if (!editor) return
 
     const clearViewZones = () => {

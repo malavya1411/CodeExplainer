@@ -25,9 +25,30 @@ export function CommentPreview() {
 
   const resolvedTheme = useThemeStore((s) => s.resolvedTheme)
 
+  const setCode = useCodeStore((s) => s.setCode)
+  const [originalCode, setOriginalCode] = useState(code)
+  const [generatedCode, setGeneratedCode] = useState(commentedCode)
+  const [hasAppliedChanges, setHasAppliedChanges] = useState(false)
   const [previewMode, setPreviewMode] = useState("diff") // "diff" or "code"
   const [exportMenuOpen, setExportMenuOpen] = useState(false)
   const [stale, setStale] = useState(false)
+
+  useEffect(() => {
+    setOriginalCode(code)
+  }, [code])
+
+  useEffect(() => {
+    setGeneratedCode(commentedCode)
+    setHasAppliedChanges(false)
+  }, [commentedCode])
+
+  const handleApplyChanges = () => {
+    if (!generatedCode) return
+    setCode(generatedCode)
+    setPreviewMode("code")
+    setHasAppliedChanges(true)
+    toast.success("Changes applied successfully.")
+  }
 
   // Auto-generate comments on mount if none exist
   useEffect(() => {
@@ -184,27 +205,42 @@ export function CommentPreview() {
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-3 shadow-sm select-none">
         
-        {/* View mode buttons */}
-        <div className="flex items-center gap-1 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl p-1 shadow-sm shrink-0">
+        {/* View mode + Apply changes buttons */}
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl p-1 shadow-sm shrink-0">
+            <button
+              onClick={() => setPreviewMode("diff")}
+              className={`text-[10px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+                previewMode === "diff"
+                  ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+              }`}
+            >
+              Comparison
+            </button>
+            <button
+              onClick={() => setPreviewMode("code")}
+              className={`text-[10px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+                previewMode === "code"
+                  ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+              }`}
+            >
+              Final Code
+            </button>
+          </div>
+
           <button
-            onClick={() => setPreviewMode("diff")}
-            className={`text-[10px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
-              previewMode === "diff"
-                ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
-                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+            onClick={handleApplyChanges}
+            disabled={hasAppliedChanges}
+            className={`flex items-center gap-1.5 text-[10px] font-bold uppercase rounded-lg px-3 py-2 border transition-all cursor-pointer shadow-sm active:scale-95 ${
+              hasAppliedChanges
+                ? "bg-green-500/10 border-green-500/20 text-green-500 opacity-80 cursor-default"
+                : "bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] border-[var(--accent-primary)] text-[var(--accent-on)]"
             }`}
           >
-            Comparison
-          </button>
-          <button
-            onClick={() => setPreviewMode("code")}
-            className={`text-[10px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
-              previewMode === "code"
-                ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
-                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-            }`}
-          >
-            Final Code
+            <Check size={12} strokeWidth={3} />
+            {hasAppliedChanges ? "Applied" : "Apply Changes"}
           </button>
         </div>
 
