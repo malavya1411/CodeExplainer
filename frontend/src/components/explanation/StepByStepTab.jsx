@@ -9,6 +9,7 @@ export function StepByStepTab() {
   const explanation = useExplanationStore((s) => s.explanation)
   const currentStep = useExplanationStore((s) => s.currentStep)
   const goToStep = useExplanationStore((s) => s.goToStep)
+  const depth = useExplanationStore((s) => s.depth)
   const steps = explanation.execution_steps
   const step = steps[currentStep]
   const activeState = getActiveState(explanation, currentStep)
