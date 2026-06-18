@@ -321,7 +321,13 @@ export function StepByStepTab() {
         return (
           <div
             key={block.id}
-            onClick={() => setActiveBlockIndex(idx)}
+            onClick={() => {
+              if (isActive) {
+                setActiveBlockIndex(-1)
+              } else {
+                setActiveBlockIndex(idx)
+              }
+            }}
             className={`premium-card border text-left p-4 cursor-pointer transition-all duration-300 ${
               isActive
                 ? "border-[var(--accent-primary)] bg-[var(--bg-secondary)] shadow-md shadow-[var(--accent-primary)]/5"
