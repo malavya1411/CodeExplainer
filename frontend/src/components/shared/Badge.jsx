@@ -1,6 +1,7 @@
 import { cn } from "../../utils/cn.js"
 
 const TYPE_STYLES = {
+  primary: "bg-[var(--accent-primary)] text-[var(--accent-on)]",
   success: "bg-[var(--success)] text-[var(--accent-on)]",
   warning: "bg-[var(--warning)] text-[var(--text-primary)]",
   error: "bg-[var(--error)] text-white",
