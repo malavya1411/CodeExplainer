@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { Sun, Moon, Settings, Download, ChevronDown, Code2, Play, Cpu, MessageSquare, Eye, EyeOff } from "lucide-react"
+import { Sun, Moon, Settings, Download, ChevronDown, Code2, Play, Cpu, MessageSquare, Eye, EyeOff, ArrowLeftRight } from "lucide-react"
 import { useThemeStore } from "../../stores/themeStore.js"
 import { useAuthStore } from "../../stores/authStore.js"
 import { useCommentStore } from "../../stores/commentStore.js"
@@ -18,7 +18,9 @@ export function Header({
   activeWorkspace = "explainer",
   onWorkspaceChange,
   onOptimize,
-  isOptimizing
+  isOptimizing,
+  onConvert,
+  isConverting,
 }) {
   const resolvedTheme = useThemeStore((s) => s.resolvedTheme)
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
@@ -91,10 +93,33 @@ export function Header({
           >
             Optimizer
           </button>
+          <button
+            onClick={() => onWorkspaceChange("converter")}
+            className={`text-[11px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+              activeWorkspace === "converter"
+                ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+            }`}
+          >
+            Convert
+          </button>
         </div>
       </div>
 
       <div className="flex items-center gap-1.5">
+        <Button
+          variant={activeWorkspace === "converter" ? "primary" : "secondary"}
+          size="sm"
+          icon={ArrowLeftRight}
+          onClick={() => {
+            onWorkspaceChange("converter")
+          }}
+          disabled={isConverting}
+          className="hidden sm:inline-flex"
+        >
+          {isConverting ? "Converting…" : "Convert"}
+        </Button>
+
         <Button
           variant={activeWorkspace === "optimizer" ? "primary" : "secondary"}
           size="sm"
