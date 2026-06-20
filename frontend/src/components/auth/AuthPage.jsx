@@ -1,15 +1,27 @@
-import { Sun, Moon, Code2, Check, Loader2, ArrowRight } from "lucide-react"
+import { Sun, Moon, Code2, Check, Loader2, ArrowRight, Zap, RefreshCw, MessageSquare, Network, Activity, BookOpen, Terminal } from "lucide-react"
 import { useAuthStore } from "../../stores/authStore.js"
 import { useThemeStore } from "../../stores/themeStore.js"
 import { Button } from "../shared/Button.jsx"
 import { toast } from "../shared/Toast.jsx"
 
-export function AuthPage() {
+export function AuthPage({ onLaunch }) {
   const login = useAuthStore((s) => s.login)
   const isLoading = useAuthStore((s) => s.isLoading)
 
   const resolvedTheme = useThemeStore((s) => s.resolvedTheme)
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
+
+  const handleLaunch = async (workspace, tab = null) => {
+    try {
+      await login("developer@codeexplainer.org", "guestpass123")
+      toast.success("Welcome to the workspace!")
+      if (onLaunch) {
+        onLaunch(workspace, tab)
+      }
+    } catch (err) {
+      toast.error("Failed to launch workspace.")
+    }
+  }
 
   return (
     <div className="flex h-screen w-full bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300 relative overflow-hidden">
@@ -28,7 +40,7 @@ export function AuthPage() {
       {/* Main Container Split View */}
       <div className="flex flex-1 w-full h-full">
         
-        {/* Left Side: Features & Code Preview (Hidden on Mobile) */}
+        {/* Left Side: Features & Value Proposition (Hidden on Mobile) */}
         <div className="hidden lg:flex flex-col w-1/2 bg-[var(--bg-secondary)] border-r border-[var(--border)] p-12 justify-between select-none relative overflow-hidden">
           
           {/* Logo & Header */}
@@ -43,42 +55,36 @@ export function AuthPage() {
           </div>
 
           {/* Core Feature Text Blocks */}
-          <div className="my-auto max-w-lg space-y-6">
-            <div className="space-y-3">
-              <h1 className="text-3xl font-extrabold tracking-tight text-[var(--text-primary)] leading-tight">
-                Understand Code, Visually.
+          <div className="my-auto max-w-lg space-y-8">
+            <div className="space-y-4">
+              <h1 className="text-4xl font-black tracking-tight text-[var(--text-primary)] leading-[1.15]">
+                Understand Code.<br/>
+                <span className="text-[var(--accent-primary)]">Optimize It.</span><br/>
+                Convert It.<br/>
+                Document It.
               </h1>
-              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                Transform complex code snippets into interactive line-by-line debugger walkthroughs, runtime execution flows, complexity reports, and visual diagrams.
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed max-w-md">
+                AI-powered developer workspace that helps you explain, improve, convert, and document code.
               </p>
             </div>
 
-            <div className="space-y-3 pt-2">
-              <FeatureItem label="Interactive Code Walkthroughs" />
-              <FeatureItem label="Complexity Analysis" />
-              <FeatureItem label="Visual Execution Flow" />
-              <FeatureItem label="Multi-Level Explanations" />
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <FeatureItem label="Multi-level explanations" />
+              <FeatureItem label="Code optimization" />
+              <FeatureItem label="Language conversion" />
+              <FeatureItem label="Smart comments" />
+              <FeatureItem label="Architecture insights" />
+              <FeatureItem label="Interactive walkthroughs" />
             </div>
-          </div>
 
-          {/* Clean Mock Code Editor Illustration */}
-          <div className="w-full premium-card p-4 relative font-mono text-[11px] leading-relaxed max-w-lg mx-auto bg-[var(--bg-primary)]">
-            <div className="flex items-center gap-1.5 pb-3 border-b border-[var(--border)] mb-3 text-[var(--text-muted)]">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-400 opacity-60"></span>
-              <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 opacity-60"></span>
-              <span className="w-2.5 h-2.5 rounded-full bg-green-400 opacity-60"></span>
-              <span className="ml-2 text-[10px] select-none">solution.java</span>
-            </div>
-            <div className="space-y-1 select-none">
-              <div><span className="text-[var(--syntax-keyword)]">class</span> <span className="text-[var(--text-primary)]">Solution</span> &#123;</div>
-              <div className="pl-4"><span className="text-[var(--syntax-keyword)]">public int</span> <span className="text-[var(--syntax-function)]">search</span>(<span className="text-[var(--syntax-keyword)]">int</span>[] nums, <span className="text-[var(--syntax-keyword)]">int</span> target) &#123;</div>
-              <div className="pl-8"><span className="text-[var(--syntax-keyword)]">if</span> (nums.length == <span className="text-[var(--syntax-number)]">0</span>) <span className="text-[var(--syntax-keyword)]">return</span> -<span className="text-[var(--syntax-number)]">1</span>;</div>
-              <div className="pl-8"><span className="text-[var(--syntax-keyword)]">for</span> (<span className="text-[var(--syntax-keyword)]">int</span> i = <span className="text-[var(--syntax-number)]">0</span>; i &lt; nums.length; i++) &#123;</div>
-              <div className="pl-12 bg-[color-mix(in_srgb,var(--accent-primary)_12%,transparent)] border-l-2 border-[var(--accent-primary)] -ml-0.5 pl-[10px]"><span className="text-[var(--syntax-keyword)]">if</span> (nums[i] == target) <span className="text-[var(--syntax-keyword)]">return</span> i;</div>
-              <div className="pl-8">&#125;</div>
-              <div className="pl-8"><span className="text-[var(--syntax-keyword)]">return</span> -<span className="text-[var(--syntax-number)]">1</span>;</div>
-              <div className="pl-4">&#125;</div>
-              <div>&#125;</div>
+            {/* Visual Feature Grid */}
+            <div className="grid grid-cols-2 gap-3 mt-6">
+              <FeatureGridCard icon={BookOpen} title="Explain" desc="Line-by-line breakdown" />
+              <FeatureGridCard icon={Zap} title="Optimize" desc="Performance tuning" />
+              <FeatureGridCard icon={RefreshCw} title="Convert" desc="Language translation" />
+              <FeatureGridCard icon={MessageSquare} title="Comments" desc="Auto-documentation" />
+              <FeatureGridCard icon={Network} title="Diagrams" desc="Architecture flows" />
+              <FeatureGridCard icon={Activity} title="Complexity" desc="Big-O Analysis" />
             </div>
           </div>
         </div>
@@ -95,60 +101,98 @@ export function AuthPage() {
           </div>
 
           {/* Welcome Sandbox Launcher Card */}
-          <div className="w-full max-w-[420px] premium-card p-8 space-y-6 animate-fade-in relative text-center">
+          <div className="w-full max-w-[420px] space-y-8 animate-fade-in relative">
             
-            {/* Loading Cover Overlay */}
-            {isLoading && (
-              <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-[var(--bg-secondary)]/85 backdrop-blur-[1px] rounded-xl select-none">
-                <Loader2 size={28} className="animate-spin text-[var(--accent-primary)]" />
-                <p className="text-xs font-semibold text-[var(--text-secondary)]">
-                  Launching Sandbox...
+            <div className="premium-card p-8 space-y-6 relative text-center">
+              {/* Loading Cover Overlay */}
+              {isLoading && (
+                <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-[var(--bg-secondary)]/85 backdrop-blur-[1px] rounded-xl select-none">
+                  <Loader2 size={28} className="animate-spin text-[var(--accent-primary)]" />
+                  <p className="text-xs font-semibold text-[var(--text-secondary)]">
+                    Launching Workspace...
+                  </p>
+                </div>
+              )}
+
+              {/* Header Text */}
+              <div className="space-y-2 select-none">
+                <h2 className="text-3xl font-black tracking-tight text-[var(--text-primary)]">
+                  Get Started
+                </h2>
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                  Join the workspace. CodeExplainer is fully open-source and free to use. Explore visual execution timelines, code complexity structures, and comment generators instantly.
                 </p>
               </div>
-            )}
 
-            {/* Open Source Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[color-mix(in_srgb,var(--accent-primary)_10%,transparent)] border border-[color-mix(in_srgb,var(--accent-primary)_20%,transparent)] text-[var(--accent-primary)] mx-auto select-none">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] animate-pulse"></span>
-              Open Source Sandbox
-            </div>
+              {/* Workspace Launchers */}
+              <div className="pt-2 space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="primary"
+                    disabled={isLoading}
+                    onClick={() => handleLaunch("explainer", "Overview")}
+                    className="w-full justify-center gap-2 group cursor-pointer shadow-sm text-xs font-bold py-2.5"
+                  >
+                    <BookOpen size={14} className="text-[var(--accent-on)]" />
+                    <span>Explain Code</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={isLoading}
+                    onClick={() => handleLaunch("optimizer")}
+                    className="w-full justify-center gap-2 group cursor-pointer shadow-sm text-xs font-bold py-2.5 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] border border-[var(--border)]"
+                  >
+                    <Zap size={14} className="text-[var(--accent-primary)]" />
+                    <span>Optimize Code</span>
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={isLoading}
+                    onClick={() => handleLaunch("converter")}
+                    className="w-full justify-center gap-2 group cursor-pointer shadow-sm text-xs font-bold py-2.5 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] border border-[var(--border)]"
+                  >
+                    <RefreshCw size={14} className="text-[var(--accent-primary)]" />
+                    <span>Convert Code</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={isLoading}
+                    onClick={() => handleLaunch("explainer", "Comments")}
+                    className="w-full justify-center gap-2 group cursor-pointer shadow-sm text-xs font-bold py-2.5 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] border border-[var(--border)]"
+                  >
+                    <MessageSquare size={14} className="text-[var(--accent-primary)]" />
+                    <span>Generate Comments</span>
+                  </Button>
+                </div>
+              </div>
 
-            {/* Header Text */}
-            <div className="space-y-2 select-none">
-              <h2 className="text-2xl font-black tracking-tight text-[var(--text-primary)]">
-                Launch Workspace
-              </h2>
-              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                CodeExplainer is fully open-source and free to use. Explore visual execution timelines, code complexity structures, and comment generators instantly without an account.
+              {/* Telemetry/Disclaimers */}
+              <p className="text-[10px] text-[var(--text-muted)] leading-normal select-none">
+                All settings and preferences are saved locally in your browser storage. Zero tracking scripts or analytics are active.
               </p>
             </div>
 
-            {/* Primary Action Button */}
-            <div className="pt-2">
-              <Button
-                type="button"
-                variant="primary"
-                size="lg"
-                disabled={isLoading}
-                onClick={async () => {
-                  try {
-                    await login("developer@codeexplainer.org", "guestpass123")
-                    toast.success("Welcome to the sandbox!")
-                  } catch (err) {
-                    toast.error("Failed to launch sandbox.")
-                  }
-                }}
-                className="w-full justify-center gap-2 group cursor-pointer shadow-md py-3 text-sm font-bold"
-              >
-                <span>Enter Sandbox</span>
-                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-              </Button>
+            {/* Developer Stats / Mock visual panel */}
+            <div className="premium-card p-4 flex items-center justify-between text-[var(--text-secondary)] bg-[var(--bg-secondary)] text-xs select-none shadow-sm">
+               <div className="flex items-center gap-2">
+                 <Terminal size={14} className="text-[var(--accent-primary)]" />
+                 <span className="font-mono">system.status</span>
+               </div>
+               <div className="flex items-center gap-4 font-mono">
+                 <div className="flex items-center gap-1.5">
+                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--success)] animate-pulse"></span>
+                   API Ready
+                 </div>
+                 <div className="text-[var(--text-muted)]">v1.2.0</div>
+               </div>
             </div>
 
-            {/* Telemetry/Disclaimers */}
-            <p className="text-[10px] text-[var(--text-muted)] leading-normal select-none">
-              All settings and preferences are saved locally in your browser storage. Zero tracking scripts or analytics are active.
-            </p>
           </div>
 
           {/* Footer links */}
@@ -169,10 +213,24 @@ export function AuthPage() {
 function FeatureItem({ label }) {
   return (
     <div className="flex items-center gap-2.5 text-xs text-[var(--text-secondary)] font-medium">
-      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]">
-        <Check size={12} strokeWidth={3} />
+      <div className="flex items-center justify-center w-4 h-4 rounded-full bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)] shrink-0">
+        <Check size={10} strokeWidth={3} />
       </div>
       <span>{label}</span>
+    </div>
+  )
+}
+
+function FeatureGridCard({ icon: Icon, title, desc }) {
+  return (
+    <div className="flex items-start gap-3 p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--accent-primary)] hover:shadow-sm transition-all group">
+      <div className="flex items-center justify-center w-8 h-8 rounded-md bg-[color-mix(in_srgb,var(--accent-primary)_10%,transparent)] text-[var(--accent-primary)] shrink-0 group-hover:scale-105 transition-transform">
+        <Icon size={16} />
+      </div>
+      <div className="space-y-0.5">
+        <div className="text-xs font-bold text-[var(--text-primary)]">{title}</div>
+        <div className="text-[10px] text-[var(--text-muted)] leading-tight">{desc}</div>
+      </div>
     </div>
   )
 }

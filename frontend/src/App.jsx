@@ -214,7 +214,14 @@ export default function App() {
   }, [])
 
   if (!isAuthenticated) {
-    return <AuthPage />
+    return (
+      <AuthPage 
+        onLaunch={(workspace, tab) => {
+          if (workspace) setActiveWorkspace(workspace)
+          if (tab) useExplanationStore.getState().setActiveTab(tab)
+        }} 
+      />
+    )
   }
 
   return (
