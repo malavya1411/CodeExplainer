@@ -102,9 +102,9 @@ export function AuthPage({ onLaunch }) {
         {/* Left Side: Product Description, Bullets and Code mockup */}
         <div className="lg:col-span-7 flex flex-col justify-between text-left h-full min-h-0 gap-6">
           <div className="flex flex-col space-y-4">
-            <h1 className="text-3xl lg:text-4xl xl:text-[45px] font-extrabold tracking-tight leading-[1.1] text-white">
+            <h1 className="text-4xl lg:text-[50px] xl:text-[54px] font-extrabold tracking-tight leading-[1.1] text-white">
               One Workspace. <br />
-              Four <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-green-400 to-emerald-500">Developer Superpowers.</span>
+              Four Developer Superpowers.
             </h1>
 
             <p className="text-xs lg:text-sm text-gray-400 leading-relaxed max-w-xl">
