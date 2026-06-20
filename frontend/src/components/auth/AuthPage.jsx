@@ -96,30 +96,28 @@ export function AuthPage({ onLaunch }) {
           </p>
         </div>
       )}
-
       {/* Main split content section */}
-      <main className="flex-1 min-h-0 w-full max-w-7xl mx-auto px-6 py-4 lg:py-2 flex flex-col lg:grid lg:grid-cols-12 gap-8 items-center z-10 overflow-y-auto lg:overflow-visible">
+      <main className="flex-1 min-h-0 w-full max-w-7xl mx-auto px-6 py-4 lg:py-2 flex flex-col lg:grid lg:grid-cols-12 gap-8 lg:items-stretch items-center z-10 overflow-y-auto lg:overflow-visible">
         
         {/* Left Side: Product Description, Bullets and Code mockup */}
-        <div className="lg:col-span-7 flex flex-col space-y-4 text-left min-h-0">
-          
+        <div className="lg:col-span-7 flex flex-col justify-between text-left h-full min-h-0 gap-6">
+          <div className="flex flex-col space-y-4">
+            <h1 className="text-3xl lg:text-4xl xl:text-[45px] font-extrabold tracking-tight leading-[1.1] text-white">
+              One Workspace. <br />
+              Four <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-green-400 to-emerald-500">Developer Superpowers.</span>
+            </h1>
 
+            <p className="text-xs lg:text-sm text-gray-400 leading-relaxed max-w-xl">
+              AI-powered workspace to explain, optimize, convert, and document code.
+            </p>
 
-          <h1 className="text-3xl lg:text-4xl xl:text-[45px] font-extrabold tracking-tight leading-[1.1] text-white">
-            One Workspace. <br />
-            Four <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-green-400 to-emerald-500">Developer Superpowers.</span>
-          </h1>
-
-          <p className="text-xs lg:text-sm text-gray-400 leading-relaxed max-w-xl">
-            AI-powered workspace to explain, optimize, convert, and document code.
-          </p>
-
-          {/* Feature Bullets */}
-          <div className="grid grid-cols-2 gap-y-2 gap-x-6 pt-1">
-            <FeatureItem label="Explain Code" />
-            <FeatureItem label="Optimize Performance" />
-            <FeatureItem label="Convert Languages" />
-            <FeatureItem label="Auto-Document Code" />
+            {/* Feature Bullets */}
+            <div className="grid grid-cols-2 gap-y-2 gap-x-6 pt-1">
+              <FeatureItem label="Explain Code" />
+              <FeatureItem label="Optimize Performance" />
+              <FeatureItem label="Convert Languages" />
+              <FeatureItem label="Auto-Document Code" />
+            </div>
           </div>
 
           {/* High Fidelity Code and Badge Mockup */}
@@ -188,8 +186,8 @@ export function AuthPage({ onLaunch }) {
         </div>
 
         {/* Right Side: Welcome / Interactive Launcher Grid */}
-        <div className="lg:col-span-5 w-full flex flex-col items-center">
-          <div className="w-full max-w-[465px] bg-[#0c0e0d] border border-[#1b1f1c] rounded-[24px] p-7 lg:p-8 space-y-6 shadow-2xl relative">
+        <div className="lg:col-span-5 w-full flex flex-col items-center h-full">
+          <div className="w-full h-full max-w-[465px] bg-[#0c0e0d] border border-[#1b1f1c] rounded-[24px] p-7 lg:p-8 flex flex-col justify-between shadow-2xl relative">
             <div className="space-y-1.5 text-left">
               <h2 className="text-2xl font-bold text-white tracking-tight">Start Building</h2>
               <p className="text-xs text-gray-400 leading-relaxed">Choose where you want to begin</p>
@@ -227,29 +225,31 @@ export function AuthPage({ onLaunch }) {
               />
             </div>
 
-            {/* Launch Workspace Main CTA */}
-            <button
-              onClick={() => handleLaunch("explainer", "Overview")}
-              className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-98 transition-all cursor-pointer"
-            >
-              <Rocket size={16} />
-              <span>Launch Workspace</span>
-            </button>
+            {/* Buttons Group */}
+            <div className="flex flex-col gap-3">
+              {/* Launch Workspace Main CTA */}
+              <button
+                onClick={() => handleLaunch("explainer", "Overview")}
+                className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-98 transition-all cursor-pointer"
+              >
+                <Rocket size={16} />
+                <span>Launch Workspace</span>
+              </button>
 
-            {/* Open Local File button */}
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="w-full py-3 border border-[#1e2220] hover:border-gray-700 bg-transparent hover:bg-white/5 rounded-xl flex flex-col items-center justify-center gap-0.5 active:scale-98 transition-all cursor-pointer"
-            >
-              <div className="flex items-center gap-2 text-xs font-bold text-white">
-                <FolderOpen size={14} className="text-emerald-400" />
-                <span>Open Local File</span>
-              </div>
-              <span className="text-[9px] text-gray-500 leading-none">Work with your existing code</span>
-            </button>
+              {/* Open Local File button */}
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="w-full py-3 border border-[#1e2220] hover:border-gray-700 bg-transparent hover:bg-white/5 rounded-xl flex flex-col items-center justify-center gap-0.5 active:scale-98 transition-all cursor-pointer"
+              >
+                <div className="flex items-center gap-2 text-xs font-bold text-white">
+                  <FolderOpen size={14} className="text-emerald-400" />
+                  <span>Open Local File</span>
+                </div>
+                <span className="text-[9px] text-gray-500 leading-none">Work with your existing code</span>
+              </button>
+            </div>
           </div>
         </div>
-
       </main>
 
 
