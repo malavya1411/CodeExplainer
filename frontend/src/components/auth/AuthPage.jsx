@@ -103,10 +103,7 @@ export function AuthPage({ onLaunch }) {
         {/* Left Side: Product Description, Bullets and Code mockup */}
         <div className="lg:col-span-7 flex flex-col space-y-4 text-left min-h-0">
           
-          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-[11px] font-semibold select-none w-fit">
-            <Star size={10} className="fill-current text-emerald-400" />
-            <span>AI-Powered Code Intelligence</span>
-          </div>
+
 
           <h1 className="text-3xl lg:text-4xl xl:text-[45px] font-extrabold tracking-tight leading-[1.1] text-white">
             One Workspace. <br />
@@ -257,30 +254,7 @@ export function AuthPage({ onLaunch }) {
 
       </main>
 
-      {/* Bottom stats row container */}
-      <footer className="w-full max-w-7xl mx-auto px-6 mt-3 lg:mt-1 pb-4 z-10 flex flex-col items-center">
-        
-        {/* Stats card */}
-        <div className="w-full bg-[#0a0c0b]/80 border border-[#171a18] rounded-2xl p-4 lg:p-3 shadow-lg select-none mb-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-0 md:divide-x md:divide-[#171a18]">
-            <StatItem icon={Code2} value="50K+" label="Lines Supported" />
-            <StatItem icon={Globe} value="10+" label="Languages" />
-            <StatItem icon={Layers} value="3" label="Explanation Levels" />
-            <StatItem icon={Shield} value="100%" label="Local & Private" />
-            <StatItem icon={Sparkles} value="AI" label="Powered Analysis" />
-          </div>
-        </div>
 
-        {/* Footer legal links and text */}
-        <div className="flex flex-col items-center space-y-1 select-none text-[10px] text-gray-500">
-          <p>Trusted by developers and students worldwide</p>
-          <div className="flex items-center gap-2.5">
-            <a href="#" className="hover:text-gray-300 transition-colors">Open Source</a>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#1b1f1c]"></span>
-            <a href="#" className="hover:text-gray-300 transition-colors">Privacy First</a>
-          </div>
-        </div>
-      </footer>
 
     </div>
   )
