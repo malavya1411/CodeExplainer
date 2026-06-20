@@ -125,7 +125,7 @@ export function AuthPage({ onLaunch }) {
           </div>
 
           {/* High Fidelity Code and Badge Mockup */}
-          <div className="relative bg-[#0a0c0b]/70 border border-[#1b1f1c] rounded-2xl p-4 shadow-2xl flex flex-col md:grid md:grid-cols-12 gap-4 items-center w-full">
+          <div className="relative bg-[#0a0c0b]/70 border border-[#1b1f1c] rounded-2xl p-4 shadow-2xl flex flex-col md:grid md:grid-cols-12 gap-4 items-stretch w-full">
             {/* Editor visual block */}
             <div className="w-full md:col-span-7 flex flex-col bg-[#060807] border border-[#171a18] rounded-xl overflow-hidden shadow-inner">
               <div className="flex items-center justify-between px-3 py-2 border-b border-[#171a18] bg-[#0c0e0d]">
@@ -145,7 +145,7 @@ export function AuthPage({ onLaunch }) {
             </div>
 
             {/* Badges block */}
-            <div className="w-full md:col-span-5 flex flex-col gap-2.5 relative">
+            <div className="w-full md:col-span-5 flex flex-col gap-2.5 md:gap-0 justify-between py-0.5 relative">
               {/* Star sparkles illustration */}
               <div className="absolute -top-6 -right-2 text-emerald-400/40 animate-pulse pointer-events-none">
                 <Sparkles size={40} />
