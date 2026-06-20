@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { Sun, Moon, Settings, Download, ChevronDown, Code2, Play, Cpu, MessageSquare, Eye, EyeOff, ArrowLeftRight } from "lucide-react"
+import { Sun, Moon, Settings, Download, ChevronDown, Code2, MessageSquare, Eye, EyeOff } from "lucide-react"
 import { useThemeStore } from "../../stores/themeStore.js"
 import { useAuthStore } from "../../stores/authStore.js"
 import { useCommentStore } from "../../stores/commentStore.js"
@@ -17,10 +17,6 @@ export function Header({
   isAnalyzing,
   activeWorkspace = "explainer",
   onWorkspaceChange,
-  onOptimize,
-  isOptimizing,
-  onConvert,
-  isConverting,
 }) {
   const resolvedTheme = useThemeStore((s) => s.resolvedTheme)
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
@@ -107,37 +103,6 @@ export function Header({
       </div>
 
       <div className="flex items-center gap-1.5">
-        <Button
-          variant={activeWorkspace === "converter" ? "primary" : "secondary"}
-          size="sm"
-          icon={ArrowLeftRight}
-          onClick={() => {
-            onWorkspaceChange("converter")
-          }}
-          disabled={isConverting}
-          className="hidden sm:inline-flex"
-        >
-          {isConverting ? "Converting…" : "Convert"}
-        </Button>
-
-        <Button
-          variant={activeWorkspace === "optimizer" ? "primary" : "secondary"}
-          size="sm"
-          icon={Cpu}
-          onClick={() => {
-            if (activeWorkspace !== "optimizer") {
-              onWorkspaceChange("optimizer")
-              onOptimize()
-            } else {
-              onOptimize()
-            }
-          }}
-          disabled={isOptimizing}
-          className="hidden sm:inline-flex"
-        >
-          {isOptimizing ? "Optimizing…" : "Optimize"}
-        </Button>
-
         {/* Comments Dropdown */}
         <div className="relative" ref={commentsRef}>
           <Button
