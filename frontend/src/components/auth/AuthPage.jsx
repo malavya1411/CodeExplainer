@@ -111,21 +111,19 @@ export function AuthPage({ onLaunch }) {
           </h1>
 
           <p className="text-xs lg:text-sm text-gray-400 leading-relaxed max-w-xl">
-            Explain, optimize, convert, and document code with AI-powered analysis built for students, developers, and engineering teams.
+            AI-powered workspace to explain, optimize, convert, and document code.
           </p>
 
           {/* Feature Bullets */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6 pt-1">
-            <FeatureItem label="Multi-level explanations" />
-            <FeatureItem label="Code optimization" />
-            <FeatureItem label="Language conversion" />
-            <FeatureItem label="Smart comment generation" />
-            <FeatureItem label="Architecture & dependency insights" />
-            <FeatureItem label="Interactive execution walkthroughs" />
+          <div className="grid grid-cols-2 gap-y-2 gap-x-6 pt-1">
+            <FeatureItem label="Explain Code" />
+            <FeatureItem label="Optimize Performance" />
+            <FeatureItem label="Convert Languages" />
+            <FeatureItem label="Auto-Document Code" />
           </div>
 
           {/* High Fidelity Code and Badge Mockup */}
-          <div className="relative bg-[#0a0c0b]/70 border border-[#1b1f1c] rounded-2xl p-4 shadow-2xl flex flex-col md:grid md:grid-cols-12 gap-4 items-center w-full">
+          <div className="relative bg-[#0a0c0b]/70 border border-[#1b1f1c] rounded-2xl p-4 shadow-2xl flex flex-col md:grid md:grid-cols-12 gap-4 items-stretch w-full">
             {/* Editor visual block */}
             <div className="w-full md:col-span-7 flex flex-col bg-[#060807] border border-[#171a18] rounded-xl overflow-hidden shadow-inner">
               <div className="flex items-center justify-between px-3 py-2 border-b border-[#171a18] bg-[#0c0e0d]">
@@ -145,7 +143,7 @@ export function AuthPage({ onLaunch }) {
             </div>
 
             {/* Badges block */}
-            <div className="w-full md:col-span-5 flex flex-col gap-2.5 relative">
+            <div className="w-full md:col-span-5 flex flex-col gap-2.5 md:gap-0 justify-between py-0.5 relative">
               {/* Star sparkles illustration */}
               <div className="absolute -top-6 -right-2 text-emerald-400/40 animate-pulse pointer-events-none">
                 <Sparkles size={40} />
@@ -190,10 +188,10 @@ export function AuthPage({ onLaunch }) {
         </div>
 
         {/* Right Side: Welcome / Interactive Launcher Grid */}
-        <div className="lg:col-span-5 w-full flex flex-col items-center min-h-0">
-          <div className="w-full max-w-[440px] bg-[#0c0e0d] border border-[#1b1f1c] rounded-[24px] p-5 lg:p-6 space-y-4 shadow-2xl relative">
-            <div className="space-y-1 text-left">
-              <h2 className="text-xl lg:text-2xl font-bold text-white tracking-tight">Start Building</h2>
+        <div className="lg:col-span-5 w-full flex flex-col items-center">
+          <div className="w-full max-w-[465px] bg-[#0c0e0d] border border-[#1b1f1c] rounded-[24px] p-7 lg:p-8 space-y-6 shadow-2xl relative">
+            <div className="space-y-1.5 text-left">
+              <h2 className="text-2xl font-bold text-white tracking-tight">Start Building</h2>
               <p className="text-xs text-gray-400 leading-relaxed">Choose where you want to begin</p>
             </div>
 
@@ -232,19 +230,19 @@ export function AuthPage({ onLaunch }) {
             {/* Launch Workspace Main CTA */}
             <button
               onClick={() => handleLaunch("explainer", "Overview")}
-              className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-98 transition-all cursor-pointer"
+              className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-98 transition-all cursor-pointer"
             >
-              <Rocket size={14} />
+              <Rocket size={16} />
               <span>Launch Workspace</span>
             </button>
 
             {/* Open Local File button */}
             <button
               onClick={() => fileRef.current?.click()}
-              className="w-full py-2 border border-[#1e2220] hover:border-gray-700 bg-transparent hover:bg-white/5 rounded-xl flex flex-col items-center justify-center gap-0.5 active:scale-98 transition-all cursor-pointer"
+              className="w-full py-3 border border-[#1e2220] hover:border-gray-700 bg-transparent hover:bg-white/5 rounded-xl flex flex-col items-center justify-center gap-0.5 active:scale-98 transition-all cursor-pointer"
             >
-              <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                <FolderOpen size={12} className="text-emerald-400" />
+              <div className="flex items-center gap-2 text-xs font-bold text-white">
+                <FolderOpen size={14} className="text-emerald-400" />
                 <span>Open Local File</span>
               </div>
               <span className="text-[9px] text-gray-500 leading-none">Work with your existing code</span>
@@ -404,19 +402,19 @@ function LauncherCard({ icon: Icon, title, desc, colorTheme, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`bg-[#060807] border border-[#171a18] rounded-2xl p-3 text-left flex flex-col justify-between items-start h-[115px] lg:h-[110px] xl:h-[115px] w-full transition-all hover:-translate-y-0.5 cursor-pointer select-none ${borderHover}`}
+      className={`bg-[#060807] border border-[#171a18] rounded-2xl p-4 text-left flex flex-col justify-between items-start h-[135px] w-full transition-all hover:-translate-y-0.5 cursor-pointer select-none ${borderHover}`}
     >
       <div className="flex justify-between items-center w-full">
-        <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${iconBg}`}>
-          <Icon size={14} />
+        <div className={`flex items-center justify-center w-8 h-8 rounded-lg border ${iconBg}`}>
+          <Icon size={15} />
         </div>
-        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-white/5 border border-white/10 text-gray-400 shrink-0">
-          <ArrowRight size={10} />
+        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white/5 border border-white/10 text-gray-400 shrink-0">
+          <ArrowRight size={11} />
         </div>
       </div>
-      <div className="space-y-0.5 mt-auto">
+      <div className="space-y-1 mt-auto">
         <div className="text-xs font-bold text-white leading-tight">{title}</div>
-        <div className="text-[9px] lg:text-[8.5px] xl:text-[9px] text-gray-500 leading-tight line-clamp-2">{desc}</div>
+        <div className="text-[9.5px] xl:text-[10px] text-gray-500 leading-tight line-clamp-2">{desc}</div>
       </div>
     </button>
   )
