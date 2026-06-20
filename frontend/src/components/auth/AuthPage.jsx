@@ -4,12 +4,24 @@ import { useThemeStore } from "../../stores/themeStore.js"
 import { Button } from "../shared/Button.jsx"
 import { toast } from "../shared/Toast.jsx"
 
-export function AuthPage() {
+export function AuthPage({ onLaunch }) {
   const login = useAuthStore((s) => s.login)
   const isLoading = useAuthStore((s) => s.isLoading)
 
   const resolvedTheme = useThemeStore((s) => s.resolvedTheme)
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
+
+  const handleLaunch = async (workspace, tab = null) => {
+    try {
+      await login("developer@codeexplainer.org", "guestpass123")
+      toast.success("Welcome to the workspace!")
+      if (onLaunch) {
+        onLaunch(workspace, tab)
+      }
+    } catch (err) {
+      toast.error("Failed to launch workspace.")
+    }
+  }
 
   return (
     <div className="flex h-screen w-full bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300 relative overflow-hidden">
@@ -112,26 +124,52 @@ export function AuthPage() {
                 </p>
               </div>
 
-              {/* Primary Action Button */}
-              <div className="pt-2">
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="lg"
-                  disabled={isLoading}
-                  onClick={async () => {
-                    try {
-                      await login("developer@codeexplainer.org", "guestpass123")
-                      toast.success("Welcome to the workspace!")
-                    } catch (err) {
-                      toast.error("Failed to launch workspace.")
-                    }
-                  }}
-                  className="w-full justify-center gap-2 group cursor-pointer shadow-md py-3 text-sm font-bold"
-                >
-                  <span>Enter Workspace</span>
-                  <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-                </Button>
+              {/* Workspace Launchers */}
+              <div className="pt-2 space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="primary"
+                    disabled={isLoading}
+                    onClick={() => handleLaunch("explainer", "Overview")}
+                    className="w-full justify-center gap-2 group cursor-pointer shadow-sm text-xs font-bold py-2.5"
+                  >
+                    <BookOpen size={14} className="text-[var(--accent-on)]" />
+                    <span>Explain Code</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={isLoading}
+                    onClick={() => handleLaunch("optimizer")}
+                    className="w-full justify-center gap-2 group cursor-pointer shadow-sm text-xs font-bold py-2.5 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] border border-[var(--border)]"
+                  >
+                    <Zap size={14} className="text-[var(--accent-primary)]" />
+                    <span>Optimize Code</span>
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={isLoading}
+                    onClick={() => handleLaunch("converter")}
+                    className="w-full justify-center gap-2 group cursor-pointer shadow-sm text-xs font-bold py-2.5 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] border border-[var(--border)]"
+                  >
+                    <RefreshCw size={14} className="text-[var(--accent-primary)]" />
+                    <span>Convert Code</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={isLoading}
+                    onClick={() => handleLaunch("explainer", "Comments")}
+                    className="w-full justify-center gap-2 group cursor-pointer shadow-sm text-xs font-bold py-2.5 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] border border-[var(--border)]"
+                  >
+                    <MessageSquare size={14} className="text-[var(--accent-primary)]" />
+                    <span>Generate Comments</span>
+                  </Button>
+                </div>
               </div>
 
               {/* Telemetry/Disclaimers */}
