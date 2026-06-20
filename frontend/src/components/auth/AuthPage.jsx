@@ -100,8 +100,8 @@ export function AuthPage({ onLaunch }) {
       <main className="flex-1 min-h-0 w-full max-w-7xl mx-auto px-6 py-4 lg:py-2 flex flex-col lg:grid lg:grid-cols-12 gap-8 lg:items-stretch items-center z-10 overflow-y-auto lg:overflow-visible">
         
         {/* Left Side: Product Description, Bullets and Code mockup */}
-        <div className="lg:col-span-7 flex flex-col justify-between text-left h-full min-h-0 gap-6">
-          <div className="flex flex-col space-y-4">
+        <div className="lg:col-span-7 flex flex-col justify-between text-left h-full min-h-0 gap-10 lg:gap-12">
+          <div className="flex flex-col space-y-5 lg:space-y-6">
             <h1 className="text-4xl lg:text-[50px] xl:text-[54px] font-extrabold tracking-tight leading-[1.1] text-white">
               One Workspace. <br />
               Four Developer <br />
