@@ -19,13 +19,7 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "allowJs": true,
-
-    /* Path aliases — matches vite.config.js resolve.alias */
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "allowJs": true
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
