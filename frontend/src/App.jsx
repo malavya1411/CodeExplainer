@@ -14,8 +14,10 @@ import { useThemeStore } from "./stores/themeStore.js"
 import { useAuthStore } from "./stores/authStore.js"
 import { useOptimizerStore } from "./stores/optimizerStore.js"
 import { useCommentStore } from "./stores/commentStore.js"
+import { useConverterStore } from "./stores/converterStore.js"
 import { AuthPage } from "./components/auth/AuthPage.jsx"
 import { OptimizerWorkspace } from "./components/optimizer/OptimizerWorkspace.jsx"
+import { ConvertWorkspace } from "./components/converter/ConvertWorkspace.jsx"
 import { buildMarkdown, buildHTML, buildNotion, downloadText, downloadPDF } from "./utils/exportGenerator.js"
 import { analyzeComplexity } from "./utils/complexityAnalyzer.js"
 import { generateAllExplanations } from "./utils/explanationGenerator.js"
@@ -30,6 +32,8 @@ export default function App() {
   const setAnalyzing = useCodeStore((s) => s.setAnalyzing)
   const isOptimizing = useOptimizerStore((s) => s.isOptimizing)
   const runOptimization = useOptimizerStore((s) => s.runOptimization)
+  const isConverting = useConverterStore((s) => s.isConverting)
+  const runConversion = useConverterStore((s) => s.runConversion)
   
   const explanation = useExplanationStore((s) => s.explanation)
   const setAllExplanations = useExplanationStore((s) => s.setAllExplanations)
@@ -117,6 +121,16 @@ export default function App() {
     toast.success("Code optimized successfully")
   }
 
+  const handleConvert = async () => {
+    if (!code.trim()) {
+      toast.warning("Please enter some code first")
+      return
+    }
+    setActiveWorkspace("converter")
+    await runConversion(code, language)
+    toast.success("Conversion complete!")
+  }
+
   const handleExport = async (format) => {
     if (!explanation) {
       toast.error("Nothing to export. Analyze code first.")
@@ -185,6 +199,10 @@ export default function App() {
         } else {
           toast.warning("No generated comments to copy. Generate comments first!")
         }
+      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "l") {
+        e.preventDefault()
+        setActiveWorkspace("converter")
+        toast.info("Switched to Converter workspace")
       } else if (e.key === "Escape") {
         setSettingsOpen(false)
         setShareOpen(false)
@@ -196,7 +214,14 @@ export default function App() {
   }, [])
 
   if (!isAuthenticated) {
-    return <AuthPage />
+    return (
+      <AuthPage 
+        onLaunch={(workspace, tab) => {
+          if (workspace) setActiveWorkspace(workspace)
+          if (tab) useExplanationStore.getState().setActiveTab(tab)
+        }} 
+      />
+    )
   }
 
   return (
@@ -211,6 +236,8 @@ export default function App() {
         onWorkspaceChange={setActiveWorkspace}
         onOptimize={handleOptimize}
         isOptimizing={isOptimizing}
+        onConvert={handleConvert}
+        isConverting={isConverting}
       />
       
       <main className="flex-1 min-h-0 relative">
@@ -230,11 +257,13 @@ export default function App() {
             <PanelResizeHandle className="w-1.5 bg-[var(--border)] hover:bg-[var(--accent-primary)] transition-colors cursor-col-resize z-10" />
             
             <Panel defaultSize={55} minSize={30} className="h-full">
-              <ExplanationPanel complexity={complexity} />
+              <ExplanationPanel complexity={complexity} onAnalyze={handleAnalyze} />
             </Panel>
           </PanelGroup>
-        ) : (
+        ) : activeWorkspace === "optimizer" ? (
           <OptimizerWorkspace />
+        ) : (
+          <ConvertWorkspace />
         )}
         
         {activeWorkspace === "explainer" && <AnnotationPanel />}
