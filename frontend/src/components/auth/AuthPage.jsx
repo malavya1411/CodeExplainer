@@ -104,15 +104,16 @@ export function AuthPage({ onLaunch }) {
           <div className="flex flex-col space-y-4">
             <h1 className="text-4xl lg:text-[50px] xl:text-[54px] font-extrabold tracking-tight leading-[1.1] text-white">
               One Workspace. <br />
-              Four Developer Superpowers.
+              Four Developer <br />
+              Superpowers.
             </h1>
 
-            <p className="text-xs lg:text-sm text-gray-400 leading-relaxed max-w-xl">
+            <p className="text-xs lg:text-sm text-gray-400 leading-relaxed max-w-xl text-justify">
               AI-powered workspace to explain, optimize, convert, and document code.
             </p>
 
             {/* Feature Bullets */}
-            <div className="grid grid-cols-2 gap-y-2 gap-x-6 pt-1">
+            <div className="grid grid-cols-2 gap-y-2 gap-x-6 pt-1 max-w-xl">
               <FeatureItem label="Explain Code" />
               <FeatureItem label="Optimize Performance" />
               <FeatureItem label="Convert Languages" />
