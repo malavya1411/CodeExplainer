@@ -111,17 +111,15 @@ export function AuthPage({ onLaunch }) {
           </h1>
 
           <p className="text-xs lg:text-sm text-gray-400 leading-relaxed max-w-xl">
-            Explain, optimize, convert, and document code with AI-powered analysis built for students, developers, and engineering teams.
+            AI-powered workspace to explain, optimize, convert, and document code.
           </p>
 
           {/* Feature Bullets */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6 pt-1">
-            <FeatureItem label="Multi-level explanations" />
-            <FeatureItem label="Code optimization" />
-            <FeatureItem label="Language conversion" />
-            <FeatureItem label="Smart comment generation" />
-            <FeatureItem label="Architecture & dependency insights" />
-            <FeatureItem label="Interactive execution walkthroughs" />
+          <div className="grid grid-cols-2 gap-y-2 gap-x-6 pt-1">
+            <FeatureItem label="Explain Code" />
+            <FeatureItem label="Optimize Performance" />
+            <FeatureItem label="Convert Languages" />
+            <FeatureItem label="Auto-Document Code" />
           </div>
 
           {/* High Fidelity Code and Badge Mockup */}
