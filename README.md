@@ -5,7 +5,7 @@
 <h1 align="center">CodeExplainer</h1>
 
 <p align="center">
-  <strong>Transform any codebase into interactive explanations, visual walkthroughs, complexity analysis, diagrams, and production-ready documentation — all in your browser.</strong>
+  <strong>Transform any codebase into interactive explanations, visual walkthroughs, complexity analysis, diagrams, and production ready documentation — all in your browser.</strong>
 </p>
 
 <p align="center">
