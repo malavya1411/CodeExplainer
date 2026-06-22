@@ -102,13 +102,13 @@ export function AuthPage({ onLaunch }) {
         {/* Left Side: Product Description, Bullets and Code mockup */}
         <div className="lg:col-span-7 flex flex-col justify-between text-left h-full min-h-0 gap-10 lg:gap-12">
           <div className="flex flex-col space-y-5 lg:space-y-6">
-            <h1 className="text-4xl lg:text-[50px] xl:text-[54px] font-extrabold tracking-tight leading-[1.1] text-white">
+            <h1 className="text-hero font-display text-white">
               One Workspace. <br />
               Four Developer <br />
               Superpowers.
             </h1>
 
-            <p className="text-sm lg:text-base text-gray-400 leading-relaxed max-w-xl text-justify">
+            <p className="text-body font-body text-gray-400 leading-relaxed max-w-xl text-justify">
               AI-powered workspace to explain, optimize, convert, and document code.
             </p>
           </div>

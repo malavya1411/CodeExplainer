@@ -23,6 +23,8 @@ export default {
         info: "var(--info)",
       },
       fontFamily: {
+        display: ["Fraunces", "Georgia", "Times New Roman", "serif"],
+        body: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
         sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
         mono: ["JetBrains Mono", "Fira Code", "Cascadia Code", "monospace"],
       },

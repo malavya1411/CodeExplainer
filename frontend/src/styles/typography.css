@@ -1,0 +1,188 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   CODEEXPLAINER — TYPOGRAPHY SYSTEM
+   Dual-font: Fraunces (display/hero) + Inter (UI/body)
+   Strategy: editorial × developer-tool balance (Flow meets Linear)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Font stacks ── */
+  --font-display: 'Fraunces', 'Georgia', 'Times New Roman', serif;
+  --font-body:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  /* ── Type scale tokens ── */
+
+  /* Hero — landing page h1, max visual impact */
+  --text-hero-size:        clamp(48px, 7vw, 96px);
+  --text-hero-weight:      700;
+  --text-hero-line-height: 0.92;
+  --text-hero-tracking:    -0.04em;
+
+  /* Section — panel/page headings */
+  --text-section-size:        clamp(22px, 2.5vw, 32px);
+  --text-section-weight:      700;
+  --text-section-line-height: 1.15;
+  --text-section-tracking:    -0.025em;
+
+  /* Card title — launcher cards, feature cards */
+  --text-card-size:        clamp(13px, 1.5vw, 15px);
+  --text-card-weight:      700;
+  --text-card-line-height: 1.25;
+  --text-card-tracking:    -0.015em;
+
+  /* Body copy — descriptions, explanations, panel text */
+  --text-body-size:        clamp(14px, 1.2vw, 16px);
+  --text-body-weight:      450;
+  --text-body-line-height: 1.7;
+  --text-body-tracking:    0em;
+
+  /* UI — buttons, form labels, compact text */
+  --text-ui-size:        14px;
+  --text-ui-weight:      500;
+  --text-ui-line-height: 1.45;
+  --text-ui-tracking:    0em;
+
+  /* Nav — header navigation items */
+  --text-nav-size:        13px;
+  --text-nav-weight:      600;
+  --text-nav-line-height: 1;
+  --text-nav-tracking:    0.005em;
+
+  /* Button — CTA and action buttons */
+  --text-btn-size:        14px;
+  --text-btn-weight:      600;
+  --text-btn-line-height: 1;
+  --text-btn-tracking:    -0.005em;
+
+  /* Caption — metadata, timestamps, hints */
+  --text-caption-size:        11px;
+  --text-caption-weight:      500;
+  --text-caption-line-height: 1.4;
+  --text-caption-tracking:    0.01em;
+
+  /* Label — ALLCAPS section markers */
+  --text-label-size:        10px;
+  --text-label-weight:      700;
+  --text-label-line-height: 1;
+  --text-label-tracking:    0.08em;
+}
+
+/* ── Font family utilities ── */
+.font-display {
+  font-family: var(--font-display);
+}
+.font-body {
+  font-family: var(--font-body);
+}
+
+/* ── Semantic typography utilities ── */
+
+/* Hero: for landing page main headlines */
+.text-hero {
+  font-family:    var(--font-display);
+  font-size:      var(--text-hero-size);
+  font-weight:    var(--text-hero-weight);
+  line-height:    var(--text-hero-line-height);
+  letter-spacing: var(--text-hero-tracking);
+  font-optical-sizing: auto;
+}
+
+/* Section: for panel titles, page-level headings */
+.text-section {
+  font-family:    var(--font-body);
+  font-size:      var(--text-section-size);
+  font-weight:    var(--text-section-weight);
+  line-height:    var(--text-section-line-height);
+  letter-spacing: var(--text-section-tracking);
+}
+
+/* Card title: feature card headings */
+.text-card-title {
+  font-family:    var(--font-body);
+  font-size:      var(--text-card-size);
+  font-weight:    var(--text-card-weight);
+  line-height:    var(--text-card-line-height);
+  letter-spacing: var(--text-card-tracking);
+}
+
+/* Body: readable paragraph content */
+.text-body {
+  font-family:    var(--font-body);
+  font-size:      var(--text-body-size);
+  font-weight:    var(--text-body-weight);
+  line-height:    var(--text-body-line-height);
+  letter-spacing: var(--text-body-tracking);
+}
+
+/* UI: dense compact interface text */
+.text-ui {
+  font-family:    var(--font-body);
+  font-size:      var(--text-ui-size);
+  font-weight:    var(--text-ui-weight);
+  line-height:    var(--text-ui-line-height);
+  letter-spacing: var(--text-ui-tracking);
+}
+
+/* Nav: header navigation labels */
+.text-nav {
+  font-family:    var(--font-body);
+  font-size:      var(--text-nav-size);
+  font-weight:    var(--text-nav-weight);
+  line-height:    var(--text-nav-line-height);
+  letter-spacing: var(--text-nav-tracking);
+}
+
+/* Button: CTA and action button text */
+.text-btn {
+  font-family:    var(--font-body);
+  font-size:      var(--text-btn-size);
+  font-weight:    var(--text-btn-weight);
+  line-height:    var(--text-btn-line-height);
+  letter-spacing: var(--text-btn-tracking);
+}
+
+/* Caption: metadata, hints, secondary info */
+.text-caption {
+  font-family:    var(--font-body);
+  font-size:      var(--text-caption-size);
+  font-weight:    var(--text-caption-weight);
+  line-height:    var(--text-caption-line-height);
+  letter-spacing: var(--text-caption-tracking);
+}
+
+/* Label: allcaps section markers, UI labels */
+.text-label {
+  font-family:    var(--font-body);
+  font-size:      var(--text-label-size);
+  font-weight:    var(--text-label-weight);
+  line-height:    var(--text-label-line-height);
+  letter-spacing: var(--text-label-tracking);
+  text-transform: uppercase;
+}
+
+/* ── OpenType feature settings ── */
+.font-display,
+.text-hero {
+  font-feature-settings: "liga" 1, "calt" 1, "kern" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-body,
+.text-section,
+.text-card-title,
+.text-body,
+.text-ui,
+.text-nav,
+.text-btn {
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Dyslexia mode guard — must NOT override ── */
+:root[data-dyslexia="true"] .font-display,
+:root[data-dyslexia="true"] .text-hero {
+  font-family: "Comic Sans MS", "OpenDyslexic", "Inter", sans-serif !important;
+  letter-spacing: 0.03em !important;
+  line-height: 1.4 !important;
+}

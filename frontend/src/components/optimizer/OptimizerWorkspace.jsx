@@ -338,8 +338,8 @@ export function OptimizerWorkspace() {
         {/* Redesigned Optimization Results Card Header */}
         <div className="flex justify-between items-center mb-1 shrink-0">
           <div>
-            <h2 className="text-base font-bold text-[var(--text-primary)]">Optimization Results</h2>
-            <p className="text-[11px] text-[var(--text-muted)] mt-0.5">Your code has been successfully optimized. Here's the impact.</p>
+            <h2 className="panel-title text-base text-[var(--text-primary)]">Optimization Results</h2>
+            <p className="text-caption font-body text-[var(--text-muted)] mt-0.5">Your code has been successfully optimized. Here's the impact.</p>
           </div>
           <div className={`flex items-center gap-1.5 text-[10px] font-bold rounded-lg px-2.5 py-1 border shrink-0 ${
             appliedOptimizations.length === report.improvements.length
@@ -474,7 +474,7 @@ export function OptimizerWorkspace() {
               {/* Optimization Summary Section */}
               <div className="space-y-3 pt-2 shrink-0">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">Optimization Summary</h3>
+                  <h3 className="panel-title text-xs uppercase tracking-wider text-[var(--text-secondary)]">Optimization Summary</h3>
                   
                   {/* Category & Depth Filter Row */}
                   <div className="flex items-center gap-2">
@@ -680,7 +680,7 @@ export function OptimizerWorkspace() {
 
               {/* Overall Impact Section */}
               <div className="space-y-3 pt-2 shrink-0">
-                <h3 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">Overall Impact</h3>
+                <h3 className="panel-title text-xs uppercase tracking-wider text-[var(--text-secondary)]">Overall Impact</h3>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                   
                   <div className="premium-card p-3.5 flex flex-col justify-between min-h-[90px]">
