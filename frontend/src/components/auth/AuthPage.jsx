@@ -100,14 +100,17 @@ export function AuthPage({ onLaunch }) {
 
         {/* Right Side: Welcome / Interactive Launcher Grid */}
         <div className="lg:col-span-5 w-full flex flex-col items-center h-full">
-          <div className="w-full h-full max-w-[465px] bg-[#0c0e0d] border border-[#1b1f1c] rounded-[24px] p-7 lg:p-8 flex flex-col justify-between shadow-2xl relative">
-            <div className="space-y-1.5 text-left">
-              <h2 className="text-2xl font-bold text-white tracking-tight">Start Building</h2>
+          <div className="w-full h-full max-w-[465px] bg-[#090b0a]/90 backdrop-blur-md border border-[#1a1f1c] rounded-[28px] p-7 lg:p-8 flex flex-col justify-between shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] relative overflow-hidden group">
+            {/* Ambient background glow inside the card */}
+            <div className="absolute -top-[10%] -left-[10%] w-[120%] h-[120%] bg-[radial-gradient(ellipse_at_top_right,rgba(16,185,129,0.05),transparent_50%),radial-gradient(ellipse_at_bottom_left,rgba(59,130,246,0.03),transparent_50%)] pointer-events-none" />
+            
+            <div className="space-y-1.5 text-left relative z-10">
+              <h2 className="text-2xl font-display font-bold text-white tracking-tight">Start Building</h2>
               <p className="text-xs text-gray-400 leading-relaxed">Choose where you want to begin</p>
             </div>
 
             {/* Grid of Launcher Cards */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 relative z-10">
               <LauncherCard 
                 icon={BookOpen}
                 title="Explain Code"
@@ -139,26 +142,26 @@ export function AuthPage({ onLaunch }) {
             </div>
 
             {/* Buttons Group */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 relative z-10">
               {/* Launch Workspace Main CTA */}
               <button
                 onClick={() => handleLaunch("explainer", "Overview")}
-                className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-98 transition-all cursor-pointer"
+                className="group w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] active:scale-[0.98] transition-all duration-300 cursor-pointer"
               >
-                <Rocket size={16} />
+                <Rocket size={15} className="group-hover:animate-pulse transition-transform" />
                 <span>Launch Workspace</span>
               </button>
 
               {/* Open Local File button */}
               <button
                 onClick={() => fileRef.current?.click()}
-                className="w-full py-3 border border-[#1e2220] hover:border-gray-700 bg-transparent hover:bg-white/5 rounded-xl flex flex-col items-center justify-center gap-0.5 active:scale-98 transition-all cursor-pointer"
+                className="w-full py-3 border border-[#1e2220] hover:border-emerald-500/25 bg-transparent hover:bg-emerald-500/[0.02] rounded-xl flex flex-col items-center justify-center gap-0.5 active:scale-[0.98] transition-all duration-300 cursor-pointer group/file"
               >
                 <div className="flex items-center gap-2 text-xs font-bold text-white">
-                  <FolderOpen size={14} className="text-emerald-400" />
+                  <FolderOpen size={14} className="text-emerald-400 group-hover/file:scale-110 transition-transform duration-300" />
                   <span>Open Local File</span>
                 </div>
-                <span className="text-[9px] text-gray-500 leading-none">Work with your existing code</span>
+                <span className="text-[9px] text-gray-500 leading-none group-hover/file:text-gray-400 transition-colors duration-300">Work with your existing code</span>
               </button>
             </div>
           </div>
@@ -262,20 +265,20 @@ function LauncherCard({ icon: Icon, title, desc, colorTheme, onClick }) {
   // Theme styling mapping
   const colorConfigs = {
     green: {
-      borderHover: "hover:border-emerald-500/40 hover:shadow-emerald-500/5",
-      iconBg: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+      borderHover: "hover:border-emerald-500/30 hover:bg-[#0c1310]/30 hover:shadow-[0_0_15px_rgba(16,185,129,0.03)]",
+      iconBg: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 group-hover:scale-110 transition-transform"
     },
     purple: {
-      borderHover: "hover:border-purple-500/40 hover:shadow-purple-500/5",
-      iconBg: "bg-purple-500/10 border-purple-500/20 text-purple-400"
+      borderHover: "hover:border-purple-500/30 hover:bg-[#120e16]/30 hover:shadow-[0_0_15px_rgba(168,85,247,0.03)]",
+      iconBg: "bg-purple-500/10 border-purple-500/20 text-purple-400 group-hover:scale-110 transition-transform"
     },
     blue: {
-      borderHover: "hover:border-blue-500/40 hover:shadow-blue-500/5",
-      iconBg: "bg-blue-500/10 border-blue-500/20 text-blue-400"
+      borderHover: "hover:border-blue-500/30 hover:bg-[#0d1218]/30 hover:shadow-[0_0_15px_rgba(59,130,246,0.03)]",
+      iconBg: "bg-blue-500/10 border-blue-500/20 text-blue-400 group-hover:scale-110 transition-transform"
     },
     orange: {
-      borderHover: "hover:border-orange-500/40 hover:shadow-orange-500/5",
-      iconBg: "bg-amber-500/10 border-amber-500/20 text-amber-400"
+      borderHover: "hover:border-orange-500/30 hover:bg-[#16120d]/30 hover:shadow-[0_0_15px_rgba(245,158,11,0.03)]",
+      iconBg: "bg-amber-500/10 border-amber-500/20 text-amber-400 group-hover:scale-110 transition-transform"
     }
   }
 
@@ -284,19 +287,19 @@ function LauncherCard({ icon: Icon, title, desc, colorTheme, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`bg-[#060807] border border-[#171a18] rounded-2xl p-4 text-left flex flex-col justify-between items-start h-[135px] w-full transition-all hover:-translate-y-0.5 cursor-pointer select-none ${borderHover}`}
+      className={`group bg-[#080909] border border-[#141615] rounded-2xl p-4 text-left flex flex-col justify-between items-start h-[135px] w-full transition-all duration-300 hover:-translate-y-0.5 cursor-pointer select-none ${borderHover}`}
     >
       <div className="flex justify-between items-center w-full">
-        <div className={`flex items-center justify-center w-8 h-8 rounded-lg border ${iconBg}`}>
+        <div className={`flex items-center justify-center w-8 h-8 rounded-lg border transition-all duration-300 ${iconBg}`}>
           <Icon size={15} />
         </div>
-        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white/5 border border-white/10 text-gray-400 shrink-0">
-          <ArrowRight size={11} />
+        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white/5 border border-white/10 text-gray-500 group-hover:text-white group-hover:bg-white/10 transition-all duration-300 shrink-0">
+          <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform duration-300" />
         </div>
       </div>
       <div className="space-y-1 mt-auto">
-        <div className="text-xs font-bold text-white leading-tight">{title}</div>
-        <div className="text-[9.5px] xl:text-[10px] text-gray-500 leading-tight line-clamp-2">{desc}</div>
+        <div className="text-xs font-bold text-white leading-tight group-hover:text-white transition-colors duration-300">{title}</div>
+        <div className="text-[9.5px] xl:text-[10px] text-gray-500 group-hover:text-gray-400 transition-colors duration-300 leading-tight line-clamp-2">{desc}</div>
       </div>
     </button>
   )
