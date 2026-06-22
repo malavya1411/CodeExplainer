@@ -108,7 +108,7 @@ export function AuthPage({ onLaunch }) {
               Superpowers.
             </h1>
 
-            <p className="text-xs lg:text-sm text-gray-400 leading-relaxed max-w-xl text-justify">
+            <p className="text-sm lg:text-base text-gray-400 leading-relaxed max-w-xl text-justify">
               AI-powered workspace to explain, optimize, convert, and document code.
             </p>
           </div>
