@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { 
-  Sun, Moon, Code2, Check, Loader2, ArrowRight, Zap, RefreshCw, 
-  MessageSquare, Network, Activity, BookOpen, Terminal, Sparkles, 
+  Sun, Moon, Code2, Loader2, ArrowRight, Zap, RefreshCw, 
+  MessageSquare, Network, BookOpen, Terminal, 
   Rocket, FolderOpen, Globe, Shield, ChevronDown, Monitor, Star, Layers 
 } from "lucide-react"
 import { useAuthStore } from "../../stores/authStore.js"
@@ -42,21 +42,6 @@ export function AuthPage({ onLaunch }) {
     e.target.value = ""
   }
 
-  // Syntax highlighted lines for JS editor snippet
-  const CODE_LINES = [
-    <div key="1" className="flex"><span className="w-6 text-gray-600 text-right select-none pr-3 text-[10px]">1</span><span><span className="text-[#e2895b]">function</span> <span className="text-[#8cd693]">search</span>(nums, target) {"{"}</span></div>,
-    <div key="2" className="flex"><span className="w-6 text-gray-600 text-right select-none pr-3 text-[10px]">2</span><span>  <span className="text-[#e2895b]">let</span> left = <span className="text-[#dfbe7a]">0</span>;</span></div>,
-    <div key="3" className="flex"><span className="w-6 text-gray-600 text-right select-none pr-3 text-[10px]">3</span><span>  <span className="text-[#e2895b]">let</span> right = nums.length - <span className="text-[#dfbe7a]">1</span>;</span></div>,
-    <div key="4" className="flex"><span className="w-6 text-gray-600 text-right select-none pr-3 text-[10px]">4</span><span>  <span className="text-[#e2895b]">while</span> (left &lt;= right) {"{"}</span></div>,
-    <div key="5" className="flex"><span className="w-6 text-gray-600 text-right select-none pr-3 text-[10px]">5</span><span>    <span className="text-[#e2895b]">const</span> mid = Math.floor((left + right) / <span className="text-[#dfbe7a]">2</span>);</span></div>,
-    <div key="6" className="flex"><span className="w-6 text-gray-600 text-right select-none pr-3 text-[10px]">6</span><span>    <span className="text-[#e2895b]">if</span> (nums[mid] === target) {"{"}</span></div>,
-    <div key="7" className="flex"><span className="w-6 text-gray-600 text-right select-none pr-3 text-[10px]">7</span><span>      <span className="text-[#e2895b]">return</span> mid;</span></div>,
-    <div key="8" className="flex"><span className="w-6 text-gray-600 text-right select-none pr-3 text-[10px]">8</span><span>    {"}"}</span></div>,
-    <div key="9" className="flex"><span className="w-6 text-gray-600 text-right select-none pr-3 text-[10px]">9</span><span>    left = mid + <span className="text-[#dfbe7a]">1</span>;</span></div>,
-    <div key="10" className="flex"><span className="w-6 text-gray-600 text-right select-none pr-3 text-[10px]">10</span><span>  {"}"}</span></div>,
-    <div key="11" className="flex"><span className="w-6 text-gray-600 text-right select-none pr-3 text-[10px]">11</span><span>  <span className="text-[#e2895b]">return</span> -<span className="text-[#dfbe7a]">1</span>;</span></div>,
-    <div key="12" className="flex"><span className="w-6 text-gray-600 text-right select-none pr-3 text-[10px]">12</span><span>{"}"}</span></div>
-  ]
 
   return (
     <div className="min-h-screen lg:h-screen lg:overflow-hidden w-full bg-[#070908] text-[#F5F4EE] flex flex-col justify-between relative">
@@ -78,7 +63,6 @@ export function AuthPage({ onLaunch }) {
           </div>
           <div>
             <span className="text-lg font-bold tracking-tight text-white block">CodeExplainer</span>
-            <span className="block text-[10px] text-gray-500 font-medium leading-none mt-0.5">Swiss-Developer Tools</span>
           </div>
         </div>
 
@@ -99,8 +83,8 @@ export function AuthPage({ onLaunch }) {
       {/* Main split content section */}
       <main className="flex-1 min-h-0 w-full max-w-7xl mx-auto px-6 py-4 lg:py-2 flex flex-col lg:grid lg:grid-cols-12 gap-8 lg:items-stretch items-center z-10 overflow-y-auto lg:overflow-visible">
         
-        {/* Left Side: Product Description, Bullets and Code mockup */}
-        <div className="lg:col-span-7 flex flex-col justify-between text-left h-full min-h-0 gap-10 lg:gap-12">
+        {/* Left Side: Product Description */}
+        <div className="lg:col-span-7 flex flex-col justify-center text-left h-full min-h-0 gap-10 lg:gap-12">
           <div className="flex flex-col space-y-5 lg:space-y-6">
             <h1 className="text-hero font-display text-white">
               One Workspace. <br />
@@ -111,70 +95,6 @@ export function AuthPage({ onLaunch }) {
             <p className="text-body font-body text-gray-400 leading-relaxed max-w-xl text-justify">
               AI-powered workspace to explain, optimize, convert, and document code.
             </p>
-          </div>
-
-          {/* High Fidelity Code and Badge Mockup */}
-          <div className="relative bg-[#0a0c0b]/70 border border-[#1b1f1c] rounded-2xl p-4 shadow-2xl flex flex-col md:grid md:grid-cols-12 gap-4 items-stretch w-full">
-            {/* Editor visual block */}
-            <div className="w-full md:col-span-7 flex flex-col bg-[#060807] border border-[#171a18] rounded-xl overflow-hidden shadow-inner">
-              <div className="flex items-center justify-between px-3 py-2 border-b border-[#171a18] bg-[#0c0e0d]">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-4 h-4 bg-[#f7df1e] text-black font-extrabold text-[10px] rounded flex items-center justify-center font-sans select-none">JS</span>
-                  <span className="font-mono text-[10px] text-gray-400 select-none">example.js</span>
-                </div>
-                <div className="flex gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#ff5f56]"></span>
-                  <span className="w-2 h-2 rounded-full bg-[#ffbd2e]"></span>
-                  <span className="w-2 h-2 rounded-full bg-[#27c93f]"></span>
-                </div>
-              </div>
-              <div className="p-3 font-mono text-[11px] text-gray-300 leading-relaxed overflow-x-auto select-none space-y-0.5">
-                {CODE_LINES}
-              </div>
-            </div>
-
-            {/* Badges block */}
-            <div className="w-full md:col-span-5 flex flex-col gap-2.5 md:gap-0 justify-between py-0.5 relative">
-              {/* Star sparkles illustration */}
-              <div className="absolute -top-6 -right-2 text-emerald-400/40 animate-pulse pointer-events-none">
-                <Sparkles size={40} />
-              </div>
-              {/* Dotted curve decorator line */}
-              <svg className="absolute -left-6 bottom-4 w-8 h-16 text-emerald-500/10 pointer-events-none hidden md:block" fill="none" viewBox="0 0 32 64">
-                <path d="M0 64 C 16 64, 32 48, 32 32 C 32 16, 16 0, 0 0" stroke="currentColor" strokeWidth="2" strokeDasharray="3,3" />
-              </svg>
-
-              <FloatingBadge 
-                icon={BookOpen} 
-                title="Explanation Generated" 
-                colorClass="border-emerald-500/20 bg-[#0c0f0d] text-emerald-400"
-                iconColor="text-emerald-400"
-              />
-              <FloatingBadge 
-                icon={Activity} 
-                title="Complexity: O(log n)" 
-                colorClass="border-emerald-500/20 bg-[#0c0f0d] text-emerald-400"
-                iconColor="text-emerald-400"
-              />
-              <FloatingBadge 
-                customIcon={
-                  <svg className="w-3.5 h-3.5 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M11.93 1.01c-1.44 0-2.76.11-3.72.31-2.22.45-2.61 1.4-2.61 3.5v2.22H9.2v.62H4.44C2.34 7.66 2 8.44 2 10.74v3.52c0 2.22.42 2.76 2.44 2.76h1.16v-1.62c0-2.44 2-4.44 4.44-4.44h4.44c1.44 0 2.61-1.18 2.61-2.62v-3.5c0-2.22-.52-2.92-2.61-3.5-1.1-.3-2.66-.45-4.59-.45v.02zM8.33 3.66a.93.93 0 1 1 0 1.86.93.93 0 0 1 0-1.86zm6.34 5.6c0 2.44-2 4.44-4.44 4.44H5.79c-1.44 0-2.61 1.18-2.61 2.62v3.5c0 2.22.52 2.92 2.61 3.5 1.7.46 3.99.67 6.28.67s4.58-.2 6.28-.67c2.09-.58 2.61-1.28 2.61-3.5v-2.22h-3.59v-.62h4.76c2.1 0 2.44-.78 2.44-3.08v-3.52c0-2.22-.42-2.76-2.44-2.76h-1.16v1.62c-.01.01-.01.01-.01.02zM15.4 18.25a.93.93 0 1 1 0 1.86.93.93 0 0 1 0-1.86z"/>
-                  </svg>
-                }
-                title="Python Version" 
-                subtitle="Ready to view" 
-                colorClass="border-blue-500/20 bg-[#0b0e12] text-[#4f85e4]"
-                iconColor="text-blue-400"
-              />
-              <FloatingBadge 
-                icon={MessageSquare} 
-                title="Comments Added" 
-                subtitle="Auto-generated docs" 
-                colorClass="border-amber-500/20 bg-[#120f0b] text-amber-400"
-                iconColor="text-amber-400"
-              />
-            </div>
           </div>
         </div>
 
@@ -251,26 +171,6 @@ export function AuthPage({ onLaunch }) {
   )
 }
 
-
-/* Code mockup badge list helper */
-function FloatingBadge({ icon: Icon, customIcon, title, subtitle, colorClass, iconColor }) {
-  return (
-    <div className={`flex items-center justify-between p-2.5 px-3.5 rounded-xl border ${colorClass} shadow-md select-none`}>
-      <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-white/5 border border-white/10 shrink-0">
-          {customIcon ? customIcon : <Icon size={14} className={iconColor} />}
-        </div>
-        <div className="flex flex-col text-left">
-          <span className="text-[11px] font-bold text-white leading-tight">{title}</span>
-          {subtitle && <span className="text-[9px] text-gray-500 leading-tight mt-0.5">{subtitle}</span>}
-        </div>
-      </div>
-      <div className="flex items-center justify-center w-3.5 h-3.5 rounded-full bg-emerald-500/20 text-emerald-400 shrink-0">
-        <Check size={10} strokeWidth={3.5} />
-      </div>
-    </div>
-  )
-}
 
 /* Theme selector dropdown component */
 function ThemeSelector() {
