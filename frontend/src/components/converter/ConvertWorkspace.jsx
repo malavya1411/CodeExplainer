@@ -1084,11 +1084,6 @@ export function ConvertWorkspace() {
         </button>
 
         <div className="flex items-center gap-2">
-          <button onClick={() => setActiveTab("changes")}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--border)] text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-all cursor-pointer">
-            <GitCompare size={13} />
-            View Changes
-          </button>
           <button onClick={handleExport}
             className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--border)] text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-all cursor-pointer">
             <Download size={13} />
