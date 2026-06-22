@@ -59,10 +59,10 @@ export function Header({
           <Code2 size={18} />
         </div>
         <div className="min-w-0">
-          <h1 className="text-sm font-bold text-[var(--text-primary)] leading-tight truncate">
+          <h1 className="text-sm font-bold font-body text-[var(--text-primary)] leading-tight truncate">
             CodeExplainer
           </h1>
-          <p className="text-[11px] text-[var(--text-muted)] leading-tight hidden sm:block">
+          <p className="text-caption font-body text-[var(--text-muted)] leading-tight hidden sm:block">
             Understand code, visually
           </p>
         </div>
@@ -71,7 +71,7 @@ export function Header({
         <div className="flex items-center bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl p-0.5 shadow-sm ml-4 select-none shrink-0">
           <button
             onClick={() => onWorkspaceChange("explainer")}
-            className={`text-[11px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+            className={`text-nav font-body font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
               activeWorkspace === "explainer"
                 ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
                 : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
@@ -81,7 +81,7 @@ export function Header({
           </button>
           <button
             onClick={() => onWorkspaceChange("optimizer")}
-            className={`text-[11px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+            className={`text-nav font-body font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
               activeWorkspace === "optimizer"
                 ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
                 : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
@@ -91,7 +91,7 @@ export function Header({
           </button>
           <button
             onClick={() => onWorkspaceChange("converter")}
-            className={`text-[11px] font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+            className={`text-nav font-body font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
               activeWorkspace === "converter"
                 ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
                 : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"

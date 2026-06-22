@@ -109,11 +109,11 @@ export function ExplanationPanel({ complexity, onAnalyze }) {
 
               {/* Title */}
               <div className="space-y-3">
-                <h2 className="text-3xl font-bold tracking-tight leading-tight">
+                <h2 className="font-display text-section tracking-tight leading-tight">
                   <span className="text-[var(--text-primary)]">Understand </span>
                   <span style={{ color: "var(--accent-primary)" }}>Your Code</span>
                 </h2>
-                <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-sm">
+                <p className="text-body font-body text-[var(--text-muted)] leading-relaxed max-w-sm">
                   Generate AI-powered explanations, step-by-step walkthroughs,
                   complexity analysis, diagrams, and smart comments tailored
                   to your skill level.
@@ -161,12 +161,12 @@ export function ExplanationPanel({ complexity, onAnalyze }) {
                     style={{ color: getFeatureColor(i) }}
                   />
                   <p
-                    className="text-[11px] font-semibold leading-tight whitespace-pre-line"
+                    className="text-caption font-body font-semibold leading-tight whitespace-pre-line"
                     style={{ color: getFeatureColor(i) }}
                   >
                     {f.title}
                   </p>
-                  <p className="text-[10px] text-[var(--text-muted)] leading-snug">{f.desc}</p>
+                  <p className="text-[10px] font-body text-[var(--text-muted)] leading-snug">{f.desc}</p>
                 </div>
               ))}
             </div>
