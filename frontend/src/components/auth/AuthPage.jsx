@@ -111,14 +111,6 @@ export function AuthPage({ onLaunch }) {
             <p className="text-xs lg:text-sm text-gray-400 leading-relaxed max-w-xl text-justify">
               AI-powered workspace to explain, optimize, convert, and document code.
             </p>
-
-            {/* Feature Bullets */}
-            <div className="grid grid-cols-2 gap-y-2 gap-x-6 pt-1 max-w-xl">
-              <FeatureItem label="Explain Code" />
-              <FeatureItem label="Optimize Performance" />
-              <FeatureItem label="Convert Languages" />
-              <FeatureItem label="Auto-Document Code" />
-            </div>
           </div>
 
           {/* High Fidelity Code and Badge Mockup */}
@@ -259,17 +251,6 @@ export function AuthPage({ onLaunch }) {
   )
 }
 
-/* Feature bullet checkmark helper */
-function FeatureItem({ label }) {
-  return (
-    <div className="flex items-center gap-2.5 text-xs text-gray-400 font-medium">
-      <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0 select-none">
-        <Check size={10} strokeWidth={3} />
-      </div>
-      <span className="select-none">{label}</span>
-    </div>
-  )
-}
 
 /* Code mockup badge list helper */
 function FloatingBadge({ icon: Icon, customIcon, title, subtitle, colorClass, iconColor }) {
