@@ -193,73 +193,22 @@ export function AuthPage({ onLaunch }) {
 }
 
 
-/* Theme selector dropdown component */
+/* Theme selector toggle component */
 function ThemeSelector() {
-  const theme = useThemeStore((s) => s.theme)
   const resolvedTheme = useThemeStore((s) => s.resolvedTheme)
-  const setTheme = useThemeStore((s) => s.setTheme)
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
-
-  useEffect(() => {
-    const handleOutsideClick = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleOutsideClick)
-    return () => document.removeEventListener("mousedown", handleOutsideClick)
-  }, [])
-
-  const getThemeLabel = (t) => {
-    switch (t) {
-      case "dark": return "Dark"
-      case "light": return "Light"
-      case "system": return "System"
-      default: return "Theme"
-    }
-  }
-
-  const getThemeIcon = (t, resolved = false) => {
-    const active = resolved ? resolvedTheme : t
-    if (active === "dark") return <Moon size={14} className="text-slate-600 dark:text-gray-300" />
-    if (active === "light") return <Sun size={14} className="text-amber-500 dark:text-amber-400" />
-    return <Monitor size={14} className="text-slate-600 dark:text-gray-300" />
-  }
+  const toggleTheme = useThemeStore((s) => s.toggleTheme)
 
   return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#1b1f1c] bg-white dark:bg-[#0c0e0d] hover:bg-slate-50 dark:hover:bg-white/5 hover:border-slate-300 dark:hover:border-gray-700 text-xs font-semibold text-slate-700 dark:text-gray-300 transition-all cursor-pointer shadow-sm select-none"
-      >
-        {getThemeIcon(theme, true)}
-        <span>{getThemeLabel(theme)}</span>
-        <ChevronDown size={12} className={`text-slate-400 dark:text-gray-500 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
-      </button>
-
-      {open && (
-        <div className="absolute right-0 mt-1.5 w-32 rounded-lg border border-slate-200 dark:border-[#1b1f1c] bg-white dark:bg-[#0c0e0d] shadow-xl py-1 z-50 select-none">
-          {["dark", "light", "system"].map((t) => (
-            <button
-              key={t}
-              onClick={() => {
-                setTheme(t)
-                setOpen(false)
-              }}
-              className={`flex items-center gap-2 w-full px-3 py-2 text-xs text-left cursor-pointer transition-colors ${
-                theme === t 
-                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold" 
-                  : "text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/5"
-              }`}
-            >
-              {getThemeIcon(t)}
-              <span>{getThemeLabel(t)}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <button
+      onClick={toggleTheme}
+      className="flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 dark:border-[#1b1f1c] bg-white dark:bg-[#0c0e0d] hover:bg-slate-50 dark:hover:bg-white/5 hover:border-slate-300 dark:hover:border-gray-700 text-slate-700 dark:text-gray-300 transition-all duration-300 cursor-pointer shadow-sm relative overflow-hidden active:scale-95 group"
+      aria-label="Toggle theme"
+    >
+      <div className="relative w-4 h-4 transition-transform duration-500 rotate-0 dark:rotate-[360deg]">
+        <Sun size={16} className="absolute inset-0 transition-opacity duration-300 opacity-100 dark:opacity-0 text-amber-500" />
+        <Moon size={16} className="absolute inset-0 transition-opacity duration-300 opacity-0 dark:opacity-100 text-blue-400" />
+      </div>
+    </button>
   )
 }
 
