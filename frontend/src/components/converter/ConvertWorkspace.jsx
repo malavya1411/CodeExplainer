@@ -369,6 +369,270 @@ function InsightsGrid({ notes, sourceLang, targetLang, style }) {
   )
 }
 
+// ── Interactive Changes View ───────────────────────────────────────────────
+const RULE_SEARCH_PATTERNS = {
+  "const-let-decl": { from: /\b(const|let|var)\b/, to: null },
+  "arrow-fn": { from: /\b(const|let|var)\b/, to: /\bdef\b/ },
+  "arrow-fn-implicit": { from: /\b(const|let|var)\b/, to: /\bdef\b/ },
+  "function-decl": { from: /\bfunction\b/, to: /\bdef\b/ },
+  "function-to-method": { from: /\bfunction\b/, to: /\bpublic\b/ },
+  "def-to-function": { from: /\bdef\b/, to: /\bfunction\b/ },
+  "def-to-method": { from: /\bdef\b/, to: /\bpublic\b/ },
+  "def-to-func": { from: /\bdef\b/, to: /\bfunc\b/ },
+  "function-to-func": { from: /\bfunction\b/, to: /\bfunc\b/ },
+  "console-log": { from: /console\.log/, to: /print/ },
+  "print-to-console": { from: /print/, to: /console\.log/ },
+  "print-to-sysout": { from: /print/, to: /System\.out\.println/ },
+  "print-to-fmt": { from: /print/, to: /fmt\.Println/ },
+  "strict-equality": { from: /===/, to: /==/ },
+  "strict-inequality": { from: /!==/, to: /!=/ },
+  "true-false": { from: /\b(true|false|True|False)\b/, to: /\b(true|false|True|False)\b/ },
+  "for-of-loop": { from: /\bfor\b/, to: /\bfor\b/ },
+  "for-in-keys": { from: /\bfor\b/, to: /\bfor\b/ },
+  "for-i-loop": { from: /\bfor\b/, to: /\bfor\b/ },
+  "for-in-to-forof": { from: /\bfor\b/, to: /\bfor\b/ },
+  "for-in-go": { from: /\bfor\b/, to: /\bfor\b/ },
+  "for-of-go": { from: /\bfor\b/, to: /\bfor\b/ },
+  "for-of-rust": { from: /\bfor\b/, to: /\bfor\b/ },
+  "push-to-append": { from: /\.push/, to: /\.append/ },
+  "append-to-push": { from: /\.append/, to: /\.push/ },
+  "push-to-add": { from: /\.push/, to: /\.add/ },
+  "append-to-add": { from: /\.append/, to: /\.add/ },
+  "append-go": { from: /\.append/, to: /append\(/ },
+  "push-vec": { from: /\.push/, to: /\.push/ },
+  "length-to-len": { from: /\.length/, to: /len\(/ },
+  "len-to-length": { from: /len\(/, to: /\.length/ },
+  "length-prop": { from: /\.length/, to: /\.length\(\)/ },
+  "len-go": { from: /len\(/, to: /len\(/ },
+  "len-to-size": { from: /len\(/, to: /\.size\(\)/ },
+  "null-to-none": { from: /\bnull\b/, to: /\bNone\b/ },
+  "undefined-to-none": { from: /\bundefined\b/, to: /\bNone\b/ },
+  "none-to-null": { from: /\bNone\b/, to: /\bnull\b/ },
+  "none-to-nil": { from: /\bNone\b/, to: /\bnil\b/ },
+  "null-to-nil": { from: /\bnull\b/, to: /\bnil\b/ },
+}
+
+function findLineForNote(code, note, isSource) {
+  const patternInfo = RULE_SEARCH_PATTERNS[note.id]
+  const pattern = patternInfo ? (isSource ? patternInfo.from : patternInfo.to) : null
+
+  const lines = code.split("\n")
+  if (pattern) {
+    for (let i = 0; i < lines.length; i++) {
+      if (pattern instanceof RegExp) {
+        if (pattern.test(lines[i])) return i + 1
+      } else if (typeof pattern === "string" && lines[i].includes(pattern)) {
+        return i + 1
+      }
+    }
+  }
+
+  const rawText = isSource ? note.from : note.to
+  if (!rawText || rawText === "(removed)") return -1
+
+  const cleanText = rawText.replace(/\(\.\.\.\)/g, "").replace(/\{/g, "").replace(/\}/g, "").trim()
+  if (cleanText) {
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes(cleanText)) return i + 1
+    }
+  }
+
+  const words = cleanText.split(/\s+/)
+  if (words.length > 0 && words[0].length > 2) {
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes(words[0])) return i + 1
+    }
+  }
+
+  return -1
+}
+
+function InteractiveChangesView({
+  originalCode,
+  convertedCode,
+  sourceLang,
+  targetLang,
+  notes,
+  monacoTheme,
+  isDesktop
+}) {
+  const [selectedNoteId, setSelectedNoteId] = useState(null)
+  
+  const originalEditorRef = useRef(null)
+  const convertedEditorRef = useRef(null)
+  const monacoRef = useRef(null)
+  
+  const originalDecorationsRef = useRef([])
+  const convertedDecorationsRef = useRef([])
+
+  const srcLabel = getLanguageLabel(sourceLang)
+  const tgtLabel = getLanguageLabel(targetLang)
+
+  const handleSelectNote = (note) => {
+    setSelectedNoteId(note.id)
+    
+    const orgEditor = originalEditorRef.current
+    const convEditor = convertedEditorRef.current
+    const monaco = monacoRef.current
+    
+    if (!orgEditor || !convEditor || !monaco) return
+    
+    const orgLines = originalCode.split("\n")
+    const convLines = convertedCode.split("\n")
+    
+    const orgLineNum = findLineForNote(originalCode, note, true)
+    const orgDecorations = []
+    if (orgLineNum !== -1) {
+      orgEditor.revealLineInCenter(orgLineNum)
+      orgDecorations.push({
+        range: new monaco.Range(orgLineNum, 1, orgLineNum, 100),
+        options: {
+          isWholeLine: true,
+          className: "bg-red-500/10 border-l-4 border-red-500",
+        }
+      })
+    }
+    originalDecorationsRef.current = orgEditor.deltaDecorations(originalDecorationsRef.current, orgDecorations)
+    
+    const convLineNum = findLineForNote(convertedCode, note, false)
+    const convDecorations = []
+    if (convLineNum !== -1) {
+      convEditor.revealLineInCenter(convLineNum)
+      convDecorations.push({
+        range: new monaco.Range(convLineNum, 1, convLineNum, 100),
+        options: {
+          isWholeLine: true,
+          className: "bg-green-500/10 border-l-4 border-green-500",
+        }
+      })
+    }
+    convertedDecorationsRef.current = convEditor.deltaDecorations(convertedDecorationsRef.current, convDecorations)
+  }
+
+  useEffect(() => {
+    if (originalEditorRef.current && convertedEditorRef.current) {
+      originalDecorationsRef.current = originalEditorRef.current.deltaDecorations(originalDecorationsRef.current, [])
+      convertedDecorationsRef.current = convertedEditorRef.current.deltaDecorations(convertedDecorationsRef.current, [])
+    }
+    if (notes && notes.length > 0) {
+      const timer = setTimeout(() => {
+        handleSelectNote(notes[0])
+      }, 300)
+      return () => clearTimeout(timer)
+    } else {
+      setSelectedNoteId(null)
+    }
+  }, [notes, originalCode, convertedCode])
+
+  if (!notes || notes.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-3 text-[var(--text-muted)] bg-[var(--bg-primary)]">
+        <CheckCircle2 size={32} className="opacity-30" />
+        <p className="text-sm">No syntax changes detected for this conversion.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col lg:flex-row h-full min-h-0 bg-[var(--bg-primary)]">
+      {/* Editors panel: Side-by-side or stacked */}
+      <div className="flex-1 flex flex-col sm:flex-row min-h-0 min-w-0 border-r border-[var(--border)]">
+        {/* Original Editor */}
+        <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-[var(--bg-secondary)]">
+          <div className="flex items-center justify-between px-4 py-2 shrink-0 border-b border-[var(--border)] bg-[var(--bg-tertiary)]">
+            <span className="text-xs font-bold text-[var(--text-primary)]">{srcLabel} (Original)</span>
+          </div>
+          <div className="flex-1 min-h-0">
+            <Editor
+              value={originalCode}
+              language={sourceLang}
+              theme={monacoTheme}
+              onMount={(editor, monaco) => {
+                originalEditorRef.current = editor
+                monacoRef.current = monaco
+                defineThemeOnMount(editor, monaco)
+              }}
+              options={{ ...EDITOR_OPTIONS_BASE, readOnly: true }}
+            />
+          </div>
+        </div>
+
+        <div className="w-px bg-[var(--border)] shrink-0 hidden sm:block" />
+
+        {/* Converted Editor */}
+        <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-[var(--bg-secondary)]">
+          <div className="flex items-center justify-between px-4 py-2 shrink-0 border-b border-[var(--border)] bg-[var(--bg-tertiary)]">
+            <span className="text-xs font-bold text-green-500">{tgtLabel} (Converted)</span>
+          </div>
+          <div className="flex-1 min-h-0">
+            <Editor
+              value={convertedCode}
+              language={targetLang}
+              theme={monacoTheme}
+              onMount={(editor, monaco) => {
+                convertedEditorRef.current = editor
+                monacoRef.current = monaco
+                defineThemeOnMount(editor, monaco)
+              }}
+              options={{ ...EDITOR_OPTIONS_BASE, readOnly: true }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Changes list sidebar */}
+      <div className="w-full lg:w-[320px] shrink-0 flex flex-col bg-[var(--bg-secondary)] border-t lg:border-t-0 border-[var(--border)]">
+        <div className="p-4 border-b border-[var(--border)] bg-[var(--bg-tertiary)] flex items-center justify-between shrink-0">
+          <span className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">Applied Rules ({notes.length})</span>
+          <span className="text-[10px] text-[var(--text-muted)] font-medium">Click to highlight</span>
+        </div>
+        <div className="flex-1 p-3 flex flex-col gap-2 overflow-y-auto min-h-0">
+          {notes.map((note) => {
+            const isSelected = selectedNoteId === note.id
+            return (
+              <button
+                key={note.id}
+                onClick={() => handleSelectNote(note)}
+                className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer flex flex-col gap-2 ${
+                  isSelected
+                    ? "border-[var(--accent-primary)] bg-[color-mix(in_srgb,var(--accent-primary)_6%,transparent)]"
+                    : "border-[var(--border)] bg-[var(--bg-primary)] hover:bg-[var(--bg-tertiary)]"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${
+                    isSelected ? "bg-[var(--accent-primary)] text-[var(--accent-on)]" : "bg-[var(--bg-tertiary)] text-[var(--text-muted)]"
+                  }`}>
+                    {notes.indexOf(note) + 1}
+                  </div>
+                  <span className={`text-[11px] font-bold truncate flex-1 ${isSelected ? "text-[var(--accent-primary)]" : "text-[var(--text-primary)]"}`}>
+                    {note.id.split("-").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")}
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-1 border-t border-[var(--border)]/40 pt-2 text-[10px] font-mono leading-normal w-full overflow-hidden">
+                  <div className="flex items-start gap-1.5 w-full">
+                    <span className="text-red-400 font-bold shrink-0">-</span>
+                    <span className="text-[var(--text-secondary)] break-all truncate">{note.from}</span>
+                  </div>
+                  <div className="flex items-start gap-1.5 w-full">
+                    <span className="text-green-400 font-bold shrink-0">+</span>
+                    <span className="text-[var(--text-primary)] break-all truncate">{note.to}</span>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-[var(--text-muted)] leading-relaxed border-t border-[var(--border)]/40 pt-2">
+                  {note.reason}
+                </p>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN WORKSPACE
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -760,15 +1024,16 @@ export function ConvertWorkspace() {
           </div>
         )}
 
-        {/* CHANGES — DiffEditor */}
+        {/* CHANGES — Interactive Changes View */}
         {activeTab === "changes" && (
-          <DiffEditor
-            original={originalCode}
-            modified={convertedCode}
-            language={targetLang}
-            theme={monacoTheme}
-            onMount={defineThemeOnMount}
-            options={{ ...EDITOR_OPTIONS_BASE, readOnly: true, renderSideBySide: isDesktop }}
+          <InteractiveChangesView
+            originalCode={originalCode}
+            convertedCode={convertedCode}
+            sourceLang={resolvedSource}
+            targetLang={targetLang}
+            notes={conversionNotes}
+            monacoTheme={monacoTheme}
+            isDesktop={isDesktop}
           />
         )}
 
