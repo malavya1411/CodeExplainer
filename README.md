@@ -20,9 +20,9 @@
 
 ## 📖 Overview
 
-CodeExplainer is an adaptive code-understanding platform built for developers, students, educators, and interview candidates. Rather than returning a wall of AI-generated text, it analyzes the **structure** of your code and produces a rich, interactive experience tailored to both the size and complexity of what you paste.
+CodeExplainer is an adaptive code understanding platform built for developers, students, educators, and interview candidates. Rather than returning a wall of AI-generated text, it analyzes the **structure** of your code and produces a rich, interactive experience tailored to both the size and complexity of what you paste.
 
-It automatically switches between four explanation modes based on file length — from deep line-by-line walkthroughs of small snippets to full architectural maps of large codebases.
+It automatically switches between four explanation modes based on file length from deep line by line walkthroughs of small snippets to full architectural maps of large codebases.
 
 ---
 
