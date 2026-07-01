@@ -148,7 +148,7 @@ Side-by-side optimization workspace:
 
 ---
 
-### 🎯 Variable Inspector
+### Variable Inspector
 
 Real-time variable tracking synchronized with the execution timeline:
 
