@@ -73,6 +73,10 @@ export default function App() {
     setAnalyzing(true)
     useCommentStore.setState({ isGenerating: true, generationError: null })
 
+    // Concurrently trigger optimization and conversion in background
+    runOptimization(code, language)
+    runConversion(code, language)
+
     // Simulate API delay then generate all three depth levels
     setTimeout(() => {
       const { beginner, intermediate, expert, mode } = generateAllExplanations(code, language)
