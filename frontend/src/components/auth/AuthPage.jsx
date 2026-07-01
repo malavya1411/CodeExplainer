@@ -147,7 +147,7 @@ export function AuthPage({ onLaunch }) {
             </div>
 
             {/* Grid of Launcher Cards */}
-            <div className="grid grid-cols-2 gap-0 flex-1 border-b border-[var(--color-ink,#111)] dark:border-[#1a1f1c]">
+            <div className="grid grid-cols-2 grid-rows-2 gap-0 flex-1 border-b border-[var(--color-ink,#111)] dark:border-[#1a1f1c]">
               <LauncherCard 
                 icon={BookOpen}
                 title="Explain Code"
@@ -265,7 +265,7 @@ function LauncherCard({ icon: Icon, title, desc, colorHex = "#F4C542", onClick, 
   return (
     <button
       onClick={onClick}
-      className="group flex flex-col justify-between items-start p-4 text-left h-[130px] w-full transition-all duration-150 cursor-pointer select-none relative"
+      className="group flex flex-col justify-between items-start p-4 text-left h-full w-full transition-all duration-150 cursor-pointer select-none relative"
       style={{
         background: "var(--bg-secondary, #fff)",
         borderRight: borderRight ? "1px solid var(--color-ink, #111)" : undefined,
