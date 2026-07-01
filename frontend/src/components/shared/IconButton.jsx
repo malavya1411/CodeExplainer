@@ -8,9 +8,10 @@ export function IconButton({ icon: Icon, label, size = 18, className, active, ..
       aria-label={label}
       title={label}
       className={cn(
-        "inline-flex items-center justify-center rounded p-2 min-w-[36px] min-h-[36px] transition-all duration-150",
-        "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] active:scale-95",
-        active && "bg-[var(--bg-tertiary)] text-[var(--accent-primary)]",
+        "inline-flex items-center justify-center rounded-none p-2 min-w-[36px] min-h-[36px] transition-all duration-150",
+        "border border-transparent hover:border-[var(--border)] hover:bg-[var(--bg-tertiary)]",
+        "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
+        active && "bg-[var(--bg-tertiary)] text-[var(--accent-primary)] border-[var(--border)]",
         className,
       )}
       {...props}
@@ -43,8 +44,8 @@ export function Tooltip({ content, position = "top", children }) {
         <span
           role="tooltip"
           className={cn(
-            "absolute z-50 px-2 py-1 rounded text-xs whitespace-nowrap pointer-events-none animate-fade-in",
-            "bg-[var(--text-primary)] text-[var(--bg-secondary)] shadow-lg max-w-[260px]",
+            "absolute z-50 px-2 py-1 rounded-none text-xs whitespace-nowrap pointer-events-none animate-fade-in",
+            "bg-[var(--color-ink,var(--text-primary))] text-[var(--bg-secondary)] border border-[var(--border)] max-w-[260px]",
             pos[position],
           )}
         >

@@ -125,11 +125,10 @@ export function ExplanationPanel({ complexity, onAnalyze }) {
                 <button
                   id="hero-explain-btn"
                   onClick={onAnalyze}
-                  className="flex items-center gap-2.5 px-8 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:opacity-90 active:scale-95 shadow-lg"
+                  className="premium-btn-primary flex items-center gap-2.5 px-8 py-3.5 text-sm font-black uppercase tracking-wider transition-all duration-150"
                   style={{
                     background: "var(--accent-primary)",
                     color: "var(--accent-on)",
-                    boxShadow: "0 4px 24px color-mix(in srgb, var(--accent-primary) 35%, transparent)",
                   }}
                 >
                   <Play size={16} fill="currentColor" />
@@ -138,11 +137,11 @@ export function ExplanationPanel({ complexity, onAnalyze }) {
 
                 {/* Keyboard hint */}
                 <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
-                  <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-tertiary)] font-mono text-[10px] border border-[var(--border)]">⌘</kbd>
-                  <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-tertiary)] font-mono text-[10px] border border-[var(--border)]">Enter</kbd>
+                  <kbd className="px-1.5 py-0.5 bg-[var(--bg-tertiary)] font-mono text-[10px] border border-[var(--border)]">⌘</kbd>
+                  <kbd className="px-1.5 py-0.5 bg-[var(--bg-tertiary)] font-mono text-[10px] border border-[var(--border)]">Enter</kbd>
                   <span>or</span>
-                  <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-tertiary)] font-mono text-[10px] border border-[var(--border)]">Ctrl</kbd>
-                  <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-tertiary)] font-mono text-[10px] border border-[var(--border)]">Enter</kbd>
+                  <kbd className="px-1.5 py-0.5 bg-[var(--bg-tertiary)] font-mono text-[10px] border border-[var(--border)]">Ctrl</kbd>
+                  <kbd className="px-1.5 py-0.5 bg-[var(--bg-tertiary)] font-mono text-[10px] border border-[var(--border)]">Enter</kbd>
                   <span>to analyze</span>
                 </div>
               </div>
@@ -153,7 +152,14 @@ export function ExplanationPanel({ complexity, onAnalyze }) {
               {FEATURES.map((f, i) => (
                 <div
                   key={i}
-                  className="flex flex-col items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-3 text-center"
+                  className="flex flex-col items-center gap-2 border-[var(--border)] bg-[var(--bg-secondary)] p-3 text-center transition-all duration-150"
+                  style={{
+                    borderWidth: "var(--border-width, 1px)",
+                    borderStyle: "solid",
+                    borderColor: "var(--border)",
+                    boxShadow: "var(--card-shadow-sm, none)",
+                    background: getFeatureColor(i) + "18",
+                  }}
                 >
                   <f.Icon
                     size={24}
@@ -161,7 +167,7 @@ export function ExplanationPanel({ complexity, onAnalyze }) {
                     style={{ color: getFeatureColor(i) }}
                   />
                   <p
-                    className="text-caption font-body font-semibold leading-tight whitespace-pre-line"
+                    className="text-caption font-body font-black leading-tight whitespace-pre-line uppercase tracking-wide"
                     style={{ color: getFeatureColor(i) }}
                   >
                     {f.title}

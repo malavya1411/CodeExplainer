@@ -53,54 +53,68 @@ export function Header({
   ]
 
   return (
-    <header className="flex items-center justify-between gap-3 px-4 h-14 border-b border-[var(--border)] bg-[var(--bg-secondary)] shrink-0">
+    <header
+      className="flex items-center justify-between gap-3 px-4 h-14 shrink-0"
+      style={{
+        backgroundColor: "var(--accent-nav, var(--bg-secondary))",
+        borderBottom: "3px solid var(--border)",
+      }}
+    >
       <div className="flex items-center gap-2.5 min-w-0">
-        <div className="flex items-center justify-center w-8 h-8 rounded bg-[var(--accent-primary)] text-[var(--accent-on)] shrink-0">
-          <Code2 size={18} />
+        <div className="flex items-center justify-center w-8 h-8 shrink-0 border-2 border-[var(--border)]"
+          style={{ background: "var(--color-ink, var(--accent-primary))" }}>
+          <Code2 size={18} style={{ color: "var(--bg-secondary)" }} />
         </div>
         <div className="min-w-0">
-          <h1 className="text-sm font-bold font-body text-[var(--text-primary)] leading-tight truncate">
+          <h1
+            className="text-sm font-display font-bold leading-tight truncate"
+            style={{ color: "var(--color-ink, var(--text-primary))", fontFamily: "var(--font-display)" }}
+          >
             CodeExplainer
           </h1>
-          <p className="text-caption font-body text-[var(--text-muted)] leading-tight hidden sm:block">
+          <p className="text-caption font-body leading-tight hidden sm:block" style={{ color: "var(--color-ink, var(--text-muted))", opacity: 0.6 }}>
             Understand code, visually
           </p>
         </div>
 
         {/* Workspace Switcher */}
-        <div className="flex items-center bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl p-0.5 shadow-sm ml-4 select-none shrink-0">
+        <div
+          className="flex items-center ml-4 select-none shrink-0 border-2 border-[var(--border)]"
+          style={{ background: "var(--bg-secondary)" }}
+        >
           <button
             onClick={() => onWorkspaceChange("explainer")}
-            className={`text-nav font-body font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+            className={`text-nav font-body font-black uppercase tracking-wide px-3 py-1.5 transition-all cursor-pointer border-r-2 border-[var(--border)] ${
               activeWorkspace === "explainer"
-                ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
-                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                ? "bg-[var(--color-ink,#111)] text-[var(--bg-secondary)]"
+                : "text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
             }`}
           >
             Explainer
           </button>
           <button
             onClick={() => onWorkspaceChange("optimizer")}
-            className={`text-nav font-body font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+            className={`text-nav font-body font-black uppercase tracking-wide px-3 py-1.5 transition-all cursor-pointer border-r-2 border-[var(--border)] ${
               activeWorkspace === "optimizer"
-                ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
-                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                ? "bg-[var(--color-ink,#111)] text-[var(--bg-secondary)]"
+                : "text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
             }`}
           >
             Optimizer
           </button>
           <button
             onClick={() => onWorkspaceChange("converter")}
-            className={`text-nav font-body font-bold uppercase rounded-lg px-2.5 py-1.5 transition-all cursor-pointer ${
+            className={`text-nav font-body font-black uppercase tracking-wide px-3 py-1.5 transition-all cursor-pointer ${
               activeWorkspace === "converter"
-                ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
-                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                ? "bg-[var(--color-ink,#111)] text-[var(--bg-secondary)]"
+                : "text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
             }`}
           >
             Convert
           </button>
         </div>
       </div>
+
 
       <div className="flex items-center gap-1.5">
         {/* Comments Dropdown */}
@@ -119,7 +133,7 @@ export function Header({
           {commentsMenuOpen && (
             <div
               role="menu"
-              className="absolute left-1/2 -translate-x-1/2 mt-1.5 w-48 premium-card shadow-xl py-1 z-50 animate-fade-in"
+              className="absolute left-1/2 -translate-x-1/2 mt-1.5 w-52 premium-card z-50 animate-fade-in"
             >
               <button
                 role="menuitem"
@@ -233,7 +247,7 @@ export function Header({
           {exportOpen && (
             <div
               role="menu"
-              className="absolute right-0 mt-1.5 w-48 premium-card shadow-xl py-1 z-50 animate-fade-in"
+              className="absolute right-0 mt-1.5 w-52 premium-card z-50 animate-fade-in"
             >
               {exportFormats.map((f) => (
                 <button
