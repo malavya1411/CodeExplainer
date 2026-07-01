@@ -258,7 +258,7 @@ export function OptimizerWorkspace() {
     }
   }
 
-  const defineThemeOnMount = (editor, monaco) => {
+  function defineThemeOnMount(editor, monaco) {
     monaco.editor.defineTheme("explainer-dark", {
       base: "vs-dark",
       inherit: true,
