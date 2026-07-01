@@ -48,8 +48,8 @@ export function AuthPage({ onLaunch }) {
       
       {/* Decorative corner accent — neubrutalism style */}
       <div className="absolute bottom-0 left-0 w-64 h-64 pointer-events-none z-0 opacity-30 dark:opacity-10">
-        <div className="absolute bottom-8 left-8 w-40 h-40 border-4 border-[var(--color-ink,#111)] bg-[var(--warning,#F4C542)] dark:border-[#2A2F2B] dark:bg-transparent" />
-        <div className="absolute bottom-4 left-4 w-40 h-40 border-4 border-[var(--color-ink,#111)] bg-transparent dark:border-[#2A2F2B]" />
+        <div className="absolute bottom-8 left-8 w-40 h-40 border border-[var(--color-ink,#111)] bg-[var(--warning,#F4C542)] dark:border-[#2A2F2B] dark:bg-transparent" />
+        <div className="absolute bottom-4 left-4 w-40 h-40 border border-[var(--color-ink,#111)] bg-transparent dark:border-[#2A2F2B]" />
       </div>
       
       {/* Hidden File Input */}
@@ -65,7 +65,7 @@ export function AuthPage({ onLaunch }) {
       <header className="w-full max-w-7xl mx-auto px-6 py-4 lg:py-3 flex items-center justify-between z-10 relative">
         <div className="flex items-center gap-3">
           <div
-            className="flex items-center justify-center w-10 h-10 border-2 border-[var(--color-ink,#111)] dark:border-[#2A2F2B] dark:bg-[#1c3024] dark:text-[#4ede7d]"
+            className="flex items-center justify-center w-10 h-10 border border-[var(--color-ink,#111)] dark:border-[#2A2F2B] dark:bg-[#1c3024] dark:text-[#4ede7d]"
             style={{ background: "var(--color-ink, #111)", color: "#fff" }}
           >
             <Code2 size={20} />
@@ -126,13 +126,13 @@ export function AuthPage({ onLaunch }) {
           <div
             className="w-full h-full max-w-[465px] bg-[var(--bg-secondary,#fff)] dark:bg-[#090b0a] flex flex-col justify-between relative overflow-hidden"
             style={{
-              border: "3px solid var(--color-ink, #111)",
+              border: "1px solid var(--color-ink, #111)",
               boxShadow: "8px 8px 0px var(--color-ink, #111)",
             }}
           >
             {/* Header stripe — yellow accent bar */}
             <div
-              className="px-7 pt-6 pb-4 border-b-2 border-[var(--color-ink,#111)] dark:border-[#1a1f1c]"
+              className="px-7 pt-6 pb-4 border-b border-[var(--color-ink,#111)] dark:border-[#1a1f1c]"
               style={{ background: "var(--accent-nav, #F4C542)" }}
             >
               <h2
@@ -147,7 +147,7 @@ export function AuthPage({ onLaunch }) {
             </div>
 
             {/* Grid of Launcher Cards */}
-            <div className="grid grid-cols-2 gap-0 flex-1 border-b-2 border-[var(--color-ink,#111)] dark:border-[#1a1f1c]">
+            <div className="grid grid-cols-2 gap-0 flex-1 border-b border-[var(--color-ink,#111)] dark:border-[#1a1f1c]">
               <LauncherCard 
                 icon={BookOpen}
                 title="Explain Code"
@@ -190,7 +190,7 @@ export function AuthPage({ onLaunch }) {
                 style={{
                   background: "var(--color-ink, #111)",
                   color: "var(--bg-secondary, #fff)",
-                  border: "3px solid var(--color-ink, #111)",
+                  border: "1px solid var(--color-ink, #111)",
                   boxShadow: "4px 4px 0px var(--accent-nav, #F4C542)",
                 }}
                 onMouseEnter={e => { e.currentTarget.style.transform = "translate(-2px,-2px)"; e.currentTarget.style.boxShadow = "6px 6px 0px var(--accent-nav, #F4C542)"; }}
@@ -209,7 +209,7 @@ export function AuthPage({ onLaunch }) {
                 style={{
                   background: "var(--bg-secondary, #fff)",
                   color: "var(--color-ink, #111)",
-                  border: "2px solid var(--color-ink, #111)",
+                  border: "1px solid var(--color-ink, #111)",
                   boxShadow: "3px 3px 0px var(--color-ink, #111)",
                 }}
                 onMouseEnter={e => { e.currentTarget.style.transform = "translate(-1px,-1px)"; e.currentTarget.style.boxShadow = "4px 4px 0px var(--color-ink, #111)"; }}
@@ -245,7 +245,7 @@ function ThemeSelector() {
       onClick={toggleTheme}
       className="flex items-center justify-center w-9 h-9 cursor-pointer transition-all duration-150 active:translate-x-0.5 active:translate-y-0.5"
       style={{
-        border: "2px solid var(--color-ink, #111)",
+        border: "1px solid var(--color-ink, #111)",
         background: "var(--bg-secondary, #fff)",
         color: "var(--color-ink, #111)",
         boxShadow: "3px 3px 0px var(--color-ink, #111)",
@@ -268,8 +268,8 @@ function LauncherCard({ icon: Icon, title, desc, colorHex = "#F4C542", onClick, 
       className="group flex flex-col justify-between items-start p-4 text-left h-[130px] w-full transition-all duration-150 cursor-pointer select-none relative"
       style={{
         background: "var(--bg-secondary, #fff)",
-        borderRight: borderRight ? "2px solid var(--color-ink, #111)" : undefined,
-        borderBottom: borderBottom ? "2px solid var(--color-ink, #111)" : undefined,
+        borderRight: borderRight ? "1px solid var(--color-ink, #111)" : undefined,
+        borderBottom: borderBottom ? "1px solid var(--color-ink, #111)" : undefined,
       }}
       onMouseEnter={e => { e.currentTarget.style.background = colorHex + "18"; }}
       onMouseLeave={e => { e.currentTarget.style.background = "var(--bg-secondary, #fff)"; }}
@@ -279,7 +279,7 @@ function LauncherCard({ icon: Icon, title, desc, colorHex = "#F4C542", onClick, 
 
       <div className="flex justify-between items-center w-full pl-3">
         <div
-          className="flex items-center justify-center w-8 h-8 border-2 border-[var(--color-ink,#111)]"
+          className="flex items-center justify-center w-8 h-8 border border-[var(--color-ink,#111)]"
           style={{ background: colorHex }}
         >
           <Icon size={14} style={{ color: "var(--color-ink, #111)" }} />
@@ -306,7 +306,7 @@ function FeatureItem({ label }) {
   return (
     <div className="flex items-center gap-2.5 text-xs font-bold" style={{ color: "var(--text-secondary, #333)" }}>
       <div
-        className="flex items-center justify-center w-4 h-4 shrink-0 border-2 border-[var(--color-ink,#111)]"
+        className="flex items-center justify-center w-4 h-4 shrink-0 border border-[var(--color-ink,#111)]"
         style={{ background: "var(--accent-primary, #3B4CCA)" }}
       >
         <Check size={9} strokeWidth={3.5} style={{ color: "#fff" }} />
