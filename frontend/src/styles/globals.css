@@ -5,50 +5,64 @@
 @tailwind utilities;
 
 :root[data-theme="light"] {
-  --bg-primary: #F7F5EA;
-  --bg-secondary: #FAF9F5;
-  --bg-tertiary: #F3F0E2;
-  --bg-code: #F5F3E7;
+  /* ── Core surfaces ── */
+  --bg-primary:   #F5EFDC;     /* cream dot-grid base */
+  --bg-secondary: #FFFFFF;     /* card / panel backgrounds */
+  --bg-tertiary:  #F0EAD6;     /* slightly deeper cream for hover states */
+  --bg-code:      #FFFEF9;     /* code editor background */
 
-  --text-primary: #3A3A35;
-  --text-secondary: #6B6B63;
-  --text-muted: #9A9A90;
+  /* ── Text ── */
+  --text-primary:   #111111;
+  --text-secondary: #333333;
+  --text-muted:     #666666;
 
-  --accent-primary: #2D6A4F;
-  --accent-secondary: #6B8E6E;
-  --accent-tertiary: #5FAF68;
-  --accent-hover: #1F4D37;
+  /* ── Accent ── */
+  --accent-primary:  #3B4CCA;   /* blue CTA — primary buttons */
+  --accent-secondary:#5B6BD4;
+  --accent-tertiary: #7080DC;
+  --accent-hover:    #2A3BB0;
+  --accent-nav:      #F4C542;   /* brand yellow — nav bar */
 
-  --border: #D8D1BE;
-  --success: #5FAF68;
-  --warning: #D9A441;
-  --error: #A35A3A;
-  --info: #6B8E6E;
+  /* ── Borders & ink ── */
+  --border:       #111111;     /* always ink-black in light mode */
+  --color-ink:    #111111;
+  --border-width: 3px;
 
-  --syntax-keyword: #8C472B;
-  --syntax-string: #3E6B4E;
-  --syntax-function: #2D6A4F;
-  --syntax-comment: #999990;
-  --syntax-number: #A87D25;
+  /* ── Status colours (semantic, not decorative) ── */
+  --success:  #4CAF6D;
+  --warning:  #F4C542;
+  --error:    #E85C4A;
+  --info:     #6EC6E8;
+  --flag:     #E85CA8;
 
-  --comment-beginner: #2D6A4F;
-  --comment-intermediate: #457B9D;
-  --comment-expert: #6F42C1;
-  --comment-docstring: #E9C46A;
-  --comment-highlight-bg: #E9F5F0;
+  /* ── Syntax highlighting ── */
+  --syntax-keyword:  #E85C4A;
+  --syntax-string:   #4CAF6D;
+  --syntax-function: #3B4CCA;
+  --syntax-comment:  #888888;
+  --syntax-number:   #F4A010;
 
-  --accent-on: #ffffff;
+  /* ── Comment depth colours ── */
+  --comment-beginner:       #3B4CCA;
+  --comment-intermediate:   #4CAF6D;
+  --comment-expert:         #E85C4A;
+  --comment-docstring:      #F4C542;
+  --comment-highlight-bg:   #EFF2FF;
 
-  /* Premium theme additions */
-  --card-radius: 20px;
-  --card-shadow: 0 4px 20px -2px rgba(58, 58, 53, 0.04), 0 2px 8px -1px rgba(58, 58, 53, 0.02);
-  --card-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
-  --btn-primary-shadow: 0 1.5px 2px 0 rgba(45, 106, 79, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
-  --btn-secondary-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
+  --accent-on: #FFFFFF;
 
-  --chart-good: #6EBB78;
-  --chart-moderate: #D8B25C;
-  --chart-poor: #B86A4D;
+  /* ── Neubrutalism structural tokens ── */
+  --card-radius:   0px;
+  --card-shadow:   6px 6px 0px var(--color-ink);
+  --card-shadow-sm:4px 4px 0px var(--color-ink);
+  --card-highlight:none;
+  --btn-primary-shadow:  6px 6px 0px var(--color-ink);
+  --btn-secondary-shadow:6px 6px 0px var(--color-ink);
+
+  /* ── Charts ── */
+  --chart-good:     #4CAF6D;
+  --chart-moderate: #F4C542;
+  --chart-poor:     #E85C4A;
 }
 
 :root[data-theme="dark"] {
@@ -99,7 +113,13 @@
   --chart-info: #6FA5B7;
 }
 
-* {
+/* Light-mode: force 3px ink border on all elements */
+:root[data-theme="light"] * {
+  border-color: var(--border);
+}
+
+/* Dark-mode border color reset */
+:root[data-theme="dark"] * {
   border-color: var(--border);
 }
 
@@ -118,24 +138,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Light Theme Background Radial Gradients + Paper Noise Texture */
+/* Neubrutalism Light — dot-grid cream background */
 :root[data-theme="light"] body {
-  background-image: 
-    radial-gradient(circle at 50% 0%, rgba(243, 240, 226, 0.5) 0%, transparent 70%),
-    radial-gradient(circle at 0% 100%, rgba(231, 225, 208, 0.3) 0%, transparent 50%);
-}
-
-:root[data-theme="light"] body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  opacity: 0.015; /* Almost imperceptible paper texture */
-  z-index: 9999;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-color: var(--bg-primary);
+  background-image: radial-gradient(rgba(17,17,17,0.12) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
 /* Dark Theme Background Radial Gradients + Noise Texture */
@@ -158,15 +165,21 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* Premium Card custom utility styling */
+/* Neubrutalism card — 0 radius, hard offset shadow, 3px ink border */
 .premium-card {
   border-radius: var(--card-radius);
   background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
-  box-shadow: var(--card-shadow), var(--card-highlight);
+  border: var(--border-width, 1px) solid var(--border);
+  box-shadow: var(--card-shadow);
   position: relative;
   overflow: hidden;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+/* Dark mode: keep original soft shadow */
+:root[data-theme="dark"] .premium-card {
+  border-width: 1px;
+  box-shadow: var(--card-shadow);
 }
 
 /* Typography — Display serif for headings, body sans for UI */
@@ -198,14 +211,23 @@ code {
 /* Premium Button style classes */
 .premium-btn-primary {
   box-shadow: var(--btn-primary-shadow);
-  border: 1px solid rgba(27, 67, 50, 0.4);
+  border: var(--border-width, 1px) solid var(--color-ink, rgba(27, 67, 50, 0.4));
+}
+:root[data-theme="light"] .premium-btn-primary {
+  border-color: var(--color-ink);
+  border-width: var(--border-width);
 }
 :root[data-theme="light"] .premium-btn-primary:hover {
-  transform: translateY(-0.5px);
-  box-shadow: 0 4px 12px 0 rgba(45, 106, 79, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+  transform: translate(-1px, -1px);
+  box-shadow: 8px 8px 0px var(--color-ink);
+}
+:root[data-theme="light"] .premium-btn-primary:active {
+  transform: translate(3px, 3px);
+  box-shadow: 3px 3px 0px var(--color-ink);
 }
 :root[data-theme="dark"] .premium-btn-primary {
   border-color: rgba(95, 158, 115, 0.4);
+  border-width: 1px;
 }
 :root[data-theme="dark"] .premium-btn-primary:hover {
   transform: translateY(-0.5px);
@@ -216,13 +238,24 @@ code {
 
 .premium-btn-secondary {
   box-shadow: var(--btn-secondary-shadow);
+  border: var(--border-width, 1px) solid var(--border);
+}
+:root[data-theme="light"] .premium-btn-secondary {
+  border-color: var(--color-ink);
+  border-width: var(--border-width);
 }
 :root[data-theme="light"] .premium-btn-secondary:hover {
-  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+  transform: translate(-1px, -1px);
+  box-shadow: 8px 8px 0px var(--color-ink);
+}
+:root[data-theme="light"] .premium-btn-secondary:active {
+  transform: translate(3px, 3px);
+  box-shadow: 3px 3px 0px var(--color-ink);
 }
 :root[data-theme="dark"] .premium-btn-secondary {
   background-color: var(--bg-tertiary);
   border-color: var(--border);
+  border-width: 1px;
 }
 :root[data-theme="dark"] .premium-btn-secondary:hover {
   background-color: var(--bg-code);
@@ -275,10 +308,14 @@ body * {
   line-height: 1.4 !important;
 }
 
-/* Focus indicators */
+/* Focus indicators — square outline for neubrutalism */
 :where(button, a, input, textarea, select, [tabindex]):focus-visible {
-  outline: 2px solid var(--accent-primary);
+  outline: 3px solid var(--color-ink, var(--accent-primary));
   outline-offset: 2px;
+  border-radius: 0px;
+}
+:root[data-theme="dark"] :where(button, a, input, textarea, select, [tabindex]):focus-visible {
+  outline-color: var(--accent-primary);
   border-radius: 4px;
 }
 
