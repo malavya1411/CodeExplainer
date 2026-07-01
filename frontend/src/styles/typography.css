@@ -22,6 +22,7 @@
   --font-mono:    'IBM Plex Mono', 'Fira Code', monospace;
 }
 
+:root {
   /* ── Type scale tokens ── */
 
   /* Hero — landing page h1, max visual impact */
