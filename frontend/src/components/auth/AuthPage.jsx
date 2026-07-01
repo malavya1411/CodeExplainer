@@ -49,13 +49,7 @@ export function AuthPage({ onLaunch }) {
   return (
     <div className="min-h-screen lg:h-screen lg:overflow-hidden w-full bg-transparent text-slate-800 dark:text-[#F5F4EE] flex flex-col justify-between relative transition-colors duration-300">
       
-      {/* Decorative corner accent — neubrutalism style in light mode, original in dark mode */}
-      <div className="absolute bottom-0 left-0 w-64 h-64 pointer-events-none z-0 opacity-30 dark:opacity-10">
-        <div className="absolute bottom-8 left-8 w-40 h-40 border-[var(--border)] bg-[var(--warning,#F4C542)] dark:border-[#2A2F2B] dark:bg-transparent"
-          style={isLight ? { border: "1px solid var(--color-ink,#111)" } : {}} />
-        <div className="absolute bottom-4 left-4 w-40 h-40 border-[var(--border)] bg-transparent dark:border-[#2A2F2B]"
-          style={isLight ? { border: "1px solid var(--color-ink,#111)" } : {}} />
-      </div>
+
       
       {/* Hidden File Input */}
       <input 
