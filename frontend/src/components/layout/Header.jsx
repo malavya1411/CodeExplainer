@@ -57,11 +57,11 @@ export function Header({
       className="flex items-center justify-between gap-3 px-4 h-14 shrink-0"
       style={{
         backgroundColor: "var(--accent-nav, var(--bg-secondary))",
-        borderBottom: "3px solid var(--border)",
+        borderBottom: "1px solid var(--border)",
       }}
     >
       <div className="flex items-center gap-2.5 min-w-0">
-        <div className="flex items-center justify-center w-8 h-8 shrink-0 border-2 border-[var(--border)]"
+        <div className="flex items-center justify-center w-8 h-8 shrink-0 border border-[var(--border)]"
           style={{ background: "var(--color-ink, var(--accent-primary))" }}>
           <Code2 size={18} style={{ color: "var(--bg-secondary)" }} />
         </div>
@@ -79,12 +79,12 @@ export function Header({
 
         {/* Workspace Switcher */}
         <div
-          className="flex items-center ml-4 select-none shrink-0 border-2 border-[var(--border)]"
+          className="flex items-center ml-4 select-none shrink-0 border border-[var(--border)]"
           style={{ background: "var(--bg-secondary)" }}
         >
           <button
             onClick={() => onWorkspaceChange("explainer")}
-            className={`text-nav font-body font-black uppercase tracking-wide px-3 py-1.5 transition-all cursor-pointer border-r-2 border-[var(--border)] ${
+            className={`text-nav font-body font-black uppercase tracking-wide px-3 py-1.5 transition-all cursor-pointer border-r border-[var(--border)] ${
               activeWorkspace === "explainer"
                 ? "bg-[var(--color-ink,#111)] text-[var(--bg-secondary)]"
                 : "text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
@@ -94,7 +94,7 @@ export function Header({
           </button>
           <button
             onClick={() => onWorkspaceChange("optimizer")}
-            className={`text-nav font-body font-black uppercase tracking-wide px-3 py-1.5 transition-all cursor-pointer border-r-2 border-[var(--border)] ${
+            className={`text-nav font-body font-black uppercase tracking-wide px-3 py-1.5 transition-all cursor-pointer border-r border-[var(--border)] ${
               activeWorkspace === "optimizer"
                 ? "bg-[var(--color-ink,#111)] text-[var(--bg-secondary)]"
                 : "text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"

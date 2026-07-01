@@ -3,7 +3,7 @@ import Editor, { DiffEditor } from "@monaco-editor/react"
 import { Cpu, ArrowLeftRight, Check, RotateCcw, Copy, Download, FileText, ChevronDown, Award, Sparkles, Shield, Eye, HelpCircle, Zap, ShieldCheck, Lock, ArrowRight, Rocket, Clock, Info, Code2 } from "lucide-react"
 import { useOptimizerStore } from "../../stores/optimizerStore.js"
 import { useThemeStore } from "../../stores/themeStore.js"
-import { getLanguageLabel } from "../../utils/languageDetector.js"
+import { getLanguageLabel, SUPPORTED_LANGUAGES, detectLanguageFromContent } from "../../utils/languageDetector.js"
 import { Button } from "../shared/Button.jsx"
 import { Card } from "../shared/Card.jsx"
 import { Badge } from "../shared/Badge.jsx"
@@ -36,6 +36,12 @@ export function OptimizerWorkspace() {
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768)
   const [viewMode, setViewMode] = useState("diff")
 
+  // Code input states when there is no report
+  const [inputCode, setInputCode] = useState("")
+  const [inputLanguage, setInputLanguage] = useState("javascript")
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false)
+  const langRef = useRef(null)
+
   useEffect(() => {
     const onClick = (e) => {
       if (exportRef.current && !exportRef.current.contains(e.target)) {
@@ -43,6 +49,9 @@ export function OptimizerWorkspace() {
       }
       if (categoryRef.current && !categoryRef.current.contains(e.target)) {
         setCategoryDropdownOpen(false)
+      }
+      if (langRef.current && !langRef.current.contains(e.target)) {
+        setLangDropdownOpen(false)
       }
     }
     document.addEventListener("mousedown", onClick)
@@ -69,9 +78,110 @@ export function OptimizerWorkspace() {
   }
 
   if (!report) {
+    const handleOptimizeClick = async () => {
+      if (!inputCode.trim()) {
+        toast.warning("Please enter some code first")
+        return
+      }
+      await useOptimizerStore.getState().runOptimization(inputCode, inputLanguage)
+      toast.success("Code optimized successfully!")
+    }
+
     return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-2 bg-[var(--bg-primary)] text-[var(--text-muted)] text-sm h-full w-full">
-        <p>No optimization report available. Enter code and click Optimize.</p>
+      <div className="flex flex-col flex-1 h-full min-h-0 bg-[var(--bg-primary)] overflow-hidden">
+        
+        {/* Config bar */}
+        <div className="shrink-0 bg-[var(--bg-secondary)] border-b border-[var(--border)] px-5 py-4">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            
+            {/* Language Selector */}
+            <div className="relative" ref={langRef}>
+              <div className="text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">Select Language</div>
+              <button
+                onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                className="flex items-center gap-3 px-3.5 py-3 rounded-none border border-[var(--border)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer min-w-[190px]"
+              >
+                <div className="text-[13px] font-bold text-[var(--text-primary)]">
+                  {SUPPORTED_LANGUAGES.find(l => l.id === inputLanguage)?.label || inputLanguage}
+                </div>
+                <ChevronDown size={13} className="text-[var(--text-muted)] ml-auto" />
+              </button>
+
+              {langDropdownOpen && (
+                <div className="absolute top-full left-0 mt-1.5 premium-card shadow-2xl py-1.5 z-[60] w-full max-h-64 overflow-y-auto">
+                  {SUPPORTED_LANGUAGES.map(lang => (
+                    <button
+                      key={lang.id}
+                      onClick={() => {
+                        setInputLanguage(lang.id)
+                        setLangDropdownOpen(false)
+                      }}
+                      className={`flex items-center gap-2.5 w-full px-3.5 py-2 text-xs text-left transition-colors cursor-pointer ${
+                        inputLanguage === lang.id
+                          ? "bg-[color-mix(in_srgb,var(--accent-primary)_10%,transparent)] text-[var(--accent-primary)] font-bold"
+                          : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]"
+                      }`}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Optimize Button */}
+            <button
+              onClick={handleOptimizeClick}
+              className="premium-btn-primary flex items-center gap-2 px-6 py-3 font-black text-sm uppercase tracking-wider text-[var(--accent-on)] cursor-pointer"
+              style={{ background: "var(--accent-primary)" }}
+            >
+              <Cpu size={15} />
+              Optimize Code
+            </button>
+
+          </div>
+        </div>
+
+        {/* Editor for inputting code */}
+        <div className="flex-1 min-h-0 relative bg-[var(--bg-secondary)]">
+          <Editor
+            value={inputCode}
+            language={inputLanguage}
+            theme={resolvedTheme === "dark" ? "explainer-dark" : "explainer-light"}
+            onMount={defineThemeOnMount}
+            onChange={(val) => {
+              const newCode = val || ""
+              setInputCode(newCode)
+              // Auto detect language
+              const detected = detectLanguageFromContent(newCode)
+              if (detected && detected !== inputLanguage) {
+                setInputLanguage(detected)
+              }
+            }}
+            options={{
+              fontSize: 13,
+              lineHeight: 22,
+              fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              wordWrap: "on",
+              padding: { top: 12, bottom: 12 },
+            }}
+          />
+
+          {/* Empty placeholder text overlay */}
+          {!inputCode.trim() && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 pointer-events-none select-none">
+              <Cpu size={40} className="text-[var(--text-muted)] opacity-25 animate-pulse" />
+              <div className="text-center opacity-40">
+                <p className="text-sm font-bold text-[var(--text-primary)]">Paste or write your code here to optimize</p>
+                <p className="text-xs text-[var(--text-muted)] mt-1">We will auto-detect the language and generate refactored improvements.</p>
+              </div>
+            </div>
+          )}
+        </div>
+
       </div>
     )
   }
@@ -148,7 +258,7 @@ export function OptimizerWorkspace() {
     }
   }
 
-  const defineThemeOnMount = (editor, monaco) => {
+  function defineThemeOnMount(editor, monaco) {
     monaco.editor.defineTheme("explainer-dark", {
       base: "vs-dark",
       inherit: true,

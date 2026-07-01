@@ -14,6 +14,7 @@
   --font-display: 'Fraunces', 'Georgia', 'Times New Roman', serif;
   --font-body:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono:    'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
 
 /* ── Neubrutalism font overrides — light theme only ── */
 :root[data-theme="light"] {
@@ -21,6 +22,7 @@
   --font-mono:    'IBM Plex Mono', 'Fira Code', monospace;
 }
 
+:root {
   /* ── Type scale tokens ── */
 
   /* Hero — landing page h1, max visual impact */
